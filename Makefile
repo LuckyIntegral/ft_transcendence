@@ -1,5 +1,7 @@
 DB_FOLDER = ./data
 STATIC_FOLDER = ./srcs/staticfiles
+CACHE_FOLDER = ./srcs/pingpong/__pycache__ ./srcs/transcedence/__pycache__
+
 
 run:
 	@docker-compose up -d --build
@@ -18,3 +20,4 @@ fclean: clean
 	@docker rmi -f $(shell docker images -q)
 	@rm -rf $(DB_FOLDER)
 	@rm -rf $(STATIC_FOLDER)
+	@rm -rf $(CACHE_FOLDER)

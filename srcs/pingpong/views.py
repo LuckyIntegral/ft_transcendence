@@ -1,10 +1,11 @@
 from django.shortcuts import render
-from django.http import HttpResponse
-from django.views import View
-from django.contrib import messages
-from django.contrib.auth import authenticate, login, logout
-from django.contrib.auth.decorators import login_required
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
 from django.contrib.auth.models import User
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError
+
 from .models import *
 
 
@@ -13,36 +14,23 @@ from .models import *
 def home(request):
     return render(request, 'home.html', {})
 
-def login(request):
-    if (request.method == 'POST'):
-        username = request.POST.get['username']
-        password = request.POST.get['password']
-        if (not User.objects.filter(username=username).exists()):
-            messages.error(request, 'Incorrect username or password')
-            return render(request, 'login.html', {})
-        user = authenticate(username=username, password=password)
-        if user is None:
-            messages.error(request, 'Incorrect username or password')
-            return render(request, 'login.html', {})
-        else:
-            login(request, user)
-            messages.success(request, 'Logged in successfully')
-            return render(request, 'home.html', {})
+class SignupView(APIView):
+    def post(self, request, format=None):
+        username = request.data.get('username')
+        email = request.data.get('email')
+        password = request.data.get('password')
+        password_confirm = request.data.get('password_confirm')
 
-def register(request):
-    if (request.method == 'POST'):
-        username = request.POST.get['username']
-        password = request.POST.get['password']
-        if (User.objects.filter(username=username).exists()):
-            messages.error(request, 'Username already exists')
-            return render(request, 'register.html', {})
-        user = User.objects.create_user(username=username, password=password)
+        if password != password_confirm:
+            return Response({'error': 'Passwords do not match'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            validate_password(password)
+        except ValidationError as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+        user = User(username=username, email=email)
+        user.set_password(password)
         user.save()
-        messages.success(request, 'User created successfully')
-        return render(request, 'login.html', {})
 
-def logout(request):
-    logout(request)
-    messages.success(request, 'Logged out successfully')
-    return render(request, 'home.html', {})
-        
+        return Response({'status': 'Successfully signed up'}, status=status.HTTP_201_CREATED)

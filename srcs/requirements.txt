@@ -4,3 +4,5 @@ django-bootstrap-v5
 djangorestframework
 markdown
 django-filter
+djangorestframework_simplejwt
+
