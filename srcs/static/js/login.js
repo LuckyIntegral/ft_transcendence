@@ -66,6 +66,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (response.ok) {
                         return response.json();
                     } else {
+                        var errorMessage = document.createElement('p');
+                        errorMessage.textContent = 'Invalid username or password. Please try again.';
+                        errorMessage.style.color = 'red';
+                        loginForm.appendChild(errorMessage);
                         throw new Error('Error: ' + response.statusText);
                     }
                 }).then(function(data) {
@@ -76,7 +80,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 }).catch(function(error) {
                     console.log('Error:', error);
                 }).finally(function() {
-                    document.body.removeChild(popup);
+                    if (localStorage.getItem('token') != null) {
+                        document.body.removeChild(popup);
+                    }
                 });
             });
         }

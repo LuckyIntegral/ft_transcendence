@@ -16,12 +16,8 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
-from pingpong.views import SignupView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('pingpong.urls')),
-    path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
-    path('api/signup/', SignupView.as_view(), name='signup'),
 ]

@@ -25,6 +25,8 @@ class SpecialCharacterValidator:
 class RepeatableCharacterValidator:
     def validate(self, password, user=None):
         counterChars = Counter(password)
+        if (len(counterChars) == 0):
+            raise ValidationError('Password must contain at least 1 character.')
         if counterChars.most_common(1)[0][1] > 3:
             raise ValidationError('Password must not contain any character more than 3 times.')
 

@@ -71,16 +71,17 @@
     </footer>
     <script>
       // TODO: think about user already logged in, because token can be not a valid one
-      var token = localStorage.getItem('token');
+        var token = localStorage.getItem('token');
 
-      if (token) {
-          document.getElementById("loginRef").style.display = "none";
-          document.getElementById("signUpRef").style.display = "none";
-      } else {
-          document.getElementById("friendsRef").style.display = "none";
-          document.getElementById("messagesRef").style.display = "none";
-          document.getElementById("logOutRef").style.display = "none";
-      }
+        if (token) {
+            document.getElementById("loginRef").style.display = "none";
+            document.getElementById("signUpRef").style.display = "none";
+        } else {
+
+            document.getElementById("friendsRef").style.display = "none";
+            document.getElementById("messagesRef").style.display = "none";
+            document.getElementById("logOutRef").style.display = "none";
+        }
     </script>
 </body>
 <footer class="container">
