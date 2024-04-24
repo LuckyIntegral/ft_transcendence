@@ -32,3 +32,21 @@ class RepeatableCharacterValidator:
 
     def get_help_text(self):
         return 'Password must not contain any character more than 3 times.'
+
+class PhoneNumberValidator:
+	def validate(self, phoneNumber, user=None):
+		if not phoneNumber:
+			return ValidationError('Phone number is required.')
+		if not re.match(r'^\+?1?\d{9,15}$', phoneNumber):
+			raise ValidationError('Phone number must be between 9 and 15 digits.')
+
+	def get_help_text(self):
+		return 'Phone number must be between 9 and 15 digits.'
+
+class EmailValidator:
+	def validate(self, email, user=None):
+		if not re.match(r'^\w+@\w+\.\w+$', email):
+			raise ValidationError('Invalid email address.')
+
+	def get_help_text(self):
+		return 'Invalid email address.'
