@@ -8,17 +8,8 @@ document.addEventListener('DOMContentLoaded', function() {
     loginLink.addEventListener('click', function(e) {
         e.preventDefault();
 
-        var popup = document.createElement('div');
-        popup.style.display = 'flex';
-        popup.style.justifyContent = 'center';
-        popup.style.alignItems = 'center';
-        popup.style.position = 'fixed';
-        popup.style.top = '0';
-        popup.style.bottom = '0';
-        popup.style.left = '0';
-        popup.style.right = '0';
-        popup.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
-        popup.innerHTML = `
+        var popup = createPopup();
+		popup.innerHTML = `
             <div class="card mb-3" style="width: 300px;">
                 <div class="card-header bg-primary text-white">
                         Login
@@ -69,18 +60,20 @@ document.addEventListener('DOMContentLoaded', function() {
                         var errorMessage = document.createElement('p');
                         errorMessage.textContent = 'Invalid username or password. Please try again.';
                         errorMessage.style.color = 'red';
+						loginForm.removeChild(loginForm.lastChild);
                         loginForm.appendChild(errorMessage);
                         throw new Error('Error: ' + response.statusText);
                     }
                 }).then(function(data) {
                     // Store the JWT in localStorage
-                    localStorage.setItem('token', data.access);
+                    localStorage.setItem('access', data.access);
+					localStorage.setItem('refresh', data.refresh);
                     // Reload the page
                     location.reload();
                 }).catch(function(error) {
                     console.log('Error:', error);
                 }).finally(function() {
-                    if (localStorage.getItem('token') != null) {
+                    if (localStorage.getItem('access') != null) {
                         document.body.removeChild(popup);
                     }
                 });

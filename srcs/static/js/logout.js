@@ -3,7 +3,7 @@ document.addEventListener('DOMContentLoaded', function() {
     var logoutLink = document.getElementById('logOutRef');
     logoutLink.addEventListener('click', function(e) {
         e.preventDefault();
-        localStorage.removeItem('token');
+        localStorage.removeItem('access');
         location.reload();
     });
 });

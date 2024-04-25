@@ -8,16 +8,7 @@ document.addEventListener('DOMContentLoaded', function() {
     signupLink.addEventListener('click', function(e) {
         e.preventDefault();
 
-        var popup = document.createElement('div');
-        popup.style.display = 'flex';
-        popup.style.justifyContent = 'center';
-        popup.style.alignItems = 'center';
-        popup.style.position = 'fixed';
-        popup.style.top = '0';
-        popup.style.bottom = '0';
-        popup.style.left = '0';
-        popup.style.right = '0';
-        popup.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
+        var popup = createPopup();
         popup.innerHTML = `
             <div class="card" style="width: 300px;">
                 <div class="card-header bg-primary text-white">
@@ -63,7 +54,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 var email = document.getElementById('id_email').value;
                 var password = document.getElementById('id_password').value;
                 var passwordConfirm = document.getElementById('id_password_confirm').value;
-                fetch('/api/signup/', {
+                fetchWithToken('/api/signup/', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

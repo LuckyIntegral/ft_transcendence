@@ -1,3 +1,22 @@
+document.addEventListener('DOMContentLoaded', function() {
+	var content = document.getElementById('content');
+
+	if (content === null) {
+		console.log('content is null');
+		return;
+	}
+
+	var canvas = document.createElement('canvas');
+	canvas.id = 'game';
+	content.appendChild(canvas);
+
+	var gameButton = document.getElementById('pongRef');
+	gameButton.addEventListener('click', function() {
+		document.getElementById('content').textContent = '';
+		document.getElementById('content').appendChild(canvas);
+	});
+});
+
 var Game = {
     init: function() {
         this.canvas = document.getElementById('game');

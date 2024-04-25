@@ -49,7 +49,6 @@ class PhoneNumberValidator:
 
 class EmailValidator:
 	def validate(self, email, user=None):
-		print(email)
 		if not re.match(r'^\w+@\w+\.\w+$', email):
 			raise ValidationError('Invalid email address.')
 
