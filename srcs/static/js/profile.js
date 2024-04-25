@@ -54,9 +54,9 @@ document.addEventListener('DOMContentLoaded', function() {
 				'Authorization': 'Bearer ' + localStorage.getItem('token'),
 			},
 			body: JSON.stringify({
-				displayName: displayName.getAttribute('value'),
-				email: email.getAttribute('value'),
-				mobile: mobile.getAttribute('value'),
+				displayName: newDisplayName.value,
+				email: newEmail.value,
+				mobile: newMobile.value
 			})
 		}).then(function(response) {
 			if (response.ok) {

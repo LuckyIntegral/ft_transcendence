@@ -16,6 +16,8 @@ clean:
 	@docker network prune -f
 	@docker image prune -f
 	@docker container prune -f
+cleandb:
+	@rm -rf $(DB_FOLDER)
 fclean: clean
 	@docker rmi -f $(shell docker images -q)
 	@rm -rf $(DB_FOLDER)

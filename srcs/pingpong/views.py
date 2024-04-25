@@ -62,24 +62,10 @@ class VerifyTokenView(APIView):
 class ProfileView(APIView):
 	def put(self, request, format=None):
 		authHeader = request.headers.get('Authorization')
-		if not authHeader:
-			return Response({'error': 'Token is required'}, status=status.HTTP_400_BAD_REQUEST)
 		try:
-			tokenType, tokenKey = authHeader.split(' ')
-			if (tokenType.lower() != 'bearer'):
-				return Response({'error': 'Token is invalid'}, status=status.HTTP_400_BAD_REQUEST)
-			UntypedToken(tokenKey)
-		except (InvalidToken, TokenError) as e:
-			return Response({'error': 'Token is invalid: {str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
-
-		print("Token is valid")
-		token = token_backend.decode(tokenKey)
-		user_id = token['user_id']
-		try:
-			user = User.objects.get(id=user_id)
-		except User.DoesNotExist:
-			return Response({'error': 'User does not exist'}, status=status.HTTP_400_BAD_REQUEST)
-		print("User exists")
+			user = JWTTokenValidator().validate(authHeader)
+		except ValidationError as e:
+			return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 		user.userprofile.displayName = request.data.get('displayName')
 		phoneNumber = request.data.get('phoneNumber')
 		phoneValidator = PhoneNumberValidator()
