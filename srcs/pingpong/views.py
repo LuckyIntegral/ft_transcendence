@@ -1,10 +1,12 @@
 from django.shortcuts import render
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError
+from django.core.mail import send_mail
+from django.http import HttpResponse
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from django.contrib.auth.password_validation import validate_password
-from django.core.exceptions import ValidationError
-from rest_framework_simplejwt.tokens import UntypedToken
+from rest_framework_simplejwt.tokens import UntypedToken, RefreshToken
 from rest_framework_simplejwt.state import token_backend
 from rest_framework_simplejwt.authentication import InvalidToken, TokenError
 from .validators import *
@@ -44,20 +46,29 @@ class SignupView(APIView):
 		return Response({'status': 'Successfully signed up'}, status=status.HTTP_201_CREATED)
 
 
-class VerifyTokenView(APIView):
-	def post(self, request, format=None):
-		authHeader = request.headers.get('Authorization')
-		if not authHeader or authHeader == '':
-			return Response({'error': 'Token is required'}, status=status.HTTP_400_BAD_REQUEST)
-
+class VerifyEmailView(APIView):
+	def get(self, request, format=None):
+		token = request.query_params.get('token')
+		print('token: ', token)
+		if not token:
+			return HttpResponse('Please provide a token', status=400)
 		try:
-			tokenType, tokenKey = authHeader.split(' ')
-			if (tokenType.lower() != 'bearer'):
-				return Response({'error': 'Token is invalid'}, status=status.HTTP_400_BAD_REQUEST)
-			token = Token.objects.get(key=tokenKey)
-		except:
-			return Response({'error': 'Token is invalid'}, status=status.HTTP_400_BAD_REQUEST)
-		return Response({'status': 'Token is valid'}, status=status.HTTP_200_OK)
+			decoded_token = RefreshToken(token)
+		except (InvalidToken, TokenError) as e:
+			return HttpResponse('Invalid token', status=400)
+
+		user_id = decoded_token['user_id']
+		try:
+			user = User.objects.get(id=user_id)
+		except User.DoesNotExist:
+			return HttpResponse('User does not exist', status=404)
+
+		if user.userprofile.emailVerified:
+			return HttpResponse('Email is already verified', status=400)
+		user.userprofile.emailVerified = True
+		user.userprofile.save()
+
+		return HttpResponse('Email verified successfully', status=200)
 
 class PasswordView(APIView):
 	def put(self, request, format=None):
@@ -88,6 +99,22 @@ class PasswordView(APIView):
 		return Response({'status': 'Password updated successfully'}, status=status.HTTP_200_OK)
 
 class ProfileView(APIView):
+	def get(self, request, format=None):
+		authHeader = request.headers.get('Authorization')
+		try:
+			user = JWTTokenValidator().validate(authHeader)
+		except ValidationError as e:
+			return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+		data = {
+			'username': user.username,
+			'email': user.email,
+			'displayName': user.userprofile.displayName,
+			'phoneNumber': user.userprofile.phoneNumber,
+			'emailVerified' : user.userprofile.emailVerified
+		}
+		print('from get request: ', data)
+		return Response(data, status=status.HTTP_200_OK)
+
 	def put(self, request, format=None):
 		authHeader = request.headers.get('Authorization')
 		print(request.data)
@@ -105,39 +132,30 @@ class ProfileView(APIView):
 			except ValidationError:
 				return Response({'error': 'Invalid phone number'}, status=status.HTTP_400_BAD_REQUEST)
 
-		user.email = request.data.get('email')
+		email = request.data.get('email')
 		emailValidator = EmailValidator()
-		if (user.email != None and len(user.email)):
+		if (email != None and len(email)):
 			try:
-				emailValidator.validate(user.email)
+				emailValidator.validate(email)
 			except ValidationError:
 				return Response({'error': 'Invalid email address'}, status=status.HTTP_400_BAD_REQUEST)
 		try:
-			curUser = UserProfile.objects.get(email=user.email)
+			curUser = UserProfile.objects.get(email=email)
 		except:
 			curUser = None
 		if curUser != None and curUser.username != user.username:
 			return Response({'error': 'Email is already taken'}, status=status.HTTP_400_BAD_REQUEST)
+		if (email != None and len(email) != 0 and email != user.email):
+			user.userprofile.emailVerified = False
+			token = str(RefreshToken.for_user(user))
+			send_mail(
+				'Email Verification',
+				'Verify your email address by clicking the link below: http://localhost:8000/verify-email?token=' + token,
+				'admin@localhost',
+				[email],
+				fail_silently=False,
+			)
+		user.email = email
 		user.save()
 		user.userprofile.save()
-
-		print('display name: ', user.userprofile.displayName)
-		print('phone number: ', user.userprofile.phoneNumber)
-
-
 		return Response({'status': 'Profile updated successfully'}, status=status.HTTP_200_OK)
-	
-	def get(self, request, format=None):
-		authHeader = request.headers.get('Authorization')
-		try:
-			user = JWTTokenValidator().validate(authHeader)
-		except ValidationError as e:
-			return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-		data = {
-			'username': user.username,
-			'email': user.email,
-			'displayName': user.userprofile.displayName,
-			'phoneNumber': user.userprofile.phoneNumber,
-		}
-		print('from get request: ', data)
-		return Response(data, status=status.HTTP_200_OK)

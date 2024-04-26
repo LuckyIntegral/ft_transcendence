@@ -7,3 +7,5 @@ class UserProfile(models.Model):
 	# additional fields
 	phoneNumber = models.CharField(max_length=15, blank=True)
 	displayName = models.CharField(max_length=50, blank=True)
+	phoneNumberVerified = models.BooleanField(default=False)
+	emailVerified = models.BooleanField(default=False)

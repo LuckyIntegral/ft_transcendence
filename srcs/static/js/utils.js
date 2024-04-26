@@ -11,3 +11,17 @@ function createPopup() {
     popup.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
 	return popup;
 }
+
+function createVerificationSpan(is_verified) {
+	var span = document.createElement('span');
+	if (is_verified) {
+		span.setAttribute('class', 'material-symbols-outlined');
+		span.style.color = 'green';
+		span.textContent = 'check_circle';
+	} else {
+		span.setAttribute('class', 'material-symbols-outlined');
+		span.style.color = 'red';
+		span.textContent = 'unpublished';
+	}
+	return span;
+}

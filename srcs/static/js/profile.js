@@ -32,6 +32,7 @@ function editProfile() {
 }
 
 function saveProfile() {
+	document.getElementById('loading').style.display = 'block';
 	var newDisplayName = document.getElementById('displayName');
 	var newEmail = document.getElementById('email');
 	var newPhoneNumber = document.getElementById('phoneNumber');
@@ -39,17 +40,6 @@ function saveProfile() {
 	var email = document.createElement('p');
 	var phoneNumber = document.createElement('p');
 	var displayName = document.createElement('p');
-	
-	phoneNumber.setAttribute('id', 'phoneNumber');
-	email.setAttribute('id', 'email');
-	displayName.setAttribute('id', 'displayName');
-	phoneNumber.setAttribute('class', 'text-muted mb-0');
-	email.setAttribute('class', 'text-muted mb-0');
-	displayName.setAttribute('class', 'text-muted mb-0');
-	
-	phoneNumber.textContent = newPhoneNumber.value;
-	email.textContent = newEmail.value;
-	displayName.textContent = newDisplayName.value;
 	
 	fetchWithToken ('/api/profile/', {
 		method: 'PUT',
@@ -64,8 +54,22 @@ function saveProfile() {
 		})
 	}).then(function(response) {
 		if (response.ok) {
-			email.textContent = newEmail.value;
+			if (email.textContent !== newEmail.value) {
+				console.log('Email was changed');
+				var emailVerificationP = document.getElementById('emailVerified');
+				var emailVerificationSpan = createVerificationSpan(false);
+				emailVerificationP.innerHTML = '';
+				emailVerificationP.appendChild(emailVerificationSpan);
+			}
+			phoneNumber.setAttribute('id', 'phoneNumber');
+			email.setAttribute('id', 'email');
+			displayName.setAttribute('id', 'displayName');
+			phoneNumber.setAttribute('class', 'text-muted mb-0');
+			email.setAttribute('class', 'text-muted mb-0');
+			displayName.setAttribute('class', 'text-muted mb-0');
+			
 			phoneNumber.textContent = newPhoneNumber.value;
+			email.textContent = newEmail.value;
 			displayName.textContent = newDisplayName.value;
 	
 			newPhoneNumber.parentNode.replaceChild(phoneNumber, newPhoneNumber);
@@ -75,14 +79,12 @@ function saveProfile() {
 			editProfileButton.textContent = 'Edit Profile';
 			editProfileButton.removeEventListener('click', saveProfile);
 			editProfileButton.addEventListener('click', editProfile);
-	
 			return response.json();
 		} else {
-			alert('Error: ' + response.error);
-			throw new Error('Error: ' + response.error);
+			response.json().then(data => alert(data.error));
 		}
-	}).catch(function(error) {
-		console.log(error);
+	}).finally(function() {
+		document.getElementById('loading').style.display = 'none';
 	});
 }
 
@@ -96,7 +98,7 @@ function loadProfilePage() {
 		.then(data => {
 			profilePage.innerHTML = data;
 			try {
-				var profileData = getProfileData();
+				getAndSetProfileData();
 			} catch (error) {
 				console.log(error);
 				return error;
@@ -116,7 +118,7 @@ function loadProfilePage() {
 		});
 }
 
-function getProfileData() {
+function getAndSetProfileData() {
 	fetchWithToken('/api/profile/', {
 		method: 'GET',
 		headers: {
@@ -134,9 +136,15 @@ function getProfileData() {
 		var displayName = document.getElementById('displayName');
 		var email = document.getElementById('email');
 		var phoneNumber = document.getElementById('phoneNumber');
+
+		var emailVerificationP = document.getElementById('emailVerified'); 
+		var emailVerificationSpan = createVerificationSpan(data.emailVerified);
+		
 		displayName.textContent = data.displayName;
 		email.textContent = data.email;
 		phoneNumber.textContent = data.phoneNumber;
+
+		emailVerificationP.appendChild(emailVerificationSpan);
 	}).catch(function(error) {
 		console.log(error);
 	});
@@ -211,11 +219,9 @@ function changePassword() {
 	
 					changePasswordForm.removeChild(changePasswordForm.lastChild);
 					changePasswordForm.appendChild(errorMessage);
-					throw new Error('Error: ' + response.statusText);
+					throw new Error('Error: ' + response.error);
 				}
 			}).then(function(data) {
-				// Reload the page
-				// document.body.removeChild(popup);
 				location.reload();
 			}).catch(function(error) {
 				console.log('Error:', error);
