@@ -6,6 +6,7 @@ function editProfile() {
 	var newDisplayName = document.createElement('input');
 	var newEmail = document.createElement('input');
 	var newPhoneNumber = document.createElement('input');
+	var undoButton = document.getElementById('buttonChangePassword')
 
 	newDisplayName.setAttribute('type', 'text');
 	newDisplayName.setAttribute('id', 'displayName');
@@ -21,6 +22,12 @@ function editProfile() {
 	newPhoneNumber.setAttribute('id', 'phoneNumber');
 	newPhoneNumber.setAttribute('value', phoneNumber.textContent);
 	newPhoneNumber.setAttribute('placeholder', '+380 12 345 6789');
+
+	undoButton.textContent = 'Undo';
+
+	localStorage.setItem('displayName', displayName.textContent);
+	localStorage.setItem('email', email.textContent);
+	localStorage.setItem('phoneNumber', phoneNumber.textContent);
 	
 	displayName.parentNode.replaceChild(newDisplayName, displayName);
 	email.parentNode.replaceChild(newEmail, email);
@@ -29,14 +36,59 @@ function editProfile() {
 	editProfileButton.textContent = 'Save';
 	editProfileButton.removeEventListener('click', editProfile);
 	editProfileButton.addEventListener('click', saveProfile);
+	undoButton.removeEventListener('click', changePassword);
+	undoButton.addEventListener('click', undoChanges);
+}
+
+function undoChanges() {
+	var displayNameInput = document.getElementById('displayName');
+	var emailInput = document.getElementById('email');
+	var phoneNumberInput = document.getElementById('phoneNumber');
+	var editProfileButton = document.getElementById('buttonEditProfile');
+	var undoButton = document.getElementById('buttonChangePassword');
+
+	var displayName = document.createElement('p');
+	var email = document.createElement('p');
+	var phoneNumber = document.createElement('p');
+
+	phoneNumber.setAttribute('id', 'phoneNumber');
+	email.setAttribute('id', 'email');
+	displayName.setAttribute('id', 'displayName');
+
+	phoneNumber.setAttribute('class', 'text-muted mb-0');
+	email.setAttribute('class', 'text-muted mb-0');
+	displayName.setAttribute('class', 'text-muted mb-0');
+
+	phoneNumber.textContent = localStorage.getItem('phoneNumber');
+	email.textContent = localStorage.getItem('email');
+	displayName.textContent = localStorage.getItem('displayName');
+
+	phoneNumberInput.parentNode.replaceChild(phoneNumber, phoneNumberInput);
+	emailInput.parentNode.replaceChild(email, emailInput);
+	displayNameInput.parentNode.replaceChild(displayName, displayNameInput);
+
+	editProfileButton.textContent = 'Edit Profile';
+	editProfileButton.removeEventListener('click', saveProfile);
+	editProfileButton.addEventListener('click', editProfile);
+
+	undoButton.textContent = 'Change Password';
+	undoButton.removeEventListener('click', undoChanges);
+	undoButton.addEventListener('click', changePassword);
 }
 
 function saveProfile() {
+	validateToken();
+	if (localStorage.getItem('access') === null) {
+		alert('You are not logged in');
+		window.location.hash = 'default';
+		return;
+	}
 	document.getElementById('loading').style.display = 'block';
 	var newDisplayName = document.getElementById('displayName');
 	var newEmail = document.getElementById('email');
 	var newPhoneNumber = document.getElementById('phoneNumber');
 	var editProfileButton = document.getElementById('buttonEditProfile');
+	var undoButton = document.getElementById('buttonChangePassword');
 	var email = document.createElement('p');
 	var phoneNumber = document.createElement('p');
 	var displayName = document.createElement('p');
@@ -55,7 +107,6 @@ function saveProfile() {
 	}).then(function(response) {
 		if (response.ok) {
 			if (email.textContent !== newEmail.value) {
-				console.log('Email was changed');
 				var emailVerificationP = document.getElementById('emailVerified');
 				var emailVerificationSpan = createVerificationSpan(false);
 				emailVerificationP.innerHTML = '';
@@ -79,6 +130,10 @@ function saveProfile() {
 			editProfileButton.textContent = 'Edit Profile';
 			editProfileButton.removeEventListener('click', saveProfile);
 			editProfileButton.addEventListener('click', editProfile);
+
+			undoButton.textContent = 'Change Password';
+			undoButton.removeEventListener('click', undoChanges);
+			undoButton.addEventListener('click', changePassword);
 			return response.json();
 		} else {
 			response.json().then(data => alert(data.error));
@@ -119,6 +174,12 @@ function loadProfilePage() {
 }
 
 function getAndSetProfileData() {
+	validateToken();
+	if (localStorage.getItem('access') === null) {
+		alert('You are not logged in');
+		window.location.hash = 'default';
+		return;
+	}
 	fetchWithToken('/api/profile/', {
 		method: 'GET',
 		headers: {
@@ -151,6 +212,12 @@ function getAndSetProfileData() {
 }
 
 function changePassword() {
+	validateToken();
+	if (localStorage.getItem('access') === null) {
+		alert('You are not logged in');
+		window.location.hash = 'default';
+		return;
+	}
 	var popup = createPopup();
 	
 	popup.innerHTML = `
@@ -196,7 +263,7 @@ function changePassword() {
 	if (changePasswordForm) {
 		changePasswordForm.addEventListener('submit', function(e) {
 			e.preventDefault();
-	
+
 			fetchWithToken('/api/password/', {
 				method: 'PUT',
 				headers: {

@@ -17,6 +17,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
 	// Function to handle hash changes
 	function handleHashChange() {
+		validateToken();
+		if (localStorage.getItem('access') === null) {
+			window.location.hash = 'default';
+			return;
+		}
 		var hash = window.location.hash.slice(1);  // Remove the '#' from the hash
 		var routeFunction = routes[hash];
 		if (routeFunction) {

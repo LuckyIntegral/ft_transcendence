@@ -19,6 +19,17 @@ from .models import *
 def home(request):
 	return render(request, 'home.html', {})
 
+class VerifyTokenView(APIView):
+	def post(self, request, format=None):
+		authHeader = request.headers.get('Authorization')
+		if not authHeader:
+			return Response({'error': 'Please provide a token'}, status=status.HTTP_400_BAD_REQUEST)
+		try:
+			user = JWTTokenValidator().validate(authHeader)
+		except ValidationError as e:
+			return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+		return Response({'status': 'Token is valid'}, status=status.HTTP_200_OK)
+
 class SignupView(APIView):
 	def post(self, request, format=None):
 		username = request.data.get('username')
@@ -49,7 +60,6 @@ class SignupView(APIView):
 class VerifyEmailView(APIView):
 	def get(self, request, format=None):
 		token = request.query_params.get('token')
-		print('token: ', token)
 		if not token:
 			return HttpResponse('Please provide a token', status=400)
 		try:
@@ -112,12 +122,10 @@ class ProfileView(APIView):
 			'phoneNumber': user.userprofile.phoneNumber,
 			'emailVerified' : user.userprofile.emailVerified
 		}
-		print('from get request: ', data)
 		return Response(data, status=status.HTTP_200_OK)
 
 	def put(self, request, format=None):
 		authHeader = request.headers.get('Authorization')
-		print(request.data)
 		try:
 			user = JWTTokenValidator().validate(authHeader)
 		except ValidationError as e:

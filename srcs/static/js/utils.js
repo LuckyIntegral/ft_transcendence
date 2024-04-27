@@ -25,3 +25,43 @@ function createVerificationSpan(is_verified) {
 	}
 	return span;
 }
+
+function validateToken() {
+	var token = localStorage.getItem('access');
+	if (token === null) {
+		window.location.hash = 'default';
+		document.getElementById("profileRef").style.display = "none";
+		document.getElementById("friendsRef").style.display = "none";
+		document.getElementById("messagesRef").style.display = "none";
+		document.getElementById("logOutRef").style.display = "none";
+	} else {
+		if (token) {
+			fetchWithToken('/api/verify-token/', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					'Authorization': 'Bearer ' + token,
+				},
+			})
+			.then(function(response) {
+				if (response.ok) {
+					document.getElementById("loginRef").style.display = "none";
+					document.getElementById("signUpRef").style.display = "none";
+				} else {
+					document.getElementById("profileRef").style.display = "none";
+					document.getElementById("friendsRef").style.display = "none";
+					document.getElementById("messagesRef").style.display = "none";
+					document.getElementById("logOutRef").style.display = "none";
+					localStorage.removeItem('access');
+				}
+			});
+		} else {
+			document.getElementById("content").innerHTML = "<h1>Invalid token</h1>";
+			document.getElementById("profileRef").style.display = "none";
+			document.getElementById("friendsRef").style.display = "none";
+			document.getElementById("messagesRef").style.display = "none";
+			document.getElementById("logOutRef").style.display = "none";
+		}
+	}
+	return false;
+}
