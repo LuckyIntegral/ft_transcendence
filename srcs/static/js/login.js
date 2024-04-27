@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', function() {
     // Login handling
-    var loginLink = document.getElementById('loginRef');
+	var loginLink = document.getElementById('loginRef');
 
     if (!loginLink) {
         return;

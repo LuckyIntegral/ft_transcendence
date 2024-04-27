@@ -54,7 +54,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 var email = document.getElementById('id_email').value;
                 var password = document.getElementById('id_password').value;
                 var passwordConfirm = document.getElementById('id_password_confirm').value;
-                fetchWithToken('/api/signup/', {
+                fetch('/api/signup/', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

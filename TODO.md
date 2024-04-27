@@ -1,0 +1,1 @@
+1. When user succesfully registred - send a verification email to him

@@ -9,3 +9,5 @@ class UserProfile(models.Model):
 	displayName = models.CharField(max_length=50, blank=True)
 	phoneNumberVerified = models.BooleanField(default=False)
 	emailVerified = models.BooleanField(default=False)
+	isTwoStepEmailAuthEnabled = models.BooleanField(default=False)
+	verificationEmailCode = models.CharField(max_length=6, blank=True)

@@ -30,6 +30,28 @@ class VerifyTokenView(APIView):
 			return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 		return Response({'status': 'Token is valid'}, status=status.HTTP_200_OK)
 
+class LoginView(APIView):
+	def post(self, request, format=None):
+		username = request.data.get('username')
+		password = request.data.get('password')
+
+		if not username or not password:
+			return Response({'error': 'Please provide all required fields'}, status=status.HTTP_400_BAD_REQUEST)
+		
+		try:
+			user = User.objects.get(username=username)
+		except User.DoesNotExist:
+			return Response({'error': 'Incorrect password or username'}, status=status.HTTP_400_BAD_REQUEST)
+		
+		if not user.check_password(password):
+			return Response({'error': 'Incorrect password or username'}, status=status.HTTP_400_BAD_REQUEST)
+		
+		if not user.userprofile.isTwoStepEmailAuthEnabled:
+			token = str(RefreshToken.for_user(user))
+			return Response({'token': token}, status=status.HTTP_200_OK)
+		
+		return Response({'status': 'Proccess 2-step verification'}, status=status.HTTP_202_ACCEPTED)
+
 class SignupView(APIView):
 	def post(self, request, format=None):
 		username = request.data.get('username')
@@ -167,3 +189,39 @@ class ProfileView(APIView):
 		user.save()
 		user.userprofile.save()
 		return Response({'status': 'Profile updated successfully'}, status=status.HTTP_200_OK)
+
+class TwoStepVerificationCodeView(APIView):
+	def get(self, request, format=None):
+		authHeader = request.headers.get('Authorization')
+		try:
+			user = JWTTokenValidator().validate(authHeader)
+		except ValidationError as e:
+			return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+		verificationEmailCode = str(random.randint(100000, 999999))
+		if not user.userprofile.isTwoStepEmailAuthEnabled:
+			return Response({'error': '2-step email verification is not enabled'}, status=status.HTTP_200_OK)
+		user.userprofile.verificationEmailCode = verificationEmailCode
+		user.userprofile.save()
+		send_mail(
+			'2-Step Verification Code',
+			'Your 2-step verification code is: ' + verificationEmailCode,
+			'admin@localhost',
+			[user.email],
+			fail_silently=False,
+		)
+		return Response({'status': 'Verification code sent successfully'}, status=status.HTTP_202_ACCEPTED)
+	
+	def post(self, request, format=None):
+		authHeader = request.headers.get('Authorization')
+		try:
+			user = JWTTokenValidator().validate(authHeader)
+		except ValidationError as e:
+			return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+		verificationEmailCode = request.data.get('verificationEmailCode')
+		if not verificationEmailCode:
+			return Response({'error': 'Please provide a verification code'}, status=status.HTTP_400_BAD_REQUEST)
+		if user.userprofile.verificationEmailCode != verificationEmailCode:
+			return Response({'error': 'Incorrect verification code'}, status=status.HTTP_400_BAD_REQUEST)
+		user.userprofile.verificationEmailCode = None
+		user.userprofile.save()
+		return Response({'status': 'Verification successful'}, status=status.HTTP_200_OK)
