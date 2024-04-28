@@ -9,3 +9,4 @@ class UserProfile(models.Model):
 	displayName = models.CharField(max_length=50, blank=True)
 	phoneNumberVerified = models.BooleanField(default=False)
 	emailVerified = models.BooleanField(default=False)
+	friendList = models.ManyToManyField("self", related_name='friendList', blank=True)

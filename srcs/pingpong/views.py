@@ -42,7 +42,7 @@ class SignupView(APIView):
 		if User.objects.filter(username=username).exists():
 			return Response({'error': 'Username is already taken'}, status=status.HTTP_400_BAD_REQUEST)
 		if User.objects.filter(email=email).exists():
-			return Response({'error': 'Email is already taken'}, status=status.HTTP_400_BAD_REQUEST)    
+			return Response({'error': 'Email is already taken'}, status=status.HTTP_400_BAD_REQUEST)
 		if password != password_confirm:
 			return Response({'error': 'Passwords do not match'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -167,3 +167,67 @@ class ProfileView(APIView):
 		user.save()
 		user.userprofile.save()
 		return Response({'status': 'Profile updated successfully'}, status=status.HTTP_200_OK)
+
+class FriendsView(APIView):
+	def get(self, request, format=None):
+		authHeader = request.headers.get('Authorization')
+		try:
+			user = JWTTokenValidator().validate(authHeader)
+		except ValidationError as e:
+			return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+		friendList = user.userprofile.friendList.all()
+		data = []
+		for friend in friendList:
+			data.append({
+				'email': friend.user.email,
+				'displayName': friend.user.username,
+			})
+		return Response(data, status=status.HTTP_200_OK)
+
+	def post(self, request, format=None):
+		authHeader = request.headers.get('Authorization')
+		try:
+			user = JWTTokenValidator().validate(authHeader)
+		except ValidationError as e:
+			return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+		friend_username = request.data.get('friend_username')
+		if not friend_username:
+			return Response({'error': 'Please provide a friend username'}, status=status.HTTP_400_BAD_REQUEST)
+		try:
+			friend_user = User.objects.get(username=friend_username)
+			friend = UserProfile.objects.get(user=friend_user)
+		except User.DoesNotExist:
+			return Response({'error': 'User does not exist'}, status=status.HTTP_404_NOT_FOUND)
+		except UserProfile.DoesNotExist:
+			return Response({'error': 'User does not have a profile'}, status=status.HTTP_404_NOT_FOUND)
+		if friend.id == user.id:
+			return Response({'error': 'You cannot add yourself as a friend'}, status=status.HTTP_400_BAD_REQUEST)
+		if friend in user.userprofile.friendList.all():
+			return Response({'error': 'User is already in your friend list'}, status=status.HTTP_400_BAD_REQUEST)
+		user.userprofile.friendList.add(friend)
+		user.userprofile.save()
+		return Response({'status': 'Friend added successfully'}, status=status.HTTP_200_OK)
+
+	def delete(self, request, format=None):
+		authHeader = request.headers.get('Authorization')
+		try:
+			user = JWTTokenValidator().validate(authHeader)
+		except ValidationError as e:
+			return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+		friend_username = request.data.get('friend_username')
+		if not friend_username:
+			return Response({'error': 'Please provide a friend username'}, status=status.HTTP_400_BAD_REQUEST)
+		try:
+			friend_user = User.objects.get(username=friend_username)
+			friend = UserProfile.objects.get(user=friend_user)
+		except User.DoesNotExist:
+			return Response({'error': 'User does not exist'}, status=status.HTTP_404_NOT_FOUND)
+		except UserProfile.DoesNotExist:
+			return Response({'error': 'User does not have a profile'}, status=status.HTTP_404_NOT_FOUND)
+		if friend.id == user.id:
+			return Response({'error': 'You cannot remove yourself from your friend list'}, status=status.HTTP_400_BAD_REQUEST)
+		if friend not in user.userprofile.friendList.all():
+			return Response({'error': 'User is not in your friend list'}, status=status.HTTP_400_BAD_REQUEST)
+		user.userprofile.friendList.remove(friend)
+		user.userprofile.save()
+		return Response({'status': 'Friend removed successfully'}, status=status.HTTP_200_OK)

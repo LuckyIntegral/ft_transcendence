@@ -12,12 +12,12 @@ function editProfile() {
 	newDisplayName.setAttribute('id', 'displayName');
 	newDisplayName.setAttribute('value', displayName.textContent);
 	newDisplayName.setAttribute('placeholder', 'Beatiful Name');
-	
+
 	newEmail.setAttribute('type', 'text');
 	newEmail.setAttribute('id', 'email');
 	newEmail.setAttribute('value', email.textContent);
 	newEmail.setAttribute('placeholder', 'prossi@exam02.ez.pass');
-	
+
 	newPhoneNumber.setAttribute('type', 'text');
 	newPhoneNumber.setAttribute('id', 'phoneNumber');
 	newPhoneNumber.setAttribute('value', phoneNumber.textContent);
@@ -28,11 +28,11 @@ function editProfile() {
 	localStorage.setItem('displayName', displayName.textContent);
 	localStorage.setItem('email', email.textContent);
 	localStorage.setItem('phoneNumber', phoneNumber.textContent);
-	
+
 	displayName.parentNode.replaceChild(newDisplayName, displayName);
 	email.parentNode.replaceChild(newEmail, email);
 	phoneNumber.parentNode.replaceChild(newPhoneNumber, phoneNumber);
-	
+
 	editProfileButton.textContent = 'Save';
 	editProfileButton.removeEventListener('click', editProfile);
 	editProfileButton.addEventListener('click', saveProfile);
@@ -92,7 +92,7 @@ function saveProfile() {
 	var email = document.createElement('p');
 	var phoneNumber = document.createElement('p');
 	var displayName = document.createElement('p');
-	
+
 	fetchWithToken ('/api/profile/', {
 		method: 'PUT',
 		headers: {
@@ -118,15 +118,15 @@ function saveProfile() {
 			phoneNumber.setAttribute('class', 'text-muted mb-0');
 			email.setAttribute('class', 'text-muted mb-0');
 			displayName.setAttribute('class', 'text-muted mb-0');
-			
+
 			phoneNumber.textContent = newPhoneNumber.value;
 			email.textContent = newEmail.value;
 			displayName.textContent = newDisplayName.value;
-	
+
 			newPhoneNumber.parentNode.replaceChild(phoneNumber, newPhoneNumber);
 			newEmail.parentNode.replaceChild(email, newEmail);
 			newDisplayName.parentNode.replaceChild(displayName, newDisplayName);
-	
+
 			editProfileButton.textContent = 'Edit Profile';
 			editProfileButton.removeEventListener('click', saveProfile);
 			editProfileButton.addEventListener('click', editProfile);
@@ -198,9 +198,9 @@ function getAndSetProfileData() {
 		var email = document.getElementById('email');
 		var phoneNumber = document.getElementById('phoneNumber');
 
-		var emailVerificationP = document.getElementById('emailVerified'); 
+		var emailVerificationP = document.getElementById('emailVerified');
 		var emailVerificationSpan = createVerificationSpan(data.emailVerified);
-		
+
 		displayName.textContent = data.displayName;
 		email.textContent = data.email;
 		phoneNumber.textContent = data.phoneNumber;
@@ -219,7 +219,7 @@ function changePassword() {
 		return;
 	}
 	var popup = createPopup();
-	
+
 	popup.innerHTML = `
 		<div class="card mb-3" style="width: 300px;">
 			<div class="card-header bg-primary text-white">
@@ -250,7 +250,7 @@ function changePassword() {
 	document.body.appendChild(popup);
 
 	var closeButton = popup.querySelector('#close-button');
-	
+
 	closeButton.addEventListener('click', function() {
 		document.body.removeChild(popup);
 	});
@@ -259,7 +259,7 @@ function changePassword() {
 	var oldPassword = document.getElementById('id_old_password');
 	var newPassword = document.getElementById('id_new_password');
 	var newPasswordConfirm = document.getElementById('id_new_password_confirm');
-	
+
 	if (changePasswordForm) {
 		changePasswordForm.addEventListener('submit', function(e) {
 			e.preventDefault();
@@ -268,7 +268,7 @@ function changePassword() {
 				method: 'PUT',
 				headers: {
 					'Content-Type': 'application/json',
-					'Authorization': 'Bearer ' + localStorage.getItem('token'),
+					'Authorization': 'Bearer ' + localStorage.getItem('access'),
 				},
 				body: JSON.stringify({
 					old_password: oldPassword.value,
@@ -280,10 +280,10 @@ function changePassword() {
 					return response.json();
 				} else {
 					var errorMessage = document.createElement('p');
-	
+
 					errorMessage.textContent = 'Password error (doesnt match etc).'; // TODO: Add error message
 					errorMessage.style.color = 'red';
-	
+
 					changePasswordForm.removeChild(changePasswordForm.lastChild);
 					changePasswordForm.appendChild(errorMessage);
 					throw new Error('Error: ' + response.error);
