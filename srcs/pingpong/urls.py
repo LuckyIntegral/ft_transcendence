@@ -1,7 +1,7 @@
 from django.urls import path
 from . import views
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
-from pingpong.views import SignupView, ProfileView, PasswordView, VerifyEmailView, VerifyTokenView, FriendsView
+from pingpong.views import SignupView, ProfileView, PasswordView, VerifyEmailView, VerifyTokenView, FriendsView, FriendsRequestsView
 
 urlpatterns = [
     path('', views.home, name='home'),
@@ -13,4 +13,5 @@ urlpatterns = [
 	path('verify-email/', VerifyEmailView.as_view(), name='verify_email'),
 	path('api/verify-token/', VerifyTokenView.as_view(), name='verify_token'),
     path('api/friends/', FriendsView.as_view(), name='friend_list'),
+    path('api/friends-requests/', FriendsRequestsView.as_view(), name='friend_request_list'),
 ]

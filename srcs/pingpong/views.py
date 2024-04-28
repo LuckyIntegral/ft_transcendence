@@ -168,66 +168,178 @@ class ProfileView(APIView):
 		user.userprofile.save()
 		return Response({'status': 'Profile updated successfully'}, status=status.HTTP_200_OK)
 
+class FriendsRequestsView(APIView):
+    """ This view is used to send, accept, and reject friend requests.
+        It has three methods:
+        1. get: This method is used to get all the friend requests sent to the user.
+        2. post: This method is used to send a friend request to a user.
+        3. put: This method is used to accept or reject a friend request.
+    """
+    def get(self, request):
+        """ This method is used to get all the friend requests sent to the user.
+            It first validates the JWT token.
+            It then gets all the friend requests sent to the user.
+            It then creates a list of dictionaries with the email and username
+                of the users who sent the friend requests.
+            It then returns the list of dictionaries as a response.
+        """
+        auth_header = request.headers.get('Authorization')
+        try:
+            user = JWTTokenValidator().validate(auth_header)
+        except ValidationError as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        friend_request_list = FriendRequest.objects.filter(toUser=user.id)
+        data = []
+        for friend_request in friend_request_list:
+            data.append({
+                'email': friend_request.fromUser.email,
+                'username': friend_request.fromUser.username,
+            })
+        return Response(data, status=status.HTTP_200_OK)
+
+    def post(self, request):
+        """ This method is used to send a friend request to a user.
+            It first validates the JWT token.
+            It then gets the friend username from the request data.
+            It then checks if the friend username is provided.
+            It then gets the friend user and friend user profile.
+            It then checks if the friend user is the same as the user.
+            It then checks if the friend is already in the user's friend list.
+            It then checks if the user has already sent a friend request
+                to the friend user.
+            It then checks if the friend user has already sent a friend request
+                to the user.
+            It then creates a friend request and saves it.
+            It then returns a response with the status 'Friend request sent successfully'.
+        """
+        auth_header = request.headers.get('Authorization')
+        try:
+            user = JWTTokenValidator().validate(auth_header)
+        except ValidationError as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        friend_username = request.data.get('friend_username')
+        if not friend_username:
+            return Response({'error': 'Please provide a friend username'}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            friend_user = User.objects.get(username=friend_username)
+            friend = UserProfile.objects.get(user=friend_user)
+        except User.DoesNotExist:
+            return Response({'error': 'User does not exist'}, status=status.HTTP_404_NOT_FOUND)
+        except UserProfile.DoesNotExist:
+            return Response({'error': 'User does not have a profile'}, status=status.HTTP_404_NOT_FOUND)
+        if friend.id == user.id:
+            return Response({'error': 'You cannot add yourself as a friend'}, status=status.HTTP_400_BAD_REQUEST)
+        if friend in user.userprofile.friendList.all():
+            return Response({'error': 'User is already in your friend list'}, status=status.HTTP_400_BAD_REQUEST)
+        if FriendRequest.objects.filter(fromUser=user, toUser=friend_user).exists():
+            return Response({'error': 'You have already sent a friend request to the user'}, status=status.HTTP_400_BAD_REQUEST)
+        if FriendRequest.objects.filter(fromUser=friend_user, toUser=user).exists():
+            return Response({'error': 'User has already sent you a friend request'}, status=status.HTTP_400_BAD_REQUEST)
+        friend_request = FriendRequest.objects.create(fromUser=user, toUser=friend_user)
+        friend_request.save()
+        return Response({'status': 'Friend request sent successfully'}, status=status.HTTP_200_OK)
+
+    def put(self, request):
+        """ This method is used to accept or reject a friend request.
+            It first validates the JWT token.
+            It then gets the friend username and action from the request data.
+            It then checks if the friend username is provided.
+            It then gets the friend user and friend user profile.
+            It then checks if the friend user is the same as the user.
+            It then checks if the user has received a friend request from the friend user.
+            It then deletes the friend request.
+
+            If the action is 'accept':
+                It adds the friend user to the user's friend list.
+                It then returns a response with the status 'Friend request accepted successfully'.
+
+            If the action is 'reject':
+                It then returns a response with the status 'Friend request rejected successfully'.
+        """
+        auth_header = request.headers.get('Authorization')
+        try:
+            user = JWTTokenValidator().validate(auth_header)
+        except ValidationError as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        friend_username = request.data.get('friend_username')
+        action = request.data.get('action')
+        if not friend_username:
+            return Response({'error': 'Please provide a friend username'}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            friend_user = User.objects.get(username=friend_username)
+            friend = UserProfile.objects.get(user=friend_user)
+        except User.DoesNotExist:
+            return Response({'error': 'User does not exist'}, status=status.HTTP_404_NOT_FOUND)
+        except UserProfile.DoesNotExist:
+            return Response({'error': 'User does not have a profile'}, status=status.HTTP_404_NOT_FOUND)
+        if not FriendRequest.objects.filter(fromUser=friend_user, toUser=user).exists():
+            return Response({'error': 'User has not sent you a friend request'}, status=status.HTTP_400_BAD_REQUEST)
+        FriendRequest.objects.filter(fromUser=friend_user, toUser=user).delete()
+        if action == 'accept':
+            user.userprofile.friendList.add(friend)
+            user.userprofile.save()
+            return Response({'status': 'Friend request accepted successfully'}, status=status.HTTP_200_OK)
+        return Response({'status': 'Friend request rejected successfully'}, status=status.HTTP_200_OK)
+
 class FriendsView(APIView):
-	def get(self, request, format=None):
-		authHeader = request.headers.get('Authorization')
-		try:
-			user = JWTTokenValidator().validate(authHeader)
-		except ValidationError as e:
-			return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-		friendList = user.userprofile.friendList.all()
-		data = []
-		for friend in friendList:
-			data.append({
-				'email': friend.user.email,
-				'displayName': friend.user.username,
-			})
-		return Response(data, status=status.HTTP_200_OK)
+    """ This view is used to get and remove friends.
+        It has two methods:
+        1. get: This method is used to get all the friends of the user.
+        2. delete: This method is used to remove a friend
+            from the user's friend list.
+    """
+    def get(self, request):
+        """ This method is used to get all the friends of the user.
+            It first validates the JWT token.
+            It then gets all the friends of the user.
+            It then creates a list of dictionaries with the email and username
+                of the friends.
+            It then returns the list of dictionaries as a response.
+        """
+        auth_header = request.headers.get('Authorization')
+        try:
+            user = JWTTokenValidator().validate(auth_header)
+        except ValidationError as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        friend_list = user.userprofile.friendList.all()
+        data = []
+        for friend in friend_list:
+            data.append({
+                'email': friend.user.email,
+                'username': friend.user.username,
+            })
+        return Response(data, status=status.HTTP_200_OK)
 
-	def post(self, request, format=None):
-		authHeader = request.headers.get('Authorization')
-		try:
-			user = JWTTokenValidator().validate(authHeader)
-		except ValidationError as e:
-			return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-		friend_username = request.data.get('friend_username')
-		if not friend_username:
-			return Response({'error': 'Please provide a friend username'}, status=status.HTTP_400_BAD_REQUEST)
-		try:
-			friend_user = User.objects.get(username=friend_username)
-			friend = UserProfile.objects.get(user=friend_user)
-		except User.DoesNotExist:
-			return Response({'error': 'User does not exist'}, status=status.HTTP_404_NOT_FOUND)
-		except UserProfile.DoesNotExist:
-			return Response({'error': 'User does not have a profile'}, status=status.HTTP_404_NOT_FOUND)
-		if friend.id == user.id:
-			return Response({'error': 'You cannot add yourself as a friend'}, status=status.HTTP_400_BAD_REQUEST)
-		if friend in user.userprofile.friendList.all():
-			return Response({'error': 'User is already in your friend list'}, status=status.HTTP_400_BAD_REQUEST)
-		user.userprofile.friendList.add(friend)
-		user.userprofile.save()
-		return Response({'status': 'Friend added successfully'}, status=status.HTTP_200_OK)
-
-	def delete(self, request, format=None):
-		authHeader = request.headers.get('Authorization')
-		try:
-			user = JWTTokenValidator().validate(authHeader)
-		except ValidationError as e:
-			return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-		friend_username = request.data.get('friend_username')
-		if not friend_username:
-			return Response({'error': 'Please provide a friend username'}, status=status.HTTP_400_BAD_REQUEST)
-		try:
-			friend_user = User.objects.get(username=friend_username)
-			friend = UserProfile.objects.get(user=friend_user)
-		except User.DoesNotExist:
-			return Response({'error': 'User does not exist'}, status=status.HTTP_404_NOT_FOUND)
-		except UserProfile.DoesNotExist:
-			return Response({'error': 'User does not have a profile'}, status=status.HTTP_404_NOT_FOUND)
-		if friend.id == user.id:
-			return Response({'error': 'You cannot remove yourself from your friend list'}, status=status.HTTP_400_BAD_REQUEST)
-		if friend not in user.userprofile.friendList.all():
-			return Response({'error': 'User is not in your friend list'}, status=status.HTTP_400_BAD_REQUEST)
-		user.userprofile.friendList.remove(friend)
-		user.userprofile.save()
-		return Response({'status': 'Friend removed successfully'}, status=status.HTTP_200_OK)
+    def delete(self, request):
+        """ This method is used to remove a friend from the user's friend list.
+            It first validates the JWT token.
+            It then gets the friend username from the request data.
+            It then checks if the friend username is provided.
+            It then gets the friend user and friend user profile.
+            It then checks if the friend user is the same as the user.
+            It then checks if the friend is in the user's friend list.
+            It then removes the friend from the user's friend list.
+            It then returns a response with the status 'Friend removed successfully'.
+        """
+        auth_header = request.headers.get('Authorization')
+        try:
+            user = JWTTokenValidator().validate(auth_header)
+        except ValidationError as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        friend_username = request.data.get('friend_username')
+        if not friend_username:
+            return Response({'error': 'Please provide a friend username'}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            friend_user = User.objects.get(username=friend_username)
+            friend = UserProfile.objects.get(user=friend_user)
+        except User.DoesNotExist:
+            return Response({'error': 'User does not exist'}, status=status.HTTP_404_NOT_FOUND)
+        except UserProfile.DoesNotExist:
+            return Response({'error': 'User does not have a profile'}, status=status.HTTP_404_NOT_FOUND)
+        if friend.id == user.id:
+            return Response({'error': 'You cannot remove yourself from your friend list'}, status=status.HTTP_400_BAD_REQUEST)
+        if friend not in user.userprofile.friendList.all():
+            return Response({'error': 'User is not in your friend list'}, status=status.HTTP_400_BAD_REQUEST)
+        user.userprofile.friendList.remove(friend)
+        user.userprofile.save()
+        return Response({'status': 'Friend removed successfully'}, status=status.HTTP_200_OK)
