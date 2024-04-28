@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', function() {
     // Login handling
-    var loginLink = document.getElementById('loginRef');
+	var loginLink = document.getElementById('loginRef');
 
     if (!loginLink) {
         return;
@@ -8,8 +8,8 @@ document.addEventListener('DOMContentLoaded', function() {
     loginLink.addEventListener('click', function(e) {
         e.preventDefault();
 
-        var popup = createPopup();
-		popup.innerHTML = `
+        var loginPopup = createPopup();
+		loginPopup.innerHTML = `
             <div class="card mb-3" style="width: 300px;">
                 <div class="card-header bg-primary text-white">
                         Login
@@ -31,11 +31,32 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
             </div>
         `;
-        document.body.appendChild(popup);
+        document.body.appendChild(loginPopup);
 
-        var closeButton = popup.querySelector('#close-button');
+		var twoStepVerificationPopup = createPopup();
+
+		twoStepVerificationPopup.innerHTML = `
+			<div class="card mb-3" style="width: 300px;">
+				<div class="card-header bg-primary text-white">
+					Two Step Verification
+					<button id="close-button" style="float: right; border: none; background: none; color: white;">&times;</button>
+				</div>
+				<div class="card-body">
+					<form id="two-step-verification-form">
+						<div class="form-group">
+							<label for="id_verification_code" class="form-label fs-6">Verification Code</label>
+							<input type="text" id="id_verification_code" name="verification_code" class="form-control" required>
+						</div>
+						<p class="fw-lighter" style="font-size:12px;" ></p>
+						<button type="submit" class="btn btn-primary">Verify</button>
+					</form>
+				</div>
+			</div>
+		`;
+
+        var closeButton = loginPopup.querySelector('#close-button');
         closeButton.addEventListener('click', function() {
-            document.body.removeChild(popup);
+            document.body.removeChild(loginPopup);
         });
 
         var loginForm = document.getElementById('login-form');
@@ -44,7 +65,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 e.preventDefault();
                 var username = document.getElementById('id_username').value;
                 var password = document.getElementById('id_password').value;
-                fetch('/api/token/', {
+                fetch('/api/login/', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -54,9 +75,28 @@ document.addEventListener('DOMContentLoaded', function() {
                         password: password
                     })
                 }).then(function(response) {
-                    if (response.ok) {
+					console.log(response.status);
+                    if (response.status == 200) {
+						obtainToken(username, password);
                         return response.json();
-                    } else {
+                    } else if (response.status == 202) {
+						console.log('Two step verification required');
+						document.body.removeChild(loginPopup);
+						document.body.appendChild(twoStepVerificationPopup);
+						sendVerificationEmail(username, password);
+						var twoStepVerificationForm = document.getElementById('two-step-verification-form');
+						closeButton = twoStepVerificationPopup.querySelector('#close-button');
+						closeButton.addEventListener('click', function() {
+							document.body.removeChild(twoStepVerificationPopup);
+						});
+						if (!twoStepVerificationForm) {
+							return 
+						}
+						twoStepVerificationForm.addEventListener('submit', function(e) {
+							e.preventDefault();
+							processTwoStepVerification(username, password);
+						});
+					} else {
                         var errorMessage = document.createElement('p');
                         errorMessage.textContent = 'Invalid username or password. Please try again.';
                         errorMessage.style.color = 'red';
@@ -64,17 +104,11 @@ document.addEventListener('DOMContentLoaded', function() {
                         loginForm.appendChild(errorMessage);
                         throw new Error('Error: ' + response.statusText);
                     }
-                }).then(function(data) {
-                    // Store the JWT in localStorage
-                    localStorage.setItem('access', data.access);
-					localStorage.setItem('refresh', data.refresh);
-                    // Reload the page
-                    location.reload();
                 }).catch(function(error) {
                     console.log('Error:', error);
                 }).finally(function() {
                     if (localStorage.getItem('access') != null) {
-                        document.body.removeChild(popup);
+                        document.body.removeChild(loginPopup);
                     }
                 });
             });

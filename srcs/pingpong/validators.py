@@ -77,5 +77,22 @@ class JWTTokenValidator:
 	
 	def get_help_text(self):
 		return 'Token is invalid.'
+
+class UsernamePasswordValidator:
+	def validate(self, username, password):
+		if not username:
+			raise ValidationError('Please provide a username.')
+		if not password:
+			raise ValidationError('Please provide a password.')
+		try:
+			user = User.objects.get(username=username)
+		except User.DoesNotExist:
+			raise ValidationError('Username or password is incorrect.')
+		if not user.check_password(password):
+			raise ValidationError('Username or password is incorrect.')
+		return user
+
+	def get_help_text(self):
+		return 'Username must be between 5 and 15 alphanumeric characters. Password must be between 8 and 15 alphanumeric characters.'
 		
 		

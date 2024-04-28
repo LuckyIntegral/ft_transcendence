@@ -65,3 +65,110 @@ function validateToken() {
 	}
 	return false;
 }
+
+function sendVerificationEmail(username = null, password = null) {
+	console.log(username);
+	console.log(password);
+	if (username !== null) {
+		fetch('/api/send-verification-code-email/', {
+			method: 'PUT',
+			headers: {
+				'Content-Type': 'application/json',
+			},
+			body: JSON.stringify({
+				username: username,
+				password: password
+			})
+		}).then(function(response) {
+			if (!response.ok) {
+				throw new Error('Error: ' + response.statusText);
+			}
+		}).catch(function(error) {
+			console.log('Error:', error);
+		});
+	} else {
+		validateToken();
+		if (localStorage.getItem('access') === null) {
+			alert('Session expired. Please log in again.')
+			window.location.hash = 'default';
+			return;
+		}
+		fetchWithToken('/api/send-verification-code-email/', {
+			method: 'PUT',
+			headers: {
+				'Content-Type': 'application/json',
+				'Autorization': 'Bearer ' + localStorage.getItem('access'),
+			}
+		}).then(function(response) {
+			if (!response.ok) {
+				throw new Error('Error: ' + response.statusText);
+			}
+		}).catch(function(error) {
+			console.log('Error:', error);
+		});
+	}
+
+}
+
+function obtainToken(username, password) {
+	fetch('/api/token/', {
+		method: 'POST',
+		headers: {
+			'Content-Type': 'application/json',
+		},
+		body: JSON.stringify({
+			username: username,
+			password: password
+		})
+	}).then(function(response) {
+		if (response.ok) {
+			return response.json();
+		} else {
+			var errorMessage = document.createElement('p');
+			errorMessage.textContent = 'Invalid username or password. Please try again.';
+			errorMessage.style.color = 'red';
+			var loginForm = document.getElementById('login-form');
+			loginForm.removeChild(loginForm.lastChild);
+			loginForm.appendChild(errorMessage);
+			throw new Error('Error: ' + response.statusText);
+		}
+	}).then(function(data) {
+		localStorage.setItem('access', data.access);
+		localStorage.setItem('refresh', data.refresh);
+		location.reload();
+	}).catch(function(error) {
+		console.log('Error:', error);
+	});
+}
+
+function processTwoStepVerification(username, password) {
+	var code = document.getElementById('id_verification_code').value;
+	if (!code)
+		return;
+	fetch('/api/send-verification-code-email/', {
+		method: 'POST',
+		headers: {
+			'Content-Type': 'application/json',
+		},
+		body: JSON.stringify({
+			username: username,
+			password: password,
+			code: code
+		})
+	}).then(function(response) {
+		if (response.ok) {
+			obtainToken(username, password);
+			return response.json();
+		} else {
+			var errorMessage = document.createElement('p');
+			errorMessage.textContent = 'Invalid code. Please try again.';
+			errorMessage.style.color = 'red';
+			var twoStepVerificationForm = document.getElementById('two-step-verification-form');
+			twoStepVerificationForm.removeChild(twoStepVerificationForm.lastChild);
+			twoStepVerificationForm.appendChild(errorMessage);
+			throw new Error('Error: ' + response.statusText);
+		}
+	}).catch(function(error) {
+		console.log('Error:', error);
+	});
+}

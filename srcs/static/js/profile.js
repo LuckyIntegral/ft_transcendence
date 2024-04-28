@@ -167,6 +167,9 @@ function loadProfilePage() {
 
 			var changePasswordButton = document.getElementById('buttonChangePassword');
 			changePasswordButton.addEventListener('click', changePassword);
+
+			var twoStepVerificationButton = document.getElementById('buttonTwoStepVerification');
+			twoStepVerificationButton.addEventListener('click', editTwoStepVerification);
 		})
 		.catch(error => {
 			console.error('Error:', error);
@@ -204,7 +207,7 @@ function getAndSetProfileData() {
 		displayName.textContent = data.displayName;
 		email.textContent = data.email;
 		phoneNumber.textContent = data.phoneNumber;
-
+		setTwoStepVerificationButton(data.twoStepVerificationEnabled);
 		emailVerificationP.appendChild(emailVerificationSpan);
 	}).catch(function(error) {
 		console.log(error);
@@ -294,5 +297,174 @@ function changePassword() {
 				console.log('Error:', error);
 			});
 		});
+	}
+}
+
+function getTwoStepVerificationStatus() {
+	validateToken();
+	if (localStorage.getItem('access') === null) {
+		alert('You are not logged in');
+		window.location.hash = 'default';
+		return;
+	}
+	return fetchWithToken('/api/two-step-verification/', {
+		method: 'GET',
+		headers: {
+			'Content-Type': 'application/json',
+			'Authorization': 'Bearer ' + localStorage.getItem('token'),
+		}
+	}).then(response => {
+		return response.status;
+	}).catch(function(error) {
+		console.log(error);
+	});
+}
+
+function enableTwoStepVerification(popup) {
+	validateToken();
+	if (localStorage.getItem('access') === null) {
+		alert('You are not logged in');
+		window.location.hash = 'default';
+		return;
+	}
+	var verificationCode = document.getElementById('id_verification_code');
+	fetchWithToken('/api/two-step-verification/', {
+		method: 'PUT',
+		headers: {
+			'Content-Type': 'application/json',
+			'Authorization': 'Bearer ' + localStorage.getItem('token'),
+		},
+		body: JSON.stringify({
+			code: verificationCode.value,
+			action: 'enable',
+		})
+	}).then(function(response) {
+		if (response.ok) {
+			alert('Two-step verification enabled');
+			setTwoStepVerificationButton(true);
+			popup.parentNode.removeChild(popup);
+			location.reload();
+		} else {
+			alert('Error: ' + response.statusText);
+		}
+	}).catch(function(error) {
+		console.log('Error:', error);
+	});
+}
+
+function disableTwoStepVerification(popup) {
+	validateToken();
+	if (localStorage.getItem('access') === null) {
+		alert('You are not logged in');
+		window.location.hash = 'default';
+		return;
+	}
+	var verificationCode = document.getElementById('id_verification_code');
+	fetchWithToken('/api/two-step-verification/', {
+		method: 'PUT',
+		headers: {
+			'Content-Type': 'application/json',
+			'Authorization': 'Bearer ' + localStorage.getItem('token'),
+		},
+		body: JSON.stringify({
+			code: verificationCode.value,
+			action: 'disable',
+		})
+	}).then(function(response) {
+		if (response.ok) {
+			alert('Two-step verification disabled');
+			setTwoStepVerificationButton(false);
+			popup.parentNode.removeChild(popup);
+			location.reload();
+		} else {
+			alert('Error: ' + response.statusText);
+		}
+	}).catch(function(error) {
+		console.log('Error:', error);
+	});
+}
+
+
+function editTwoStepVerification() {
+	var popup = createPopup();
+	getTwoStepVerificationStatus().then(status => {
+		var twoStepStatus = status;
+		console.log(twoStepStatus);
+		// if verification is disabled open popup to enable i
+		if (twoStepStatus === 202) {
+			popup.innerHTML = `
+				<div class="card mb-3" style="width: 300px;">
+					<div class="card-header bg-primary text-white">
+						Enable Two-Step Verification
+						<button id="close-button" style="float: right; border: none; background: none; color: white;">&times;</button>
+					</div>
+					<div class="card-body">
+						<form id="two-step-verification-form">
+							<div class="form-group
+							">
+								<label for="id_verification_code" class="form-label
+								">Verification Code</label>
+								<input type="text" id="id_verification_code" name="verification_code" class="form-control" required>
+							</div>
+							<p class="fw-lighter" style="font-size:12px;" >TODO: add explanation</p>
+							<button type="submit" class="btn btn-primary">Verify</button>
+						</form>
+					</div>
+				</div>
+			`;
+		} else if (twoStepStatus === 200) {
+			popup.innerHTML = `
+				<div class="card mb-3" style="width: 300px;">
+					<div class="card-header bg-primary text-white">
+						Disable Two-Step Verification
+						<button id="close-button" style="float: right; border: none; background: none; color: white;">&times;</button>
+					</div>
+					<div class="card-body">
+						<form id="two-step-verification-form">
+							<div class="form-group
+							">
+								<label for="id_verification_code" class="form-label
+								">Verification Code</label>
+								<input type="text" id="id_verification_code" name="verification_code" class="form-control" required>
+							</div>
+							<p class="fw-lighter" style="font-size:12px;" >TODO: add explanation</p>
+							<button type="submit" class="btn btn-primary">Verify</button>
+						</form>
+					</div>
+				</div>
+			`;
+		} else {
+			alert('Error: ' + twoStepStatus);
+			return;
+		}
+		document.body.appendChild(popup);
+		sendVerificationEmail();
+		var closeButton = popup.querySelector('#close-button');
+		closeButton.addEventListener('click', function() {
+			document.body.removeChild(popup);
+		});
+
+		var twoStepVerificationForm = document.getElementById('two-step-verification-form');
+		if (twoStepVerificationForm) {
+			twoStepVerificationForm.addEventListener('submit', function(e) {
+				e.preventDefault();
+				if (twoStepStatus === 202) {
+					enableTwoStepVerification(popup);
+				} else if (twoStepStatus === 200) {
+					disableTwoStepVerification(popup);
+				}
+			});
+		}
+	});
+}
+
+function setTwoStepVerificationButton(isEnabled) {
+	var twoStepVerifictionButton = document.getElementById('buttonTwoStepVerification');
+	if (isEnabled) {
+		twoStepVerifictionButton.textContent = 'Disable Two Step Verification';
+		twoStepVerifictionButton.class = "btn btn-outline-danger ms-1"
+	} else {
+		twoStepVerifictionButton.textContent = 'Enable Two Step Verification';
+		twoStepVerifictionButton.class = "btn btn-outline-primary ms-1"
 	}
 }

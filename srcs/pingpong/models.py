@@ -26,6 +26,8 @@ class UserProfile(models.Model):
     displayName = models.CharField(max_length=50, blank=True)
     phoneNumberVerified = models.BooleanField(default=False)
     emailVerified = models.BooleanField(default=False)
+	isTwoStepEmailAuthEnabled = models.BooleanField(default=False)
+	verificationEmailCode = models.CharField(max_length=6, blank=True)
     friendList = models.ManyToManyField("self", related_name='friendList', blank=True)
 
 class FriendRequest(models.Model):
@@ -39,3 +41,5 @@ class FriendRequest(models.Model):
     fromUser = models.ForeignKey(User, on_delete=models.CASCADE, related_name='fromUser')
     toUser = models.ForeignKey(User, on_delete=models.CASCADE, related_name='toUser')
     accepted = models.BooleanField(default=False)
+	user = models.OneToOneField(User, on_delete=models.CASCADE)
+
