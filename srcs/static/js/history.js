@@ -10,6 +10,9 @@ document.addEventListener('DOMContentLoaded', function() {
 		'pong': function() {
 			loadGamePage();
 		},
+		'friends': function() {
+			loadFriendsPage();
+		},
 		'default': function() {
 			document.getElementById('content').textContent = 'Default page';
 		}
