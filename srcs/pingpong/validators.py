@@ -1,73 +1,97 @@
-from django.core.exceptions import ValidationError
+""" Validators for the pingpong app. """
 from collections import Counter
 import re
+from django.core.exceptions import ValidationError
+from django.contrib.auth.models import User
 from rest_framework_simplejwt.tokens import UntypedToken
 from rest_framework_simplejwt.state import token_backend
 from rest_framework_simplejwt.authentication import InvalidToken, TokenError
-from django.contrib.auth.models import User
 
 class UppercaseValidator:
+    """ Validator class that holds a single method validate """
+
     def validate(self, password, user=None):
+        """ Validate whether the password contains at least 1 uppercase letter."""
         if not re.search('[A-Z]', password):
             raise ValidationError('Password must contain at least 1 uppercase letter.')
 
 class LowercaseValidator:
+    """ Validator class that holds a single method validate """
+
     def validate(self, password, user=None):
+        """ Validate whether the password contains at least 1 lowercase letter."""
         if not re.search('[a-z]', password):
             raise ValidationError('Password must contain at least 1 lowercase letter.')
 
 class NumberValidator:
+    """ Validator class that holds a single method validate """
+
     def validate(self, password, user=None):
+        """ Validate whether the password contains at least 1 number."""
         if not re.search('\d', password):
             raise ValidationError('Password must contain at least 1 number.')
 
 class SpecialCharacterValidator:
+    """ Validator class that holds a single method validate """
+
     def validate(self, password, user=None):
+        """ Validate whether the password contains at least 1 special character."""
         if not re.search('[^A-Za-z0-9]', password):
             raise ValidationError('Password must contain at least 1 special character.')
 
 class RepeatableCharacterValidator:
+    """ Validator class that holds a single method validate """
+
     def validate(self, password, user=None):
-        counterChars = Counter(password)
-        if (len(counterChars) == 0):
+        """ Validate whether the password contains any character more than 3 times. """
+        counter_chars = Counter(password)
+        if (len(counter_chars) == 0):
             raise ValidationError('Password must contain at least 1 character.')
-        if counterChars.most_common(1)[0][1] > 3:
+        if counter_chars.most_common(1)[0][1] > 3:
             raise ValidationError('Password must not contain any character more than 3 times.')
 
-    def get_help_text(self):
-        return 'Password must not contain any character more than 3 times.'
-
 class PhoneNumberValidator:
+    """ Validator class that holds a single method validate """
+
     def validate(self, phoneNumber, user=None):
+        """ Validate whether the phone number is between 9 and 15 digits.
+            The phone number can start with a '+'.
+        """
         if not phoneNumber:
-            return ValidationError('Phone number is required.')
+            raise ValidationError('Phone number is required.')
         if not re.match(r'^\+?1?\d{9,15}$', phoneNumber):
             raise ValidationError('Phone number must be between 9 and 15 digits.')
 
-    def get_help_text(self):
-        return 'Phone number must be between 9 and 15 digits.'
-
 class EmailValidator:
+    """ Validator class that holds a single method validate """
+
     def validate(self, email, user=None):
+        """ Validate whether the email is a valid email address.
+            The email must contain an '@' and a '.'.
+            Example: '<name>@<domain>.<tld>'
+        """
         if not re.match(r'^\w+@\w+\.\w+$', email):
             raise ValidationError('Invalid email address.')
 
-    def get_help_text(self):
-        return 'Invalid email address.'
-
 class JWTTokenValidator:
+    """ Validator class that holds a single method validate """
+
     def validate(self, token):
+        """ Validate whether the token is a valid JWT token.
+            The token must start with 'Bearer'.
+            Example: 'Bearer <token>'.
+        """
         if not token:
             raise ValidationError('Token is required.')
         try:
-            tokenType, tokenKey = token.split(' ')
-            if (tokenType.lower() != 'bearer'):
+            token_type, token_key = token.split(' ')
+            if token_type.lower() != 'bearer':
                 raise ValidationError('Token is invalid.')
-            UntypedToken(tokenKey)
+            UntypedToken(token_key)
         except (InvalidToken, TokenError) as e:
             raise ValidationError(f'Token is invalid: {str(e)}')
 
-        token = token_backend.decode(tokenKey)
+        token = token_backend.decode(token_key)
         user_id = token['user_id']
         try:
             user = User.objects.get(id=user_id)
@@ -75,11 +99,13 @@ class JWTTokenValidator:
             raise ValidationError('User does not exist.')
         return user
 
-    def get_help_text(self):
-        return 'Token is invalid.'
-
 class UsernamePasswordValidator:
+    """ Validator class that holds a single method validate """
+
     def validate(self, username, password):
+        """ Validate whether the username and password are correct and the password matches
+            the username password in the database.
+        """
         if not username:
             raise ValidationError('Please provide a username.')
         if not password:
@@ -91,8 +117,3 @@ class UsernamePasswordValidator:
         if not user.check_password(password):
             raise ValidationError('Username or password is incorrect.')
         return user
-
-    def get_help_text(self):
-        return 'Username must be between 5 and 15 alphanumeric characters. Password must be between 8 and 15 alphanumeric characters.'
-
-  

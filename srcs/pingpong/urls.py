@@ -1,8 +1,9 @@
+""" This module contains the urls for the pingpong app. """
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from pingpong.views import SignupView, ProfileView, PasswordView, VerifyEmailView, VerifyTokenView,\
+    TwoStepVerificationCodeView, LoginView, TwoStepVerification, FriendsView, FriendsRequestsView
 from django.urls import path
 from . import views
-from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
-from pingpong.views import SignupView, ProfileView, PasswordView, VerifyEmailView, VerifyTokenView
-from pingpong.views import TwoStepVerificationCodeView, LoginView, TwoStepVerification, FriendsView, FriendsRequestsView
 
 urlpatterns = [
     path('', views.home, name='home'),

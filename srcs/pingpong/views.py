@@ -1,3 +1,6 @@
+""" This module contains the views for the pingpong app.
+    Views are used to handle http requests and return responses.
+"""
 import random
 from django.shortcuts import render
 from django.contrib.auth.password_validation import validate_password
@@ -7,32 +10,41 @@ from django.http import HttpResponse
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework_simplejwt.tokens import UntypedToken, RefreshToken
-from rest_framework_simplejwt.state import token_backend
+from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.authentication import InvalidToken, TokenError
 from .validators import *
-
 from .models import *
 
 
 # Create your views here.
 
 def home(request):
+    """ This method is used to render the home page."""
     return render(request, 'home.html', {})
 
 class VerifyTokenView(APIView):
+    """ This view is used to verify the JWT token.
+        It has following methods:
+        1. post: This method is used to verify the JWT token.
+    """
     def post(self, request, format=None):
-        authHeader = request.headers.get('Authorization')
-        if not authHeader:
+        """ This method is used to verify the JWT token. """
+        auth_header = request.headers.get('Authorization')
+        if not auth_header:
             return Response({'error': 'Please provide a token'}, status=status.HTTP_400_BAD_REQUEST)
         try:
-            user = JWTTokenValidator().validate(authHeader)
+            JWTTokenValidator().validate(auth_header)
         except ValidationError as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         return Response({'status': 'Token is valid'}, status=status.HTTP_200_OK)
 
 class LoginView(APIView):
+    """ This view is used to login a user.
+        It has following methods:
+        1. post: This method is used to login a user.
+    """
     def post(self, request, format=None):
+        """ This method is used to login a user. """
         username = request.data.get('username')
         password = request.data.get('password')
 
@@ -54,7 +66,12 @@ class LoginView(APIView):
         return Response({'status': 'Proccess 2-step verification'}, status=status.HTTP_202_ACCEPTED)
 
 class SignupView(APIView):
+    """ This view is used to sign up a user.
+        It has following methods:
+        1. post: This method is used to sign up a user.
+    """
     def post(self, request, format=None):
+        """ This method is used to sign up a user. """
         username = request.data.get('username')
         email = request.data.get('email')
         password = request.data.get('password')
@@ -81,13 +98,19 @@ class SignupView(APIView):
 
 
 class VerifyEmailView(APIView):
+    """ This view is used to verify the email of a user.
+        It has following methods:
+        1. get: This method is used to verify the email of a user.
+            TODO: shold be put bc it changes the state of the server
+    """
     def get(self, request, format=None):
+        """ This method is used to verify the email of a user. """
         token = request.query_params.get('token')
         if not token:
             return HttpResponse('Please provide a token', status=400)
         try:
             decoded_token = RefreshToken(token)
-        except (InvalidToken, TokenError) as e:
+        except (InvalidToken, TokenError):
             return HttpResponse('Invalid token', status=400)
 
         user_id = decoded_token['user_id']
@@ -104,10 +127,15 @@ class VerifyEmailView(APIView):
         return HttpResponse('Email verified successfully', status=200)
 
 class PasswordView(APIView):
+    """ This view is used to change the password of a user.
+        It has following methods:
+        1. put: This method is used to change the password of a user.
+    """
     def put(self, request, format=None):
-        authHeader = request.headers.get('Authorization')
+        """ This method is used to change the password of a user. """
+        auth_header = request.headers.get('Authorization')
         try:
-            user = JWTTokenValidator().validate(authHeader)
+            user = JWTTokenValidator().validate(auth_header)
         except ValidationError as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         old_password = request.data.get('old_password')
@@ -120,7 +148,6 @@ class PasswordView(APIView):
             return Response({'error': 'Old password is incorrect'}, status=status.HTTP_400_BAD_REQUEST)
         if new_password != new_password_confirm:
             return Response({'error': 'New passwords do not match'}, status=status.HTTP_400_BAD_REQUEST)
-
         try:
             validate_password(new_password)
         except ValidationError as e:
@@ -132,10 +159,16 @@ class PasswordView(APIView):
         return Response({'status': 'Password updated successfully'}, status=status.HTTP_200_OK)
 
 class ProfileView(APIView):
+    """ This view is used to get and update the profile of a user.
+        It has following methods:
+        1. get: This method is used to get the profile of a user.
+        2. put: This method is used to update the profile of a user.
+    """
     def get(self, request, format=None):
-        authHeader = request.headers.get('Authorization')
+        """ This method is used to get the profile of a user. """
+        auth_header = request.headers.get('Authorization')
         try:
-            user = JWTTokenValidator().validate(authHeader)
+            user = JWTTokenValidator().validate(auth_header)
         except ValidationError as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         data = {
@@ -149,33 +182,34 @@ class ProfileView(APIView):
         return Response(data, status=status.HTTP_200_OK)
 
     def put(self, request, format=None):
-        authHeader = request.headers.get('Authorization')
+        """ This method is used to update the profile of a user."""
+        auth_header = request.headers.get('Authorization')
         try:
-            user = JWTTokenValidator().validate(authHeader)
+            user = JWTTokenValidator().validate(auth_header)
         except ValidationError as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         user.userprofile.displayName = request.data.get('displayName')
-        phoneNumber = request.data.get('phoneNumber')
-        phoneValidator = PhoneNumberValidator()
-        if (phoneNumber != None and len(phoneNumber) != 0):
+        phone_number = request.data.get('phoneNumber')
+        phone_validator = PhoneNumberValidator()
+        if (phone_number != None and len(phone_number) != 0):
             try:
-                phoneValidator.validate(phoneNumber)
-                user.userprofile.phoneNumber = phoneNumber
+                phone_validator.validate(phone_number)
+                user.userprofile.phoneNumber = phone_number
             except ValidationError:
                 return Response({'error': 'Invalid phone number'}, status=status.HTTP_400_BAD_REQUEST)
 
         email = request.data.get('email')
-        emailValidator = EmailValidator()
+        email_validator = EmailValidator()
         if (email != None and len(email)):
             try:
-                emailValidator.validate(email)
+                email_validator.validate(email)
             except ValidationError:
                 return Response({'error': 'Invalid email address'}, status=status.HTTP_400_BAD_REQUEST)
         try:
-            curUser = UserProfile.objects.get(email=email)
-        except:
-            curUser = None
-        if curUser != None and curUser.username != user.username:
+            cur_user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            cur_user = None
+        if cur_user != None and cur_user.username != user.username:
             return Response({'error': 'Email is already taken'}, status=status.HTTP_400_BAD_REQUEST)
         if (email != None and len(email) != 0 and email != user.email):
             user.userprofile.emailVerified = False
@@ -200,13 +234,7 @@ class FriendsRequestsView(APIView):
         3. put: This method is used to accept or reject a friend request.
     """
     def get(self, request):
-        """ This method is used to get all the friend requests sent to the user.
-            It first validates the JWT token.
-            It then gets all the friend requests sent to the user.
-            It then creates a list of dictionaries with the email and username
-                of the users who sent the friend requests.
-            It then returns the list of dictionaries as a response.
-        """
+        """ This method is used to get all the friend requests sent to the user. """
         auth_header = request.headers.get('Authorization')
         try:
             user = JWTTokenValidator().validate(auth_header)
@@ -222,20 +250,7 @@ class FriendsRequestsView(APIView):
         return Response(data, status=status.HTTP_200_OK)
 
     def post(self, request):
-        """ This method is used to send a friend request to a user.
-            It first validates the JWT token.
-            It then gets the friend username from the request data.
-            It then checks if the friend username is provided.
-            It then gets the friend user and friend user profile.
-            It then checks if the friend user is the same as the user.
-            It then checks if the friend is already in the user's friend list.
-            It then checks if the user has already sent a friend request
-                to the friend user.
-            It then checks if the friend user has already sent a friend request
-                to the user.
-            It then creates a friend request and saves it.
-            It then returns a response with the status 'Friend request sent successfully'.
-        """
+        """ This method is used to send a friend request to a user. """
         auth_header = request.headers.get('Authorization')
         try:
             user = JWTTokenValidator().validate(auth_header)
@@ -264,22 +279,7 @@ class FriendsRequestsView(APIView):
         return Response({'status': 'Friend request sent successfully'}, status=status.HTTP_200_OK)
 
     def put(self, request):
-        """ This method is used to accept or reject a friend request.
-            It first validates the JWT token.
-            It then gets the friend username and action from the request data.
-            It then checks if the friend username is provided.
-            It then gets the friend user and friend user profile.
-            It then checks if the friend user is the same as the user.
-            It then checks if the user has received a friend request from the friend user.
-            It then deletes the friend request.
-
-            If the action is 'accept':
-                It adds the friend user to the user's friend list.
-                It then returns a response with the status 'Friend request accepted successfully'.
-
-            If the action is 'reject':
-                It then returns a response with the status 'Friend request rejected successfully'.
-        """
+        """ This method is used to accept or reject a friend request. """
         auth_header = request.headers.get('Authorization')
         try:
             user = JWTTokenValidator().validate(auth_header)
@@ -313,13 +313,7 @@ class FriendsView(APIView):
             from the user's friend list.
     """
     def get(self, request):
-        """ This method is used to get all the friends of the user.
-            It first validates the JWT token.
-            It then gets all the friends of the user.
-            It then creates a list of dictionaries with the email and username
-                of the friends.
-            It then returns the list of dictionaries as a response.
-        """
+        """ This method is used to get all the friends of the user. """
         auth_header = request.headers.get('Authorization')
         try:
             user = JWTTokenValidator().validate(auth_header)
@@ -335,16 +329,7 @@ class FriendsView(APIView):
         return Response(data, status=status.HTTP_200_OK)
 
     def delete(self, request):
-        """ This method is used to remove a friend from the user's friend list.
-            It first validates the JWT token.
-            It then gets the friend username from the request data.
-            It then checks if the friend username is provided.
-            It then gets the friend user and friend user profile.
-            It then checks if the friend user is the same as the user.
-            It then checks if the friend is in the user's friend list.
-            It then removes the friend from the user's friend list.
-            It then returns a response with the status 'Friend removed successfully'.
-        """
+        """ This method is used to remove a friend from the user's friend list. """
         auth_header = request.headers.get('Authorization')
         try:
             user = JWTTokenValidator().validate(auth_header)
@@ -367,29 +352,36 @@ class FriendsView(APIView):
         user.userprofile.friendList.remove(friend)
         user.userprofile.save()
         return Response({'status': 'Friend removed successfully'}, status=status.HTTP_200_OK)
+
 class TwoStepVerificationCodeView(APIView):
+    """ This view is used to send and verify the 2-step verification code.
+        It has following methods:
+        1. put: This method is used to send the 2-step verification code.
+        2. post: This method is used to verify the 2-step verification code.
+    """
     def put(self, request, format=None):
-        authHeader = request.headers.get('Authorization')
-        if not authHeader:
+        """ This method is used to send the 2-step verification code."""
+        auth_header = request.headers.get('Authorization')
+        if not auth_header:
             username = request.data.get('username')
             password = request.data.get('password')
             try:
-                userPasswordValidator = UsernamePasswordValidator()
-                user = userPasswordValidator.validate(username, password)
+                user_password_validator = UsernamePasswordValidator()
+                user = user_password_validator.validate(username, password)
             except ValidationError as e:
                 return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         else:
             try:
-                user = JWTTokenValidator().validate(authHeader)
+                user = JWTTokenValidator().validate(auth_header)
             except ValidationError as e:
                 return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-        verificationEmailCode = str(random.randint(100000, 999999))
-        user.userprofile.verificationEmailCode = verificationEmailCode
+        verification_email_code = str(random.randint(100000, 999999))
+        user.userprofile.verificationEmailCode = verification_email_code
         user.userprofile.save()
         send_mail(
             '2-Step Verification Code',
-            'Your 2-step verification code is: ' + verificationEmailCode,
+            'Your 2-step verification code is: ' + verification_email_code,
             'admin@localhost',
             [user.email],
             fail_silently=False,
@@ -398,36 +390,41 @@ class TwoStepVerificationCodeView(APIView):
         return Response({'status': 'Verification code sent successfully'}, status=status.HTTP_200_OK)
 
     def post(self, request, format=None):
-        authHeader = request.headers.get('Authorization')
-        if not authHeader:
+        """ This method is used to verify the 2-step verification code."""
+        auth_header = request.headers.get('Authorization')
+        if not auth_header:
             username = request.data.get('username')
             password = request.data.get('password')
-            print(username)
-            print(password)
             try:
-                userPasswordValidator = UsernamePasswordValidator()
-                user = userPasswordValidator.validate(username, password)
+                user_password_validator = UsernamePasswordValidator()
+                user = user_password_validator.validate(username, password)
             except ValidationError as e:
                 return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         else:
             try:
-                user = JWTTokenValidator().validate(authHeader)
+                user = JWTTokenValidator().validate(auth_header)
             except ValidationError as e:
                 return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-        verificationEmailCode = request.data.get('code')
-        if not verificationEmailCode:
+        verification_email_code = request.data.get('code')
+        if not verification_email_code:
             return Response({'error': 'Please provide a verification code'}, status=status.HTTP_400_BAD_REQUEST)
-        if user.userprofile.verificationEmailCode != verificationEmailCode:
+        if user.userprofile.verificationEmailCode != verification_email_code:
             return Response({'error': 'Incorrect verification code'}, status=status.HTTP_400_BAD_REQUEST)
         user.userprofile.verificationEmailCode = ""
         user.userprofile.save()
         return Response({'status': 'Verification successful'}, status=status.HTTP_200_OK)
 
 class TwoStepVerification(APIView):
+    """ This view is used to enable and disable 2-step email verification.
+        It has following methods:
+        1. get: This method is used to check if 2-step email verification is enabled.
+        2. put: This method is used to enable or disable 2-step email verification.
+    """
     def get(self, request, format=None):
-        authHeader = request.headers.get('Authorization')
+        """ This method is used to check if 2-step email verification is enabled. """
+        auth_header = request.headers.get('Authorization')
         try:
-            user = JWTTokenValidator().validate(authHeader)
+            user = JWTTokenValidator().validate(auth_header)
         except ValidationError as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         if not user.userprofile.emailVerified:
@@ -437,18 +434,17 @@ class TwoStepVerification(APIView):
         return Response({'status': '2-step email verification enabled'}, status=status.HTTP_200_OK)
 
     def put(self, request, format=None):
-        authHeader = request.headers.get('Authorization')
+        """ This method is used to enable or disable 2-step email verification."""
+        auth_header = request.headers.get('Authorization')
         try:
-            user = JWTTokenValidator().validate(authHeader)
+            user = JWTTokenValidator().validate(auth_header)
         except ValidationError as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         action = request.data.get('action')
         if action == None:
             return Response({'error': 'Please provide an action'}, status=status.HTTP_400_BAD_REQUEST)
-
         if user.userprofile.emailVerified == False:
             return Response({'error': 'Email is not verified'}, status=status.HTTP_400_BAD_REQUEST)
-
         if request.data.get('code') == None:
             return Response({'error': 'Please provide a code'}, status=status.HTTP_400_BAD_REQUEST)
         if user.userprofile.verificationEmailCode != request.data.get('code'):
@@ -460,11 +456,10 @@ class TwoStepVerification(APIView):
             user.userprofile.isTwoStepEmailAuthEnabled = True
             user.userprofile.save()
             return Response({'status': '2-step email verification enabled'}, status=status.HTTP_200_OK)
-        elif action == 'disable':
+        if action == 'disable':
             if not user.userprofile.isTwoStepEmailAuthEnabled:
                 return Response({'error': '2-step email verification is already disabled'}, status=status.HTTP_400_BAD_REQUEST)
             user.userprofile.isTwoStepEmailAuthEnabled = False
             user.userprofile.save()
             return Response({'status': '2-step email verification disabled'}, status=status.HTTP_200_OK)
-        else:
-            return Response({'error': 'Invalid action'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'error': 'Invalid action'}, status=status.HTTP_400_BAD_REQUEST)

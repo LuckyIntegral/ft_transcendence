@@ -1,5 +1,5 @@
 function loadFriendsPage() {
-	var friendsPage = document.createElement('section');
+    var friendsPage = document.createElement('section');
     friendsPage.setAttribute('id', 'friends-page');
     friendsPage.setAttribute('class', 'container col-10');
     friendsPage.innerHTML = `
