@@ -20,10 +20,10 @@ clean:
 	@docker container prune -f
 
 cleandb:
-	@rm -rf $(DB_FOLDER)
+	@docker volume rm $(shell docker volume ls -q)
 
 fclean: clean
 	@docker rmi -f $(shell docker images -q)
-	@rm -rf $(DB_FOLDER)
+	@docker volume rm $(shell docker volume ls -q)
 	@rm -rf $(STATIC_FOLDER)
 	@rm -rf $(CACHE_FOLDER)

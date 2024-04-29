@@ -14,6 +14,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.authentication import InvalidToken, TokenError
 from .validators import *
 from .models import *
+from .utils import sendVerificationEmail, sendTwoStepVerificationEmail
 
 
 # Create your views here.
@@ -214,13 +215,7 @@ class ProfileView(APIView):
         if (email != None and len(email) != 0 and email != user.email):
             user.userprofile.emailVerified = False
             token = str(RefreshToken.for_user(user))
-            send_mail(
-                'Email Verification',
-                'Verify your email address by clicking the link below: http://localhost:8000/verify-email?token=' + token,
-                'admin@localhost',
-                [email],
-                fail_silently=False,
-            )
+            sendVerificationEmail(email, token)
         user.email = email
         user.save()
         user.userprofile.save()
@@ -379,13 +374,7 @@ class TwoStepVerificationCodeView(APIView):
         verification_email_code = str(random.randint(100000, 999999))
         user.userprofile.verificationEmailCode = verification_email_code
         user.userprofile.save()
-        send_mail(
-            '2-Step Verification Code',
-            'Your 2-step verification code is: ' + verification_email_code,
-            'admin@localhost',
-            [user.email],
-            fail_silently=False,
-        )
+        sendTwoStepVerificationEmail(user.email, verification_email_code)
         print('Verification code sent successfully')
         return Response({'status': 'Verification code sent successfully'}, status=status.HTTP_200_OK)
 
@@ -463,3 +452,16 @@ class TwoStepVerification(APIView):
             user.userprofile.save()
             return Response({'status': '2-step email verification disabled'}, status=status.HTTP_200_OK)
         return Response({'error': 'Invalid action'}, status=status.HTTP_400_BAD_REQUEST)
+
+class VerificationEmailView(APIView):
+    def get(self, request, format=None):
+        auth_header = request.headers.get('Authorization')
+        try:
+            user = JWTTokenValidator().validate(auth_header)
+        except ValidationError as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        if user.userprofile.emailVerified:
+            return Response({'error': 'Email is verified already'}, status=status.HTTP_400_BAD_REQUEST)
+        token = str(RefreshToken.for_user(user))
+        sendVerificationEmail(user.email, token)
+        return Response({'status': 'Verification email sent successfully'}, status=status.HTTP_200_OK)

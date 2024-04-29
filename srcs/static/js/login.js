@@ -83,7 +83,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         console.log('Two step verification required');
                         document.body.removeChild(loginPopup);
                         document.body.appendChild(twoStepVerificationPopup);
-                        sendVerificationEmail(username, password);
+                        sendVerificationCodeEmail(username, password);
                         var twoStepVerificationForm = document.getElementById('two-step-verification-form');
                         closeButton = twoStepVerificationPopup.querySelector('#close-button');
                         closeButton.addEventListener('click', function() {

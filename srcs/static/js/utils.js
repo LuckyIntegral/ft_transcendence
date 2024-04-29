@@ -22,6 +22,12 @@ function createVerificationSpan(is_verified) {
         span.setAttribute('class', 'material-symbols-outlined');
         span.style.color = 'red';
         span.textContent = 'unpublished';
+        span.title = 'Click to send verification email';
+        span.style.cursor = 'pointer';
+        span.addEventListener('click', function() {
+            sendVerificationEmail();
+            alert('Verification email sent');
+        });
     }
     return span;
 }
@@ -66,7 +72,7 @@ function validateToken() {
     return false;
 }
 
-function sendVerificationEmail(username = null, password = null) {
+function sendVerificationCodeEmail(username = null, password = null) {
     console.log(username);
     console.log(password);
     if (username !== null) {
@@ -110,7 +116,7 @@ function sendVerificationEmail(username = null, password = null) {
 
 }
 
-function obtainToken(username, password) {
+async function obtainToken(username, password) {
     fetch('/api/token/', {
         method: 'POST',
         headers: {
@@ -166,6 +172,22 @@ function processTwoStepVerification(username, password) {
             var twoStepVerificationForm = document.getElementById('two-step-verification-form');
             twoStepVerificationForm.removeChild(twoStepVerificationForm.lastChild);
             twoStepVerificationForm.appendChild(errorMessage);
+            throw new Error('Error: ' + response.statusText);
+        }
+    }).catch(function(error) {
+        console.log('Error:', error);
+    });
+}
+
+function sendVerificationEmail() {
+    fetchWithToken('/api/send-verification-email/', {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + localStorage.getItem('access'),
+        },
+    }).then(function(response) {
+        if (!response.ok) {
             throw new Error('Error: ' + response.statusText);
         }
     }).catch(function(error) {

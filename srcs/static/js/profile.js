@@ -106,7 +106,7 @@ function saveProfile() {
         })
     }).then(function(response) {
         if (response.ok) {
-            if (email.textContent !== newEmail.value) {
+            if (localStorage.getItem('email') !== newEmail.value) {
                 var emailVerificationP = document.getElementById('emailVerified');
                 var emailVerificationSpan = createVerificationSpan(false);
                 emailVerificationP.innerHTML = '';
@@ -438,7 +438,7 @@ function editTwoStepVerification() {
             return;
         }
         document.body.appendChild(popup);
-        sendVerificationEmail();
+        sendVerificationCodeEmail();
         var closeButton = popup.querySelector('#close-button');
         closeButton.addEventListener('click', function() {
             document.body.removeChild(popup);

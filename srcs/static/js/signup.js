@@ -73,7 +73,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     } else {
                         alert('Successfully signed up!');
                         document.body.removeChild(popup);
+                        return obtainToken(username, password)
                     }
+                }).then(() => {
+                    sendVerificationEmail();
                 });
             });
         }
