@@ -594,6 +594,10 @@ class UploadPictureView(APIView):
             image = Image.open(picture)
         except Exception:
             return Response({'error': 'Invalid image'}, status=status.HTTP_400_BAD_REQUEST)
+        if (user.userprofile.picture != None and user.userprofile.picture.url != "/media/images/default.jpg"):
+            user.userprofile.picture.delete()
+            user.userprofile.pictureSmall.delete()
+
         commpressedPicture = getCompressedPicture(image)
         smallImageField = user.userprofile.pictureSmall
         smallImageName = user.username + '_small.jpg'
