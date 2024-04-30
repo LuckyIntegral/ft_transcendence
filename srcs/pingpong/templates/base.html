@@ -29,25 +29,47 @@
   <script src="{% static 'js/friends.js' %}"></script>
 </head>
 <body>
-    <nav class="py-3 navbar bg-dark border-bottom text-white mb-3" style="background-color: #e3f2fdc9">
-      <div class="container collapse navbar-collapse">
-        <div>
-          <a class="navbar-brand text-white" href="#profile" id="profileRef">Profile</a>
-          <a class="navbar-brand text-white" href="#friends" id="friendsRef">Friends</a>
-          <a class="navbar-brand text-white" href="#messages" id="messagesRef">Messages</a>
-          <a class="navbar-brand text-white" href="#pong" id="pongRef">Ping Pong</a>
-        </div>
-        <div>
-          <button class="btn btn-outline-light m-1" href="#signup" id="signUpRef">Sign up</buttom>
-          <button class="btn btn-outline-light m-1" href="#login" id="loginRef">Login</buttom>
-          <button class="btn btn-outline-light" href="#logOut" id="logOutRef">Log out</buttom>
-        </div>
-      </div>
-    </nav>
+  <header class="p-3 bg-dark mb-3 border-bottom">
+    <div class="container">
+      <div class="d-flex flex-wrap align-items-center justify-content-center">
 
-    <div class="container justify-content-center text-center">
-      <div id="content"></div>
+        <ul class="nav col-lg-auto me-lg-auto mb-2 mb-md-0">
+          <li><a class="nav-link px-2 text-white" href="#profile" id="profileRef">Profile</a></li>
+          <li>
+            <div class="dropdown text-end" id="friendsRef">
+              <a class="nav-link px-2 text-white" id="dropdownUser1" data-bs-toggle="dropdown" aria-expanded="false">Community
+              </a>
+              <ul class="dropdown-menu text-small" aria-labelledby="dropdownUser1">
+                <li><a class="dropdown-item" href="#friends">Friends list</a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item" href="#">Friend requests</a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item" href="#">Global leaderboard</a></li>
+              </ul>
+            </div>
+          </li>
+          <li><a class="nav-link px-2 text-white" href="#messages" id="messagesRef">Messages</a></li>
+          <li><a class="nav-link px-2 text-white" href="#pong" id="pongRef">Ping Pong</a></li>
+        </ul>
+
+        <form class="col-12 col-lg-auto mb-3 mb-lg-0 me-lg-3">
+            <div class="d-flex dropdown">
+            <input type="search" class="form-control" placeholder="Search..." aria-label="Search" id="searchForLater"></input>
+            <!-- TODO: think about implementation of the search -->
+          </div>
+        </form>
+
+        <button class="btn btn-outline-light m-2" id="searchRef">Search</buttom>
+        <button class="btn btn-outline-light m-2" href="#signup" id="signUpRef">Sign up</buttom>
+        <button class="btn btn-outline-light m-2" href="#login" id="loginRef">Login</buttom>
+        <button class="btn btn-outline-light" href="#logOut" id="logOutRef">Log out</buttom>
+      </div>
     </div>
+  </header>
+
+  <div class="container justify-content-center text-center">
+    <div id="content"></div>
+  </div>
 
   <main class="container">
     <div class="row">

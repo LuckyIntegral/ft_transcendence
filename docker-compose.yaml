@@ -4,7 +4,7 @@ services:
   db:
     image: postgres
     volumes:
-      - ./data/db:/var/lib/postgresql/data
+      - db:/var/lib/postgresql/data
     environment:
       - POSTGRES_DB=${DB_NAME}
       - POSTGRES_USER=${DB_USER}
@@ -22,7 +22,7 @@ services:
         DB_PORT: ${DB_PORT}
     working_dir: /code/srcs
     command: sh ./scripts/entrypoint.sh
-    #command: tail -f /dev/null 
+    #command: tail -f /dev/null
     volumes:
       - .:/code
     ports:
@@ -31,3 +31,6 @@ services:
       - db
     env_file:
       - .env
+
+volumes:
+  db:

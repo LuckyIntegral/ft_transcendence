@@ -463,3 +463,29 @@ class TwoStepVerification(APIView):
             user.userprofile.save()
             return Response({'status': '2-step email verification disabled'}, status=status.HTTP_200_OK)
         return Response({'error': 'Invalid action'}, status=status.HTTP_400_BAD_REQUEST)
+
+class FriendsSearchView(APIView):
+    """ This view is used to search for friends.
+        It has following methods:
+        1. get: This method is used to search for friends using a query as a regex.
+    """
+    def get(self, request, format=None):
+        """ This method is used to search for friends. """
+        auth_header = request.headers.get('Authorization')
+        try:
+            JWTTokenValidator().validate(auth_header)
+        except ValidationError as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        search_query = request.query_params.get('search_query')
+        data = []
+        if search_query:
+            try :
+                friend_list = UserProfile.objects.filter(user__username__icontains=search_query)
+            except UserProfile.DoesNotExist:
+                return Response(data, status=status.HTTP_200_OK)
+            for friend in friend_list:
+                data.append({
+                    'email': friend.user.email,
+                    'username': friend.user.username,
+                })
+        return Response(data, status=status.HTTP_200_OK)
