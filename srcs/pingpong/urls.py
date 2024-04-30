@@ -2,7 +2,7 @@
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from pingpong.views import SignupView, ProfileView, PasswordView, VerifyEmailView, VerifyTokenView,\
     TwoStepVerificationCodeView, LoginView, TwoStepVerification, FriendsView, FriendsRequestsView,\
-    VerificationEmailView, UploadPictureView, ForgetPasswordView
+    VerificationEmailView, UploadPictureView, ForgetPasswordView, FriendsSearchView
 from django.urls import path
 from django.conf import settings
 from django.conf.urls.static import static
@@ -26,4 +26,5 @@ urlpatterns = [
     path('api/send-verification-email/', VerificationEmailView.as_view(), name='verification_email'),
     path('reset-password/', views.ForgetPasswordView.as_view(), name='reset_password'),
     path('api/upload-picture/', views.UploadPictureView.as_view(), name='upload_picture'),
+    path('api/friends-search/', FriendsSearchView.as_view(), name='friends_search'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

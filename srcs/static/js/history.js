@@ -40,3 +40,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Handle the initial hash
     handleHashChange();
 });
+
+//document.addEventListener('DOMContentLoaded', function() {
+//    document.getElementById('friendRequestInput').addEventListener('input', searchForLater);
+//});

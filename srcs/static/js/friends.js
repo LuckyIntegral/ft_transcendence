@@ -6,8 +6,8 @@ function loadFriendsPage() {
     <div class="row">
         <div class="input-group p-3 rounded border border-secondary">
             <legend class=" p-2">Add friends</legend>
-            <button type="button" class="btn btn-outline-secondary rounded-start" id="sendFriendRequest">Send request</button>
-            <input type="text" class="form-control rounded-end">
+            <input type="text" class="form-control rounded-end" id="friendRequestInput" placeholder="Search..." data-bs-toggle="dropdown" aria-expanded="true">
+            <ul class="dropdown-menu" aria-labelledby="friendRequestInput" id="friendRequestResultsDropdown"></ul>
         </div>
     </div>
     <div class="row">
@@ -23,7 +23,7 @@ function loadFriendsPage() {
     `;
     document.getElementById('content').innerHTML = '';
     document.getElementById('content').appendChild(friendsPage);
-    document.getElementById('sendFriendRequest').addEventListener('click', sendFriendRequest);
+    document.getElementById('friendRequestInput').addEventListener('input', searchFriendQuery);
     loadFriendsList();
     loadFriendsRequestsList();
 }
@@ -128,37 +128,17 @@ function actionFriendRequest(action = 'accept') {
     }).catch(error => console.error('Error:', error));
 }
 
-function sendFriendRequest() {
-    var searchInput = document.querySelector('input');
-    fetchWithToken('http://localhost:8000/api/friends-requests/', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': 'Bearer ' + localStorage.getItem('access'),
-            },
-            body: JSON.stringify({
-                'friend_username': searchInput.value,
-            }),
-    }).then(response => {
-        if (response.status !== 200) {
-            response.json().then(data => alert(data.error));
-        } else {
-            window.location.reload();
-        }
-    }).catch(error => console.error('Error:', error));
-}
-
 function loadFriendsList() {
     var friendsList = document.getElementById('friends-list');
     fetchWithToken('http://localhost:8000/api/friends/', {
-            method: 'GET',
+        method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': 'Bearer ' + localStorage.getItem('access'),
             },
     })
-        .then(response => response.json())
-        .then(data => {
+    .then(response => response.json())
+    .then(data => {
             if (data.length === 0) {
                 var noFriends = document.createElement('table');
                 noFriends.setAttribute('class', 'table table-striped table-hover table-bordered');
@@ -177,12 +157,12 @@ function loadFriendsList() {
                 var friendTableHeader = document.createElement('thead');
                 friendTableHeader.innerHTML = `
                 <thead>
-                    <tr>
-                        <th scope="col">#</th>
-                        <th scope="col">Email</th>
-                        <th scope="col">Username</th>
-                        <th scope="col">Actions</th>
-                    </tr>
+                <tr>
+                <th scope="col">#</th>
+                <th scope="col">Email</th>
+                <th scope="col">Username</th>
+                <th scope="col">Actions</th>
+                </tr>
                 </thead>
                 `;
 
@@ -208,18 +188,77 @@ function loadFriendsList() {
             }
         })
         .catch(error => console.error('Error:', error));
-}
+    }
 
 function deleteFriend() {
     var friendUsername = this.getAttribute('data-friend-id');
     fetchWithToken('http://localhost:8000/api/friends/', {
-            method: 'DELETE',
+        method: 'DELETE',
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': 'Bearer ' + localStorage.getItem('access'),
             },
             body: JSON.stringify({
                 'friend_username': friendUsername,
+            }),
+        }).then(response => {
+            if (response.status !== 200) {
+                response.json().then(data => alert(data.error));
+            } else {
+            window.location.reload();
+        }
+    }).catch(error => console.error('Error:', error));
+}
+
+function searchFriendQuery() {
+    var searchInput = document.getElementById('friendRequestInput');
+    if (searchInput.value !== '') {
+        var url = new URL('http://localhost:8000/api/friends-search/');
+        url.searchParams.append('search_query', searchInput.value);
+        fetchWithToken(url, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + localStorage.getItem('access'),
+            },
+        })
+        .then(response => {
+            if (response.status !== 200) {
+                response.json().then(data => alert(data.error));
+            } else {
+                response.json().then(data => {
+                    var dropdownMenu = document.getElementById('friendRequestResultsDropdown');
+                    dropdownMenu.innerHTML = '';
+                    for (var i = 0; i < data.length; i++) {
+                        var searchResults = document.createElement('li');
+                        searchResults.innerHTML = `
+                        <a class="dropdown-item" id="dropdown-item" data-friend-id="${data[i].username}">${data[i].username}</a>
+                        `;
+                        dropdownMenu.appendChild(searchResults);
+                    }
+                    dropdownMenu.querySelectorAll('#dropdown-item').forEach(item => {
+                        item.addEventListener('click', sendFriendRequest);
+                    });
+                });
+            }
+        })
+        .catch(error => console.error('Error:', error));
+    } else {
+        var dropdownMenu = document.getElementById('friendRequestResultsDropdown');
+        dropdownMenu.innerHTML = '';
+    }
+}
+
+function sendFriendRequest() {
+    var username = this.getAttribute('data-friend-id');
+    fetchWithToken('http://localhost:8000/api/friends-requests/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + localStorage.getItem('access'),
+            },
+            body: JSON.stringify({
+                'friend_username': username,
             }),
     }).then(response => {
         if (response.status !== 200) {

@@ -73,6 +73,8 @@ function validateToken() {
         document.getElementById("friendsRef").style.display = "none";
         document.getElementById("messagesRef").style.display = "none";
         document.getElementById("logOutRef").style.display = "none";
+        document.getElementById("searchRef").style.display = "none";
+        document.getElementById("searchForLater").style.display = "none";
     } else {
         if (token) {
             fetchWithToken('/api/verify-token/', {
@@ -91,6 +93,8 @@ function validateToken() {
                     document.getElementById("friendsRef").style.display = "none";
                     document.getElementById("messagesRef").style.display = "none";
                     document.getElementById("logOutRef").style.display = "none";
+                    document.getElementById("searchRef").style.display = "none";
+                    document.getElementById("searchForLater").style.display = "none";
                     localStorage.removeItem('access');
                 }
             });
@@ -100,6 +104,8 @@ function validateToken() {
             document.getElementById("friendsRef").style.display = "none";
             document.getElementById("messagesRef").style.display = "none";
             document.getElementById("logOutRef").style.display = "none";
+            document.getElementById("searchRef").style.display = "none";
+            document.getElementById("searchForLater").style.display = "none";
         }
     }
     return false;
