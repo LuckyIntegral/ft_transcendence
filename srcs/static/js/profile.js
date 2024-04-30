@@ -200,6 +200,8 @@ function getAndSetProfileData() {
         var displayName = document.getElementById('displayName');
         var email = document.getElementById('email');
         var phoneNumber = document.getElementById('phoneNumber');
+        var username = document.getElementById('username');
+        var picture = document.getElementById('profileImg');
 
         var emailVerificationP = document.getElementById('emailVerified');
         var emailVerificationSpan = createVerificationSpan(data.emailVerified);
@@ -207,6 +209,9 @@ function getAndSetProfileData() {
         displayName.textContent = data.displayName;
         email.textContent = data.email;
         phoneNumber.textContent = data.phoneNumber;
+        username.textContent = data.username;
+        picture.src = data.picture;
+
         setTwoStepVerificationButton(data.twoStepVerificationEnabled);
         emailVerificationP.appendChild(emailVerificationSpan);
     }).catch(function(error) {

@@ -3,12 +3,14 @@
     <div class="col-lg-4 p-1">
       <div class="card" style="height: 300px;">
         <div class="card-body text-center">
-          <img src="https://mdbcdn.b-cdn.net/img/Photos/new-templates/bootstrap-chat/ava3.webp" alt="avatar"
-          class="rounded-circle img-fluid" style="width: 150px;" id="profileImg">
-          <h5 class="my-3" id="profileName">John Smith</h5>
+          <img id="profileImg" src="" alt="avatar"
+          class="rounded-circle img-fluid" style="width: 150px; height: 150px;">
+          <h5 class="my-3" id="username"></h5>
           <div class="d-flex justify-content-center mb-2">
             <button type="button" data-mdb-button-init data-mdb-ripple-init class="btn btn-outline-primary ms-1" id="buttonEditProfile">Edit Profile</button>
             <button type="button" data-mdb-button-init data-mdb-ripple-init class="btn btn-outline-danger ms-1" id="buttonChangePassword">Change password</button>
+            <button type="button" data-mdb-button-init data-mdb-ripple-init class="btn btn-outline-success ms-1" id="buttonUploadPhoto" onclick="document.getElementById('photoUpload').click()">Update Picture</button>
+            <input type="file" id="photoUpload" style="display: none;" onchange="handlePhotoUpload()">
           </div>
         </div>
       </div>

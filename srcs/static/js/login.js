@@ -1,5 +1,52 @@
 document.addEventListener('DOMContentLoaded', function() {
     // Login handling
+
+    function forgotPasswordClick(loginPopup) {
+        var forgotPasswordPopup = createForgotPasswordPopup();
+        document.body.removeChild(loginPopup);
+        document.body.appendChild(forgotPasswordPopup);
+        var closeButton = forgotPasswordPopup.querySelector('#close-button');
+        closeButton.addEventListener('click', function() {
+            document.body.removeChild(forgotPasswordPopup);
+        });
+        var forgotPasswordForm = document.getElementById('forgot-password-form');
+        if (forgotPasswordForm) {
+            forgotPasswordForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                var email = document.getElementById('id_email').value;
+                fetch('/reset-password/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        email: email
+                    })
+                }).then(function(response) {
+                    if (response.ok) {
+                        var successMessage = document.createElement('p');
+                        successMessage.textContent = 'An email has been sent to you with instructions on how to reset your password.';
+                        successMessage.style.color = 'green';
+                        forgotPasswordForm.removeChild(forgotPasswordForm.lastChild);
+                        forgotPasswordForm.appendChild(successMessage);
+                    } else {
+                        var errorMessage = document.createElement('p');
+                        errorMessage.textContent = 'Invalid email. Please try again.';
+                        errorMessage.style.color = 'red';
+                        forgotPasswordForm.removeChild(forgotPasswordForm.lastChild);
+                        forgotPasswordForm.appendChild(errorMessage);
+                        throw new Error('Error: ' + response.statusText);
+                    }
+                }).catch(function(error) {
+                    console.log('Error:', error);
+                });
+            });
+        }
+    }
+
+
+
+
     var loginLink = document.getElementById('loginRef');
 
     if (!loginLink) {
@@ -27,6 +74,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         </div>
                         <p class="fw-lighter" style="font-size:12px;" ></p>
                         <button type="submit" class="btn btn-primary">Log In</button>
+                        <a id="forgot-password" style="color: blue; text-decoration: underline; cursor: pointer;" class="d-block text-right mt-2">Forgot your password?</a>
                     </form>
                 </div>
             </div>
@@ -59,6 +107,10 @@ document.addEventListener('DOMContentLoaded', function() {
             document.body.removeChild(loginPopup);
         });
 
+        var forgotPasswordLink = loginPopup.querySelector('#forgot-password');
+        forgotPasswordLink.addEventListener('click', function() {
+            forgotPasswordClick(loginPopup);
+        });
         var loginForm = document.getElementById('login-form');
         if (loginForm) {
             loginForm.addEventListener('submit', function(e) {

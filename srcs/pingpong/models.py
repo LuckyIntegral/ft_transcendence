@@ -28,7 +28,10 @@ class UserProfile(models.Model):
     emailVerified = models.BooleanField(default=False)
     isTwoStepEmailAuthEnabled = models.BooleanField(default=False)
     verificationEmailCode = models.CharField(max_length=6, blank=True)
+    passwordResetToken = models.CharField(max_length=100, blank=True)
     friendList = models.ManyToManyField("self", related_name='friendList', blank=True)
+    picture = models.ImageField(upload_to='pictures/', default='images/default.jpg')
+    pictureSmall = models.ImageField(upload_to='pictures/', default='images/defaultSmall.jpg')
 
 class FriendRequest(models.Model):
     """ This model represents the friend request.

@@ -4,6 +4,8 @@
 import random
 from django.shortcuts import render
 from django.contrib.auth.password_validation import validate_password
+from django.contrib.auth.tokens import PasswordResetTokenGenerator
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.mail import send_mail
 from django.http import HttpResponse
@@ -14,7 +16,10 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.authentication import InvalidToken, TokenError
 from .validators import *
 from .models import *
-from .utils import sendVerificationEmail, sendTwoStepVerificationEmail
+from .utils import sendVerificationEmail, sendTwoStepVerificationEmail, getUserFromToken, sendPasswordResetEmail,\
+            getCompressedPicture
+from PIL import Image
+from django.core.files.uploadedfile import InMemoryUploadedFile
 
 
 # Create your views here.
@@ -136,7 +141,11 @@ class PasswordView(APIView):
         """ This method is used to change the password of a user. """
         auth_header = request.headers.get('Authorization')
         try:
-            user = JWTTokenValidator().validate(auth_header)
+            token = JWTTokenValidator().validate(auth_header)
+        except ValidationError as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            user = getUserFromToken(token)
         except ValidationError as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         old_password = request.data.get('old_password')
@@ -169,9 +178,14 @@ class ProfileView(APIView):
         """ This method is used to get the profile of a user. """
         auth_header = request.headers.get('Authorization')
         try:
-            user = JWTTokenValidator().validate(auth_header)
+            token = JWTTokenValidator().validate(auth_header)
         except ValidationError as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            user = getUserFromToken(token)
+        except ValidationError as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
         data = {
             'username': user.username,
             'email': user.email,
@@ -179,6 +193,8 @@ class ProfileView(APIView):
             'phoneNumber': user.userprofile.phoneNumber,
             'emailVerified' : user.userprofile.emailVerified,
             'twoStepVerificationEnabled': user.userprofile.isTwoStepEmailAuthEnabled,
+            'picture': user.userprofile.picture.url,
+            'pictureSmall': user.userprofile.pictureSmall.url,
         }
         return Response(data, status=status.HTTP_200_OK)
 
@@ -186,9 +202,14 @@ class ProfileView(APIView):
         """ This method is used to update the profile of a user."""
         auth_header = request.headers.get('Authorization')
         try:
-            user = JWTTokenValidator().validate(auth_header)
+            token = JWTTokenValidator().validate(auth_header)
         except ValidationError as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            user = getUserFromToken(token)
+        except ValidationError as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
         user.userprofile.displayName = request.data.get('displayName')
         phone_number = request.data.get('phoneNumber')
         phone_validator = PhoneNumberValidator()
@@ -232,9 +253,14 @@ class FriendsRequestsView(APIView):
         """ This method is used to get all the friend requests sent to the user. """
         auth_header = request.headers.get('Authorization')
         try:
-            user = JWTTokenValidator().validate(auth_header)
+            token = JWTTokenValidator().validate(auth_header)
         except ValidationError as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            user = getUserFromToken(token)
+        except ValidationError as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
         friend_request_list = FriendRequest.objects.filter(toUser=user.id)
         data = []
         for friend_request in friend_request_list:
@@ -248,9 +274,14 @@ class FriendsRequestsView(APIView):
         """ This method is used to send a friend request to a user. """
         auth_header = request.headers.get('Authorization')
         try:
-            user = JWTTokenValidator().validate(auth_header)
+            token = JWTTokenValidator().validate(auth_header)
         except ValidationError as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            user = getUserFromToken(token)
+        except ValidationError as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
         friend_username = request.data.get('friend_username')
         if not friend_username:
             return Response({'error': 'Please provide a friend username'}, status=status.HTTP_400_BAD_REQUEST)
@@ -277,9 +308,14 @@ class FriendsRequestsView(APIView):
         """ This method is used to accept or reject a friend request. """
         auth_header = request.headers.get('Authorization')
         try:
-            user = JWTTokenValidator().validate(auth_header)
+            token = JWTTokenValidator().validate(auth_header)
         except ValidationError as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            user = getUserFromToken(token)
+        except ValidationError as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
         friend_username = request.data.get('friend_username')
         action = request.data.get('action')
         if not friend_username:
@@ -311,9 +347,14 @@ class FriendsView(APIView):
         """ This method is used to get all the friends of the user. """
         auth_header = request.headers.get('Authorization')
         try:
-            user = JWTTokenValidator().validate(auth_header)
+            token = JWTTokenValidator().validate(auth_header)
         except ValidationError as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            user = getUserFromToken(token)
+        except ValidationError as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
         friend_list = user.userprofile.friendList.all()
         data = []
         for friend in friend_list:
@@ -327,9 +368,14 @@ class FriendsView(APIView):
         """ This method is used to remove a friend from the user's friend list. """
         auth_header = request.headers.get('Authorization')
         try:
-            user = JWTTokenValidator().validate(auth_header)
+            token = JWTTokenValidator().validate(auth_header)
         except ValidationError as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            user = getUserFromToken(token)
+        except ValidationError as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
         friend_username = request.data.get('friend_username')
         if not friend_username:
             return Response({'error': 'Please provide a friend username'}, status=status.HTTP_400_BAD_REQUEST)
@@ -367,15 +413,17 @@ class TwoStepVerificationCodeView(APIView):
                 return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         else:
             try:
-                user = JWTTokenValidator().validate(auth_header)
+                token = JWTTokenValidator().validate(auth_header)
             except ValidationError as e:
                 return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
+            try:
+                user = getUserFromToken(token)
+            except ValidationError as e:
+                return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         verification_email_code = str(random.randint(100000, 999999))
         user.userprofile.verificationEmailCode = verification_email_code
         user.userprofile.save()
         sendTwoStepVerificationEmail(user.email, verification_email_code)
-        print('Verification code sent successfully')
         return Response({'status': 'Verification code sent successfully'}, status=status.HTTP_200_OK)
 
     def post(self, request, format=None):
@@ -391,9 +439,14 @@ class TwoStepVerificationCodeView(APIView):
                 return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         else:
             try:
-                user = JWTTokenValidator().validate(auth_header)
+                token = JWTTokenValidator().validate(auth_header)
             except ValidationError as e:
                 return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            try:
+                user = getUserFromToken(token)
+            except ValidationError as e:
+                return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
         verification_email_code = request.data.get('code')
         if not verification_email_code:
             return Response({'error': 'Please provide a verification code'}, status=status.HTTP_400_BAD_REQUEST)
@@ -413,9 +466,14 @@ class TwoStepVerification(APIView):
         """ This method is used to check if 2-step email verification is enabled. """
         auth_header = request.headers.get('Authorization')
         try:
-            user = JWTTokenValidator().validate(auth_header)
+            token = JWTTokenValidator().validate(auth_header)
         except ValidationError as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            user = getUserFromToken(token)
+        except ValidationError as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
         if not user.userprofile.emailVerified:
             return Response({'error': 'Email is not verified'}, status=status.HTTP_400_BAD_REQUEST)
         if not user.userprofile.isTwoStepEmailAuthEnabled:
@@ -426,9 +484,14 @@ class TwoStepVerification(APIView):
         """ This method is used to enable or disable 2-step email verification."""
         auth_header = request.headers.get('Authorization')
         try:
-            user = JWTTokenValidator().validate(auth_header)
+            token = JWTTokenValidator().validate(auth_header)
         except ValidationError as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            user = getUserFromToken(token)
+        except ValidationError as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
         action = request.data.get('action')
         if action == None:
             return Response({'error': 'Please provide an action'}, status=status.HTTP_400_BAD_REQUEST)
@@ -457,11 +520,91 @@ class VerificationEmailView(APIView):
     def get(self, request, format=None):
         auth_header = request.headers.get('Authorization')
         try:
-            user = JWTTokenValidator().validate(auth_header)
+            token = JWTTokenValidator().validate(auth_header)
         except ValidationError as e:
+            print("Token error")
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            user = getUserFromToken(token)
+        except ValidationError as e:
+            print("User error")
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
         if user.userprofile.emailVerified:
             return Response({'error': 'Email is verified already'}, status=status.HTTP_400_BAD_REQUEST)
         token = str(RefreshToken.for_user(user))
         sendVerificationEmail(user.email, token)
         return Response({'status': 'Verification email sent successfully'}, status=status.HTTP_200_OK)
+
+class ForgetPasswordView(APIView):
+    def post(self, request, format=None):
+        email = request.data.get('email')
+        if not email:
+            return Response({'error': 'Please provide an email'}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            return Response({'error': 'User does not exist'}, status=status.HTTP_404_NOT_FOUND)
+        if user.userprofile.emailVerified == False:
+            return Response({'error': 'Email is not verified'}, status=status.HTTP_400_BAD_REQUEST)
+        tokenGenerator = PasswordResetTokenGenerator()
+        token = tokenGenerator.make_token(user)
+        user.userprofile.passwordResetToken = token
+        user.userprofile.save()
+        sendPasswordResetEmail(email, token)
+        return Response({'status': 'Password reset email sent successfully'}, status=status.HTTP_200_OK)
+
+    def get(self, request, format=None):
+        token = request.query_params.get('token')
+        if not token:
+            return HttpResponse({'Please provide a token'}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            user = User.objects.get(userprofile__passwordResetToken=token)
+        except (User.DoesNotExist, Exception):
+            return HttpResponse({'Invalid token'}, status=status.HTTP_400_BAD_REQUEST)
+        user.userprofile.passwordResetToken = ""
+        user.userprofile.save()
+        user.set_password('Pong-42!')
+        user.save()
+        return HttpResponse('Your password was set to "Pong-42!"', status=200)
+
+
+class UploadPictureView(APIView):
+    def post(self, request, format=None):
+        auth_header = request.headers.get('Authorization')
+        if not auth_header:
+            return Response({'error': 'Please provide a token'}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            token = JWTTokenValidator().validate(auth_header)
+        except ValidationError as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            user = getUserFromToken(token)
+        except ValidationError as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        picture = request.data.get('picture')
+        if not picture:
+            return Response({'error': 'Please provide a picture'}, status=status.HTTP_400_BAD_REQUEST)
+        if picture.size > settings.MAX_UPLOAD_SIZE:
+            return Response({'error': 'File size is too large'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            image = Image.open(picture)
+            image.verify()
+            image = Image.open(picture)
+        except Exception:
+            return Response({'error': 'Invalid image'}, status=status.HTTP_400_BAD_REQUEST)
+        commpressedPicture = getCompressedPicture(image)
+        smallImageField = user.userprofile.pictureSmall
+        smallImageName = user.username + '_small.jpg'
+        smallImagePath = settings.MEDIA_ROOT + smallImageName
+
+        smallImageField.save(smallImageName, InMemoryUploadedFile(commpressedPicture,
+                                            None,
+                                            smallImageName,
+                                            'image/jpeg',
+                                            commpressedPicture.tell,
+                                            None))
+        user.userprofile.picture = picture
+        user.userprofile.save()
+        return Response({'status': 'Picture uploaded successfully'}, status=status.HTTP_200_OK)

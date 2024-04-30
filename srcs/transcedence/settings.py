@@ -14,6 +14,8 @@ from pathlib import Path
 import os
 from datetime import timedelta
 
+MAX_UPLOAD_SIZE = 5 * 1024 * 1024
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -151,7 +153,11 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
-    )
+    ),
+
+    'DEFAULT_RENDERER_CLASSES': [
+        'rest_framework.renderers.JSONRenderer',
+    ],
 }
 
 SIMPLE_JWT = {

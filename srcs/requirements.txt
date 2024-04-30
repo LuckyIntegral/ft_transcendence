@@ -5,3 +5,4 @@ djangorestframework
 markdown
 django-filter
 djangorestframework_simplejwt
+Pillow>=8.0.1

@@ -12,6 +12,39 @@ function createPopup() {
     return popup;
 }
 
+function createForgotPasswordPopup() {
+    var forgotPasswordPopup = createPopup();
+    forgotPasswordPopup.style.display = 'flex';
+    forgotPasswordPopup.style.justifyContent = 'center';
+    forgotPasswordPopup.style.alignItems = 'center';
+    forgotPasswordPopup.style.position = 'fixed';
+    forgotPasswordPopup.style.top = '0';
+    forgotPasswordPopup.style.bottom = '0';
+    forgotPasswordPopup.style.left = '0';
+    forgotPasswordPopup.style.right = '0';
+    forgotPasswordPopup.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
+    forgotPasswordPopup.innerHTML = `
+        <div class="card mb-3" style="width: 300px;">
+            <div class="card-header bg-primary text-white">
+                Forgot Password
+                <button id="close-button" style="float: right; border: none; background: none; color: white;">&times;</button>
+            </div>
+            <div class="card-body">
+                <form id="forgot-password-form">
+                    <div class="form-group
+                    ">
+                        <label for="id_email" class="form-label fs-6">Email</label>
+                        <input type="email" id="id_email" name="email" class="form-control" required>
+                    </div>
+                    <p class="fw-lighter" style="font-size:12px;" ></p>
+                    <button type="submit" class="btn btn-primary">Reset Password</button>
+                </form>
+            </div>
+        </div>
+    `;
+    return forgotPasswordPopup;
+}
+
 function createVerificationSpan(is_verified) {
     var span = document.createElement('span');
     if (is_verified) {
@@ -193,4 +226,45 @@ function sendVerificationEmail() {
     }).catch(function(error) {
         console.log('Error:', error);
     });
+}
+
+function handlePhotoUpload() {
+    var fileInput = document.getElementById('photoUpload');
+    var profileImg = document.getElementById('profileImg');
+    var file = fileInput.files[0];
+    var reader = new FileReader();
+
+    reader.onloadend = function() {
+        profileImg.src = reader.result;
+
+        // Create a FormData object
+        var formData = new FormData();
+        // Add the file to the FormData object
+        formData.append('picture', file);
+
+        // Send a POST request to the server with the file data
+        fetchWithToken('/api/upload-picture/', {
+            method: 'POST',
+            headers: {
+                'Authorization': 'Bearer ' + localStorage.getItem('access'),
+            },
+            body: formData
+        }).then(function(response) {
+            if (!response.ok) {
+                throw new Error('Error: ' + response.statusText);
+            }
+            return response.json();
+        }).then(function(data) {
+            console.log('Success:', data);
+        }).catch(function(error) {
+            console.log('Error:', error);
+        });
+    }
+
+    if (file) {
+        reader.readAsDataURL(file);
+    } else {
+        profileImg.src = "";
+    }
+    location.reload();
 }

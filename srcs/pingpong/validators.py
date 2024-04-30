@@ -90,14 +90,7 @@ class JWTTokenValidator:
             UntypedToken(token_key)
         except (InvalidToken, TokenError) as e:
             raise ValidationError(f'Token is invalid: {str(e)}')
-
-        token = token_backend.decode(token_key)
-        user_id = token['user_id']
-        try:
-            user = User.objects.get(id=user_id)
-        except User.DoesNotExist:
-            raise ValidationError('User does not exist.')
-        return user
+        return token_key
 
 class UsernamePasswordValidator:
     """ Validator class that holds a single method validate """
