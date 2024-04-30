@@ -38,7 +38,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         throw new Error('Error: ' + response.statusText);
                     }
                 }).catch(function(error) {
-                    console.log('Error:', error);
+                    popupAlertError(error); // TODO: Implement alertError
                 });
             });
         }
@@ -76,6 +76,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <button type="submit" class="btn btn-primary">Log In</button>
                         <a id="forgot-password" style="color: blue; text-decoration: underline; cursor: pointer;" class="d-block text-right mt-2">Forgot your password?</a>
                     </form>
+                    <div id="popupContent"></div>
                 </div>
             </div>
         `;
@@ -98,6 +99,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <p class="fw-lighter" style="font-size:12px;" ></p>
                         <button type="submit" class="btn btn-primary">Verify</button>
                     </form>
+                    <div id="popupContent"></div>
                 </div>
             </div>
         `;
@@ -127,12 +129,10 @@ document.addEventListener('DOMContentLoaded', function() {
                         password: password
                     })
                 }).then(function(response) {
-                    console.log(response.status);
                     if (response.status == 200) {
                         obtainToken(username, password);
                         return response.json();
                     } else if (response.status == 202) {
-                        console.log('Two step verification required');
                         document.body.removeChild(loginPopup);
                         document.body.appendChild(twoStepVerificationPopup);
                         sendVerificationCodeEmail(username, password);
@@ -149,15 +149,8 @@ document.addEventListener('DOMContentLoaded', function() {
                             processTwoStepVerification(username, password);
                         });
                     } else {
-                        var errorMessage = document.createElement('p');
-                        errorMessage.textContent = 'Invalid username or password. Please try again.';
-                        errorMessage.style.color = 'red';
-                        loginForm.removeChild(loginForm.lastChild);
-                        loginForm.appendChild(errorMessage);
-                        throw new Error('Error: ' + response.statusText);
+                        popupAlertError("Incorrect username or password");
                     }
-                }).catch(function(error) {
-                    console.log('Error:', error);
                 }).finally(function() {
                     if (localStorage.getItem('access') != null) {
                         document.body.removeChild(loginPopup);

@@ -31,14 +31,14 @@ function createForgotPasswordPopup() {
             </div>
             <div class="card-body">
                 <form id="forgot-password-form">
-                    <div class="form-group
-                    ">
+                    <div class="form-group">
                         <label for="id_email" class="form-label fs-6">Email</label>
                         <input type="email" id="id_email" name="email" class="form-control" required>
                     </div>
                     <p class="fw-lighter" style="font-size:12px;" ></p>
                     <button type="submit" class="btn btn-primary">Reset Password</button>
                 </form>
+                <div id="popupContent"></div>
             </div>
         </div>
     `;
@@ -59,7 +59,7 @@ function createVerificationSpan(is_verified) {
         span.style.cursor = 'pointer';
         span.addEventListener('click', function() {
             sendVerificationEmail();
-            alert('Verification email sent');
+            alertSuccess('Verification email sent');
         });
     }
     return span;
@@ -112,8 +112,6 @@ function validateToken() {
 }
 
 function sendVerificationCodeEmail(username = null, password = null) {
-    console.log(username);
-    console.log(password);
     if (username !== null) {
         fetch('/api/send-verification-code-email/', {
             method: 'PUT',
@@ -129,12 +127,12 @@ function sendVerificationCodeEmail(username = null, password = null) {
                 throw new Error('Error: ' + response.statusText);
             }
         }).catch(function(error) {
-            console.log('Error:', error);
+            alertError(error);
         });
     } else {
         validateToken();
         if (localStorage.getItem('access') === null) {
-            alert('Session expired. Please log in again.')
+            alertError('Session expired. Please log in again.')
             window.location.hash = 'default';
             return;
         }
@@ -149,7 +147,7 @@ function sendVerificationCodeEmail(username = null, password = null) {
                 throw new Error('Error: ' + response.statusText);
             }
         }).catch(function(error) {
-            console.log('Error:', error);
+            alertError(error);
         });
     }
 
@@ -169,12 +167,6 @@ async function obtainToken(username, password) {
         if (response.ok) {
             return response.json();
         } else {
-            var errorMessage = document.createElement('p');
-            errorMessage.textContent = 'Invalid username or password. Please try again.';
-            errorMessage.style.color = 'red';
-            var loginForm = document.getElementById('login-form');
-            loginForm.removeChild(loginForm.lastChild);
-            loginForm.appendChild(errorMessage);
             throw new Error('Error: ' + response.statusText);
         }
     }).then(function(data) {
@@ -182,7 +174,7 @@ async function obtainToken(username, password) {
         localStorage.setItem('refresh', data.refresh);
         location.reload();
     }).catch(function(error) {
-        console.log('Error:', error);
+        alertError(error);
     });
 }
 
@@ -211,10 +203,8 @@ function processTwoStepVerification(username, password) {
             var twoStepVerificationForm = document.getElementById('two-step-verification-form');
             twoStepVerificationForm.removeChild(twoStepVerificationForm.lastChild);
             twoStepVerificationForm.appendChild(errorMessage);
-            throw new Error('Error: ' + response.statusText);
+            alertError('Incorrect verification code');
         }
-    }).catch(function(error) {
-        console.log('Error:', error);
     });
 }
 
@@ -230,7 +220,7 @@ function sendVerificationEmail() {
             throw new Error('Error: ' + response.statusText);
         }
     }).catch(function(error) {
-        console.log('Error:', error);
+        alertError(error);
     });
 }
 
@@ -261,9 +251,9 @@ function handlePhotoUpload() {
             }
             return response.json();
         }).then(function(data) {
-            console.log('Success:', data);
+            alertSuccess(data);
         }).catch(function(error) {
-            console.log('Error:', error);
+            alertError(error);
         });
     }
 

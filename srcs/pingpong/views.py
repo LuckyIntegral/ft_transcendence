@@ -56,7 +56,6 @@ class LoginView(APIView):
 
         if not username or not password:
             return Response({'error': 'Please provide all required fields'}, status=status.HTTP_400_BAD_REQUEST)
-
         try:
             user = User.objects.get(username=username)
         except User.DoesNotExist:
@@ -157,11 +156,11 @@ class PasswordView(APIView):
         if not user.check_password(old_password):
             return Response({'error': 'Old password is incorrect'}, status=status.HTTP_400_BAD_REQUEST)
         if new_password != new_password_confirm:
-            return Response({'error': 'New passwords do not match'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'New passwords do not match'}, status=status.HTTP_401_UNAUTHORIZED)
         try:
             validate_password(new_password)
         except ValidationError as e:
-            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': str(e)}, status=status.HTTP_402_PAYMENT_REQUIRED)
 
         user.set_password(new_password)
         user.save()
@@ -190,7 +189,6 @@ class ProfileView(APIView):
             'username': user.username,
             'email': user.email,
             'displayName': user.userprofile.displayName,
-            'phoneNumber': user.userprofile.phoneNumber,
             'emailVerified' : user.userprofile.emailVerified,
             'twoStepVerificationEnabled': user.userprofile.isTwoStepEmailAuthEnabled,
             'picture': user.userprofile.picture.url,
@@ -211,18 +209,9 @@ class ProfileView(APIView):
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
         user.userprofile.displayName = request.data.get('displayName')
-        phone_number = request.data.get('phoneNumber')
-        phone_validator = PhoneNumberValidator()
-        if (phone_number != None and len(phone_number) != 0):
-            try:
-                phone_validator.validate(phone_number)
-                user.userprofile.phoneNumber = phone_number
-            except ValidationError:
-                return Response({'error': 'Invalid phone number'}, status=status.HTTP_400_BAD_REQUEST)
-
         email = request.data.get('email')
         email_validator = EmailValidator()
-        if (email != None and len(email)):
+        if (email is not None and len(email)):
             try:
                 email_validator.validate(email)
             except ValidationError:
@@ -231,9 +220,9 @@ class ProfileView(APIView):
             cur_user = User.objects.get(email=email)
         except User.DoesNotExist:
             cur_user = None
-        if cur_user != None and cur_user.username != user.username:
-            return Response({'error': 'Email is already taken'}, status=status.HTTP_400_BAD_REQUEST)
-        if (email != None and len(email) != 0 and email != user.email):
+        if cur_user is not None and cur_user.username != user.username:
+            return Response({'error': 'Email is already taken'}, status=status.HTTP_401_UNAUTHORIZED)
+        if (email is not None and len(email) != 0 and email != user.email):
             user.userprofile.emailVerified = False
             token = str(RefreshToken.for_user(user))
             sendVerificationEmail(email, token)

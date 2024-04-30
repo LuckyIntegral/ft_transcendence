@@ -36,6 +36,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <p class="fw-lighter" style="font-size:12px;" >TODO: Password policy will be implemented later</p>
                         <button type="submit" class="btn btn-primary">Sign Up</button>
                     </form>
+                    <div id="popupContent"></div>
                 </div>
             </div>
         `;
@@ -69,9 +70,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 .then(response => response.json())
                 .then(data => {
                     if (data.error) {
-                        alert(data.error);
+                        popupAlertError(data.error);
                     } else {
-                        alert('Successfully signed up!');
+                        // alertSuccess('Successfully signed up!');
                         document.body.removeChild(popup);
                         return obtainToken(username, password)
                     }

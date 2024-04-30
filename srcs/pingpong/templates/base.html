@@ -27,6 +27,7 @@
     <script src="{% static 'js/utils.js' %}"></script>
     <script src="{% static 'js/history.js' %}"></script>
   <script src="{% static 'js/friends.js' %}"></script>
+  <script src="{% static 'js/allerts.js' %}"></script>
 </head>
 <body>
   <header class="p-3 bg-dark mb-3 border-bottom">
@@ -68,8 +69,10 @@
   </header>
 
   <div class="container justify-content-center text-center">
+    <div id="toastContent"></div>
     <div id="content"></div>
   </div>
+
 
   <main class="container">
     <div class="row">

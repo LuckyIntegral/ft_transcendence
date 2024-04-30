@@ -1,7 +1,7 @@
 function loadFriendsPage() {
     var friendsPage = document.createElement('section');
     friendsPage.setAttribute('id', 'friends-page');
-    friendsPage.setAttribute('class', 'container col-10');
+    friendsPage.setAttribute('class', 'container col-12');
     friendsPage.innerHTML = `
     <div class="row">
         <div class="input-group p-3 rounded border border-secondary">
@@ -96,7 +96,7 @@ function loadFriendsRequestsList() {
             friendsRequestsList.appendChild(friendRequestTable);
         }
     }
-    ).catch(error => console.error('Error:', error));
+    ).catch(error => alertError(error));
 }
 
 function acceptFriendRequest() {
@@ -121,11 +121,11 @@ function actionFriendRequest(action = 'accept') {
             }),
     }).then(response => {
         if (response.status !== 200) {
-            response.json().then(data => alert(data.error));
+            response.json().then(data => alertError(data.error));
         } else {
             window.location.reload();
         }
-    }).catch(error => console.error('Error:', error));
+    }).catch(error => alertError(error));
 }
 
 function loadFriendsList() {
@@ -187,7 +187,7 @@ function loadFriendsList() {
                 friendsList.appendChild(friendTable);
             }
         })
-        .catch(error => console.error('Error:', error));
+        .catch(error => alertError(error));
     }
 
 function deleteFriend() {
@@ -203,11 +203,11 @@ function deleteFriend() {
             }),
         }).then(response => {
             if (response.status !== 200) {
-                response.json().then(data => alert(data.error));
+                response.json().then(data => alertError(data.error));
             } else {
             window.location.reload();
         }
-    }).catch(error => console.error('Error:', error));
+    }).catch(error => alertError(error));
 }
 
 function searchFriendQuery() {
@@ -224,7 +224,7 @@ function searchFriendQuery() {
         })
         .then(response => {
             if (response.status !== 200) {
-                response.json().then(data => alert(data.error));
+                response.json().then(data => alertError(data.error));
             } else {
                 response.json().then(data => {
                     var dropdownMenu = document.getElementById('friendRequestResultsDropdown');
@@ -242,7 +242,7 @@ function searchFriendQuery() {
                 });
             }
         })
-        .catch(error => console.error('Error:', error));
+        .catch(error => alertError(error));
     } else {
         var dropdownMenu = document.getElementById('friendRequestResultsDropdown');
         dropdownMenu.innerHTML = '';
@@ -262,9 +262,9 @@ function sendFriendRequest() {
             }),
     }).then(response => {
         if (response.status !== 200) {
-            response.json().then(data => alert(data.error));
+            response.json().then(data => alertError(data.error));
         } else {
             window.location.reload();
         }
-    }).catch(error => console.error('Error:', error));
+    }).catch(error => alertError(error));
 }

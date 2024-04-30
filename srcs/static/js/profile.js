@@ -79,7 +79,7 @@ function undoChanges() {
 function saveProfile() {
     validateToken();
     if (localStorage.getItem('access') === null) {
-        alert('You are not logged in');
+        alertError('You are not logged in');
         window.location.hash = 'default';
         return;
     }
@@ -135,8 +135,10 @@ function saveProfile() {
             undoButton.removeEventListener('click', undoChanges);
             undoButton.addEventListener('click', changePassword);
             return response.json();
-        } else {
-            response.json().then(data => alert(data.error));
+        } else if (response.status === 400) {
+            alertError('Invalid email address');
+        } else if (response.status === 401) {
+            alertError('Email is already taken');
         }
     }).finally(function() {
         document.getElementById('loading').style.display = 'none';
@@ -155,7 +157,7 @@ function loadProfilePage() {
             try {
                 getAndSetProfileData();
             } catch (error) {
-                console.log(error);
+                alertError(error);
                 return error;
             }
             var profileDiv = document.getElementById('content');
@@ -172,14 +174,14 @@ function loadProfilePage() {
             twoStepVerificationButton.addEventListener('click', editTwoStepVerification);
         })
         .catch(error => {
-            console.error('Error:', error);
+            alertError(error);
         });
 }
 
 function getAndSetProfileData() {
     validateToken();
     if (localStorage.getItem('access') === null) {
-        alert('You are not logged in');
+        alertError('You are not logged in');
         window.location.hash = 'default';
         return;
     }
@@ -215,14 +217,14 @@ function getAndSetProfileData() {
         setTwoStepVerificationButton(data.twoStepVerificationEnabled);
         emailVerificationP.appendChild(emailVerificationSpan);
     }).catch(function(error) {
-        console.log(error);
+        alertError(error);
     });
 }
 
 function changePassword() {
     validateToken();
     if (localStorage.getItem('access') === null) {
-        alert('You are not logged in');
+        alertError('You are not logged in');
         window.location.hash = 'default';
         return;
     }
@@ -252,6 +254,7 @@ function changePassword() {
                     " style="font-size:12px;" >TODO: Password policy will be implemented later</p>
                     <button type="submit" class="btn btn-primary">Change Password</button>
                 </form>
+                <div id="popupContent"></div>
             </div>
         </div>
     `;
@@ -285,22 +288,16 @@ function changePassword() {
                 }),
             }).then(function(response) {
                 if (response.ok) {
+                    location.reload();
                     return response.json();
-                } else {
-                    var errorMessage = document.createElement('p');
-
-                    errorMessage.textContent = 'Password error (doesnt match etc).'; // TODO: Add error message
-                    errorMessage.style.color = 'red';
-
-                    changePasswordForm.removeChild(changePasswordForm.lastChild);
-                    changePasswordForm.appendChild(errorMessage);
-                    throw new Error('Error: ' + response.error);
+                } else if (response.status === 400) {
+                    popupAlertError('Old password is incorrect');
+                } else if (response.status === 401) {
+                    popupAlertError('Passwords do not match');
+                } else if (response.status === 402) {
+                    popupAlertError('Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number and one special character');
                 }
-            }).then(function(data) {
-                location.reload();
-            }).catch(function(error) {
-                console.log('Error:', error);
-            });
+            })
         });
     }
 }
@@ -308,7 +305,7 @@ function changePassword() {
 function getTwoStepVerificationStatus() {
     validateToken();
     if (localStorage.getItem('access') === null) {
-        alert('You are not logged in');
+        alertError('You are not logged in');
         window.location.hash = 'default';
         return;
     }
@@ -321,14 +318,14 @@ function getTwoStepVerificationStatus() {
     }).then(response => {
         return response.status;
     }).catch(function(error) {
-        console.log(error);
+        alertError(error);
     });
 }
 
 function enableTwoStepVerification(popup) {
     validateToken();
     if (localStorage.getItem('access') === null) {
-        alert('You are not logged in');
+        alertError('You are not logged in');
         window.location.hash = 'default';
         return;
     }
@@ -345,22 +342,22 @@ function enableTwoStepVerification(popup) {
         })
     }).then(function(response) {
         if (response.ok) {
-            alert('Two-step verification enabled');
+            alertSuccess('Two-step verification enabled');
             setTwoStepVerificationButton(true);
             popup.parentNode.removeChild(popup);
             location.reload();
         } else {
-            alert('Error: ' + response.statusText);
+            alertError(response.statusText);
         }
     }).catch(function(error) {
-        console.log('Error:', error);
+        alertError(error);
     });
 }
 
 function disableTwoStepVerification(popup) {
     validateToken();
     if (localStorage.getItem('access') === null) {
-        alert('You are not logged in');
+        alertError('You are not logged in');
         window.location.hash = 'default';
         return;
     }
@@ -377,15 +374,15 @@ function disableTwoStepVerification(popup) {
         })
     }).then(function(response) {
         if (response.ok) {
-            alert('Two-step verification disabled');
+            alertSuccess('Two-step verification disabled');
             setTwoStepVerificationButton(false);
             popup.parentNode.removeChild(popup);
             location.reload();
         } else {
-            alert('Error: ' + response.statusText);
+            alertError(response.statusText);
         }
     }).catch(function(error) {
-        console.log('Error:', error);
+        alertError(error);
     });
 }
 
@@ -394,7 +391,6 @@ function editTwoStepVerification() {
     var popup = createPopup();
     getTwoStepVerificationStatus().then(status => {
         var twoStepStatus = status;
-        console.log(twoStepStatus);
         // if verification is disabled open popup to enable i
         if (twoStepStatus === 202) {
             popup.innerHTML = `
@@ -414,6 +410,7 @@ function editTwoStepVerification() {
                             <p class="fw-lighter" style="font-size:12px;" >TODO: add explanation</p>
                             <button type="submit" class="btn btn-primary">Verify</button>
                         </form>
+                    <div id="popupContent"></div>
                     </div>
                 </div>
             `;
@@ -439,7 +436,7 @@ function editTwoStepVerification() {
                 </div>
             `;
         } else {
-            alert('Error: ' + twoStepStatus);
+            alertError(twoStepStatus);
             return;
         }
         document.body.appendChild(popup);

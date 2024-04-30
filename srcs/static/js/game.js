@@ -2,7 +2,7 @@ function loadGamePage() {
     var content = document.getElementById('content');
 
     if (content === null) {
-        console.log('content is null');
+        alertError('content is null');
         return;
     }
 
