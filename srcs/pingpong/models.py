@@ -30,6 +30,8 @@ class UserProfile(models.Model):
     friendList = models.ManyToManyField("self", related_name='friendList', blank=True)
     picture = models.ImageField(upload_to='pictures/', default='images/default.jpg')
     pictureSmall = models.ImageField(upload_to='pictures/', default='images/defaultSmall.jpg')
+    gamesWon = models.IntegerField(default=0)
+    gamesPlayed = models.IntegerField(default=0)
 
 class FriendRequest(models.Model):
     """ This model represents the friend request.

@@ -627,3 +627,26 @@ class FriendsSearchView(APIView):
                     'username': friend.user.username,
                 })
         return Response(data, status=status.HTTP_200_OK)
+
+class LeaderboardView(APIView):
+    """ This view is used to get the leaderboard.
+        It has following methods:
+        1. get: This method is used to get the leaderboard.
+    """
+    def get(self, request, format=None):
+        """ This method is used to get the leaderboard. """
+        auth_header = request.headers.get('Authorization')
+        try:
+            JWTTokenValidator().validate(auth_header)
+        except ValidationError as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        data = []
+        player_list = UserProfile.objects.all() # .order_by('-gamesWon')
+        for player in player_list:
+            data.append({
+                'photo': player.pictureSmall.url,
+                'username': player.user.username,
+                'wins': player.gamesWon,
+                'games': player.gamesPlayed,
+            })
+        return Response(data, status=status.HTTP_200_OK)

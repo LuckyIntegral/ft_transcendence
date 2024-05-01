@@ -264,7 +264,7 @@ function sendFriendRequest() {
         if (response.status !== 200) {
             response.json().then(data => alertError(data.error));
         } else {
-            window.location.reload();
+            alertSuccess('Friend request sent successfully!');
         }
     }).catch(error => alertError(error));
 }

@@ -13,6 +13,9 @@ document.addEventListener('DOMContentLoaded', function() {
         'friends': function() {
             loadFriendsPage();
         },
+        'leadrboard': function() {
+            loadLeaderboardPage();
+        },
         'default': function() {
             document.getElementById('content').textContent = 'Default page';
         }

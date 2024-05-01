@@ -2,7 +2,8 @@
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from pingpong.views import SignupView, ProfileView, PasswordView, VerifyEmailView, VerifyTokenView,\
     TwoStepVerificationCodeView, LoginView, TwoStepVerification, FriendsView, FriendsRequestsView,\
-    VerificationEmailView, UploadPictureView, ForgetPasswordView, FriendsSearchView
+    VerificationEmailView, UploadPictureView, ForgetPasswordView, FriendsSearchView,\
+    LeaderboardView
 from django.urls import path
 from django.conf import settings
 from django.conf.urls.static import static
@@ -26,4 +27,5 @@ urlpatterns = [
     path('reset-password/', ForgetPasswordView.as_view(), name='reset_password'),
     path('api/upload-picture/', UploadPictureView.as_view(), name='upload_picture'),
     path('api/friends-search/', FriendsSearchView.as_view(), name='friends_search'),
+    path('api/leaderboard/', LeaderboardView.as_view(), name='leaderboard'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
