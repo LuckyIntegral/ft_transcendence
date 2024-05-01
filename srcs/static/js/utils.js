@@ -220,7 +220,7 @@ function sendVerificationEmail() {
             throw new Error('Error: ' + response.statusText);
         }
     }).catch(function(error) {
-        alertError(error);
+        //console.log("")
     });
 }
 

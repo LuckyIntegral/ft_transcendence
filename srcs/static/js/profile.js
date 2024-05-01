@@ -112,6 +112,7 @@ function saveProfile() {
             undoButton.textContent = 'Change Password';
             undoButton.removeEventListener('click', undoChanges);
             undoButton.addEventListener('click', changePassword);
+            location.reload();
             return response.json();
         } else if (response.status === 400) {
             alertError('Invalid email address');
