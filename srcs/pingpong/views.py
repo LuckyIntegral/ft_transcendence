@@ -87,14 +87,14 @@ class SignupView(APIView):
         if User.objects.filter(username=username).exists():
             return Response({'error': 'Username is already taken'}, status=status.HTTP_400_BAD_REQUEST)
         if User.objects.filter(email=email).exists():
-            return Response({'error': 'Email is already taken'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'Email is already taken'}, status=status.HTTP_401_UNAUTHORIZED)
         if password != password_confirm:
-            return Response({'error': 'Passwords do not match'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'Passwords do not match'}, status=status.HTTP_402_PAYMENT_REQUIRED)
 
         try:
             validate_password(password)
         except ValidationError as e:
-            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': str(e)}, status=status.HTTP_404_NOT_FOUND)
 
         user = User.objects.create_user(username=username, email=email, password=password)
         userProfile = UserProfile.objects.create(user=user)
@@ -225,6 +225,7 @@ class ProfileView(APIView):
         if (email is not None and len(email) != 0 and email != user.email):
             user.userprofile.emailVerified = False
             token = str(RefreshToken.for_user(user))
+            user.userprofile.isTwoStepEmailAuthEnabled = False
             sendVerificationEmail(email, token)
         user.email = email
         user.save()

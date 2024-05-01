@@ -66,18 +66,21 @@ document.addEventListener('DOMContentLoaded', function() {
                         password: password,
                         password_confirm: passwordConfirm
                     }),
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.error) {
-                        popupAlertError(data.error);
-                    } else {
-                        // alertSuccess('Successfully signed up!');
-                        document.body.removeChild(popup);
-                        return obtainToken(username, password)
+                }).then(response => {
+                    if (response.status === 201) {
+                        alertSuccess('Signup successful!');
+                        obtainToken(username, password);
+                    } else if (response.status === 400) {
+                        popupAlertError('Username is already taken');
+                    } else if (response.status === 401) {
+                        popupAlertError('Email is already taken');
+                    } else if (response.status === 402) {
+                        popupAlertError('Passwords do not match');
+                    } else if (response.status === 404) {
+                        popupAlertError('Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number and one special character');
                     }
                 }).then(() => {
-                    sendVerificationEmail();
+                    sendVerificationEmail(email);
                 });
             });
         }

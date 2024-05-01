@@ -22,9 +22,7 @@ class UserProfile(models.Model):
     """
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     # additional fields
-    phoneNumber = models.CharField(max_length=15, blank=True)
     displayName = models.CharField(max_length=50, blank=True)
-    phoneNumberVerified = models.BooleanField(default=False)
     emailVerified = models.BooleanField(default=False)
     isTwoStepEmailAuthEnabled = models.BooleanField(default=False)
     verificationEmailCode = models.CharField(max_length=6, blank=True)

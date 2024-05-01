@@ -1,11 +1,9 @@
 function editProfile() {
     var displayName = document.getElementById('displayName');
     var email = document.getElementById('email');
-    var phoneNumber = document.getElementById('phoneNumber');
     var editProfileButton = document.getElementById('buttonEditProfile');
     var newDisplayName = document.createElement('input');
     var newEmail = document.createElement('input');
-    var newPhoneNumber = document.createElement('input');
     var undoButton = document.getElementById('buttonChangePassword')
 
     newDisplayName.setAttribute('type', 'text');
@@ -18,20 +16,13 @@ function editProfile() {
     newEmail.setAttribute('value', email.textContent);
     newEmail.setAttribute('placeholder', 'prossi@exam02.ez.pass');
 
-    newPhoneNumber.setAttribute('type', 'text');
-    newPhoneNumber.setAttribute('id', 'phoneNumber');
-    newPhoneNumber.setAttribute('value', phoneNumber.textContent);
-    newPhoneNumber.setAttribute('placeholder', '+380 12 345 6789');
-
     undoButton.textContent = 'Undo';
 
     localStorage.setItem('displayName', displayName.textContent);
     localStorage.setItem('email', email.textContent);
-    localStorage.setItem('phoneNumber', phoneNumber.textContent);
 
     displayName.parentNode.replaceChild(newDisplayName, displayName);
     email.parentNode.replaceChild(newEmail, email);
-    phoneNumber.parentNode.replaceChild(newPhoneNumber, phoneNumber);
 
     editProfileButton.textContent = 'Save';
     editProfileButton.removeEventListener('click', editProfile);
@@ -43,27 +34,21 @@ function editProfile() {
 function undoChanges() {
     var displayNameInput = document.getElementById('displayName');
     var emailInput = document.getElementById('email');
-    var phoneNumberInput = document.getElementById('phoneNumber');
     var editProfileButton = document.getElementById('buttonEditProfile');
     var undoButton = document.getElementById('buttonChangePassword');
 
     var displayName = document.createElement('p');
     var email = document.createElement('p');
-    var phoneNumber = document.createElement('p');
 
-    phoneNumber.setAttribute('id', 'phoneNumber');
     email.setAttribute('id', 'email');
     displayName.setAttribute('id', 'displayName');
 
-    phoneNumber.setAttribute('class', 'text-muted mb-0');
     email.setAttribute('class', 'text-muted mb-0');
     displayName.setAttribute('class', 'text-muted mb-0');
 
-    phoneNumber.textContent = localStorage.getItem('phoneNumber');
     email.textContent = localStorage.getItem('email');
     displayName.textContent = localStorage.getItem('displayName');
 
-    phoneNumberInput.parentNode.replaceChild(phoneNumber, phoneNumberInput);
     emailInput.parentNode.replaceChild(email, emailInput);
     displayNameInput.parentNode.replaceChild(displayName, displayNameInput);
 
@@ -86,11 +71,9 @@ function saveProfile() {
     document.getElementById('loading').style.display = 'block';
     var newDisplayName = document.getElementById('displayName');
     var newEmail = document.getElementById('email');
-    var newPhoneNumber = document.getElementById('phoneNumber');
     var editProfileButton = document.getElementById('buttonEditProfile');
     var undoButton = document.getElementById('buttonChangePassword');
     var email = document.createElement('p');
-    var phoneNumber = document.createElement('p');
     var displayName = document.createElement('p');
 
     fetchWithToken ('/api/profile/', {
@@ -102,7 +85,6 @@ function saveProfile() {
         body: JSON.stringify({
             displayName: newDisplayName.value,
             email: newEmail.value,
-            phoneNumber: newPhoneNumber.value
         })
     }).then(function(response) {
         if (response.ok) {
@@ -112,18 +94,14 @@ function saveProfile() {
                 emailVerificationP.innerHTML = '';
                 emailVerificationP.appendChild(emailVerificationSpan);
             }
-            phoneNumber.setAttribute('id', 'phoneNumber');
             email.setAttribute('id', 'email');
             displayName.setAttribute('id', 'displayName');
-            phoneNumber.setAttribute('class', 'text-muted mb-0');
             email.setAttribute('class', 'text-muted mb-0');
             displayName.setAttribute('class', 'text-muted mb-0');
 
-            phoneNumber.textContent = newPhoneNumber.value;
             email.textContent = newEmail.value;
             displayName.textContent = newDisplayName.value;
 
-            newPhoneNumber.parentNode.replaceChild(phoneNumber, newPhoneNumber);
             newEmail.parentNode.replaceChild(email, newEmail);
             newDisplayName.parentNode.replaceChild(displayName, newDisplayName);
 
@@ -173,9 +151,6 @@ function loadProfilePage() {
             var twoStepVerificationButton = document.getElementById('buttonTwoStepVerification');
             twoStepVerificationButton.addEventListener('click', editTwoStepVerification);
         })
-        .catch(error => {
-            alertError(error);
-        });
 }
 
 function getAndSetProfileData() {
@@ -201,7 +176,6 @@ function getAndSetProfileData() {
     ).then(function(data) {
         var displayName = document.getElementById('displayName');
         var email = document.getElementById('email');
-        var phoneNumber = document.getElementById('phoneNumber');
         var username = document.getElementById('username');
         var picture = document.getElementById('profileImg');
 
@@ -210,7 +184,6 @@ function getAndSetProfileData() {
 
         displayName.textContent = data.displayName;
         email.textContent = data.email;
-        phoneNumber.textContent = data.phoneNumber;
         username.textContent = data.username;
         picture.src = data.picture;
 
@@ -288,7 +261,8 @@ function changePassword() {
                 }),
             }).then(function(response) {
                 if (response.ok) {
-                    location.reload();
+                    alertSuccess('Password was changed');
+                    document.body.removeChild(popup);
                     return response.json();
                 } else if (response.status === 400) {
                     popupAlertError('Old password is incorrect');
@@ -347,11 +321,9 @@ function enableTwoStepVerification(popup) {
             popup.parentNode.removeChild(popup);
             location.reload();
         } else {
-            alertError(response.statusText);
+            alertError("Email is not verified");
         }
-    }).catch(function(error) {
-        alertError(error);
-    });
+    })
 }
 
 function disableTwoStepVerification(popup) {
@@ -436,7 +408,7 @@ function editTwoStepVerification() {
                 </div>
             `;
         } else {
-            alertError(twoStepStatus);
+            alertError('Email is not verified')
             return;
         }
         document.body.appendChild(popup);

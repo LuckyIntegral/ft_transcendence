@@ -56,7 +56,12 @@ function popupAlertError(message) {
     alert.appendChild(button);
 
     var popup = document.getElementById('popupContent');
-    popup.appendChild(alert);
+    var existingAlert = popup.querySelector('.alert');
+    if (existingAlert) {
+        popup.replaceChild(alert, existingAlert);
+    } else {
+        popup.appendChild(alert);
+    }
 }
 
 {/* <div class="alert alert-danger alert-dismissible fade show" role="alert"> */}

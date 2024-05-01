@@ -50,18 +50,6 @@ class RepeatableCharacterValidator:
         if counter_chars.most_common(1)[0][1] > 3:
             raise ValidationError('Password must not contain any character more than 3 times.')
 
-class PhoneNumberValidator:
-    """ Validator class that holds a single method validate """
-
-    def validate(self, phoneNumber, user=None):
-        """ Validate whether the phone number is between 9 and 15 digits.
-            The phone number can start with a '+'.
-        """
-        if not phoneNumber:
-            raise ValidationError('Phone number is required.')
-        if not re.match(r'^\+?1?\d{9,15}$', phoneNumber):
-            raise ValidationError('Phone number must be between 9 and 15 digits.')
-
 class EmailValidator:
     """ Validator class that holds a single method validate """
 

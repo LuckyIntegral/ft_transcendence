@@ -231,8 +231,6 @@ function handlePhotoUpload() {
     var reader = new FileReader();
 
     reader.onloadend = function() {
-        profileImg.src = reader.result;
-
         // Create a FormData object
         var formData = new FormData();
         // Add the file to the FormData object
@@ -246,21 +244,16 @@ function handlePhotoUpload() {
             },
             body: formData
         }).then(function(response) {
-            if (!response.ok) {
-                throw new Error('Error: ' + response.statusText);
+            if (response.ok) {
+                alertSuccess("Profile picture updated successfully!");
+                profileImg.src = reader.result;
+            } else {
+                alertError("Failed to update profile picture");
             }
-            return response.json();
-        }).then(function(data) {
-            alertSuccess(data);
-        }).catch(function(error) {
-            alertError(error);
         });
     }
 
     if (file) {
         reader.readAsDataURL(file);
-    } else {
-        profileImg.src = "";
     }
-    location.reload();
 }
