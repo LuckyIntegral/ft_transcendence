@@ -590,7 +590,7 @@ class UploadPictureView(APIView):
 
         commpressedPicture = getCompressedPicture(image)
         smallImageField = user.userprofile.pictureSmall
-        smallImageName = user.username + '_small.jpg'
+        smallImageName = user.username + '_picture_small.jpg'
         smallImagePath = settings.MEDIA_ROOT + smallImageName
 
         smallImageField.save(smallImageName, InMemoryUploadedFile(commpressedPicture,
@@ -602,6 +602,7 @@ class UploadPictureView(APIView):
         user.userprofile.picture = picture
         user.userprofile.save()
         return Response({'status': 'Picture uploaded successfully'}, status=status.HTTP_200_OK)
+
 class FriendsSearchView(APIView):
     """ This view is used to search for friends.
         It has following methods:

@@ -47,3 +47,6 @@ def getCompressedPicture(image):
     image.save(compressedImage, format='JPEG', quality=50)
     compressedImageFile = ContentFile(compressedImage.getvalue())
     return compressedImageFile
+
+def userDirectoryPath(instance, filename):
+    return 'pictures/{0}/{1}'.format(instance.user.username, filename)
