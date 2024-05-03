@@ -349,6 +349,7 @@ class FriendsView(APIView):
         data = []
         for friend in friend_list:
             data.append({
+                'pictureSmall': friend.pictureSmall.url,
                 'email': friend.user.email,
                 'username': friend.user.username,
             })
@@ -602,6 +603,7 @@ class UploadPictureView(APIView):
         user.userprofile.picture = picture
         user.userprofile.save()
         return Response({'status': 'Picture uploaded successfully'}, status=status.HTTP_200_OK)
+
 class FriendsSearchView(APIView):
     """ This view is used to search for friends.
         It has following methods:
@@ -649,4 +651,36 @@ class LeaderboardView(APIView):
                 'wins': player.gamesWon,
                 'games': player.gamesPlayed,
             })
+        return Response(data, status=status.HTTP_200_OK)
+
+class UserDetailsView(APIView):
+    """ This view is used to get the details of a user.
+        It has following methods:
+        1. get: This method is used to get the details of a user.
+    """
+    def get(self, request, format=None):
+        """ This method is used to get the details of a user. """
+        auth_header = request.headers.get('Authorization')
+        try:
+            JWTTokenValidator().validate(auth_header)
+        except ValidationError as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        username = request.query_params.get('username')
+        if not username:
+            return Response({'error': 'Please provide a username'}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            user = User.objects.get(username=username)
+            userProfile = UserProfile.objects.get(user=user)
+        except User.DoesNotExist:
+            return Response({'error': 'User does not exist'}, status=status.HTTP_404_NOT_FOUND)
+        except UserProfile.DoesNotExist:
+            return Response({'error': 'User does not have a profile'}, status=status.HTTP_404_NOT_FOUND)
+        data = {
+            'username': user.username,
+            'email': user.email,
+            'displayName': userProfile.displayName if userProfile.displayName else 'no info',
+            'picture': userProfile.picture.url,
+            'wins': userProfile.gamesWon,
+            'games': userProfile.gamesPlayed,
+        }
         return Response(data, status=status.HTTP_200_OK)

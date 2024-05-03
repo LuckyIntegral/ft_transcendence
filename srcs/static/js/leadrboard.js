@@ -73,5 +73,70 @@ function loadLeaderboardTable() {
                 `;
                 leaderboardTableBody.appendChild(row);
             }
+            // Add event listeners to buttons
+            var profilePopupButtons = document.querySelectorAll('#profile-popup');
+            profilePopupButtons.forEach(button => {
+                button.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    var username = button.parentElement.parentElement.children[2].textContent;
+                    loadProfilePopup(username);
+                });
+            });
+            var addFriendButtons = document.querySelectorAll('#add-friend');
+            addFriendButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    var username = button.parentElement.parentElement.children[2].textContent;
+                    sendFriendRequest(username);
+                });
+            });
         });
+}
+
+function loadProfilePopup(username) {
+    var url = new URL('http://localhost:8000/api/user-details/');
+    url.searchParams.append('username', username);
+    fetchWithToken(url, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + localStorage.getItem('access'),
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            var user = data;
+            var profilePopup = createUserDetailPopup(user);
+            document.body.appendChild(profilePopup);
+            var closeButton = profilePopup.querySelector('#close-button');
+            closeButton.addEventListener('click', function() {
+                document.body.removeChild(profilePopup);
+                enableButtons();
+            });
+            disableButtons();
+        })
+        .catch(error => {
+            alertError(error);
+        });
+}
+
+function disableButtons() {
+    var profilePopupButtons = document.querySelectorAll('#profile-popup');
+    profilePopupButtons.forEach(button => {
+        button.disabled = true;
+    });
+    var addFriendButtons = document.querySelectorAll('#add-friend');
+    addFriendButtons.forEach(button => {
+        button.disabled = true;
+    });
+}
+
+function enableButtons() {
+    var profilePopupButtons = document.querySelectorAll('#profile-popup');
+    profilePopupButtons.forEach(button => {
+        button.disabled = false;
+    });
+    var addFriendButtons = document.querySelectorAll('#add-friend');
+    addFriendButtons.forEach(button => {
+        button.disabled = false;
+    });
 }

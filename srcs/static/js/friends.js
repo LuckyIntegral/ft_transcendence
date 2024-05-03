@@ -11,13 +11,17 @@ function loadFriendsPage() {
         </div>
     </div>
     <div class="row">
-        <div class="col input-group p-3 rounded border border-secondary">
-            <legend class="p-2">Friends</legend>
-            <div id="friends-list" class="container col-12"></div>
+        <div class="col input-group p-3 rounded border border-secondary justify-content-center">
+            <div>
+                <legend class="p-2">Friends</legend>
+                <div id="friends-list" class="container col-12"></div>
+            </div>
         </div>
-        <div class="col input-group p-3 rounded border border-secondary">
-            <legend class="p-2">Friend requests</legend>
-            <div id="friends-requests" class="container col-12"></div>
+        <div class="col input-group p-3 rounded border border-secondary justify-content-center">
+            <div>
+                <legend class="p-2">Friend requests</legend>
+                <div id="friends-requests" class="container col-12"></div>
+            </div>
         </div>
     </div>
     `;
@@ -71,15 +75,19 @@ function loadFriendsRequestsList() {
                 var friendRequestDiv = document.createElement('tr');
                 friendRequestDiv.innerHTML = `
                 <th scope="row">${i}</th>
-                <td>${friendRequest.email}</td>
-                <td>${friendRequest.username}</td>
+                <td><span class="d-inline-block text-truncate" style="max-width: 150px;"
+                data-bs-toggle="tooltip" title="${friendRequest.email}">${friendRequest.email}</span></td>
+                <td><span class="d-inline-block text-truncate" style="max-width: 150px;"
+                data-bs-toggle="tooltip" title="${friendRequest.username}">${friendRequest.username}</span></td>
                 <td>
-                <button type="button" id="accept-friend-request" class="btn btn-outline-secondary" data-friend-request-id="${friendRequest.username}">
-                    <span class="material-symbols-outlined">priority</span>
-                </button>
-                <button type="button" id="delete-friend-request" class="btn btn-outline-secondary" data-friend-request-id="${friendRequest.username}">
-                    <span class="material-symbols-outlined">delete</span>
-                </button>
+                    <button type="button" id="accept-friend-request" class="btn btn-outline-secondary"
+                        data-friend-request-id="${friendRequest.username}">
+                        <span class="material-symbols-outlined">priority</span>
+                    </button>
+                    <button type="button" id="delete-friend-request" class="btn btn-outline-secondary"
+                        data-friend-request-id="${friendRequest.username}">
+                        <span class="material-symbols-outlined">disabled_by_default</span>
+                    </button>
                 </td>
                 `;
                 friendRequestTableBody.appendChild(friendRequestDiv);
@@ -159,6 +167,7 @@ function loadFriendsList() {
                 <thead>
                 <tr>
                 <th scope="col">#</th>
+                <th scope="col">Photo</th>
                 <th scope="col">Email</th>
                 <th scope="col">Username</th>
                 <th scope="col">Actions</th>
@@ -172,15 +181,30 @@ function loadFriendsList() {
                     var friendDiv = document.createElement('tr');
                     friendDiv.innerHTML = `
                     <th scope="row">${i}</th>
-                    <td>${friend.email}</td>
-                    <td>${friend.username}</td>
-                    <td><button type="button" class="btn btn-outline-secondary" data-friend-id="${friend.username}">Delete</button></td>
+                    <td><img src="${friend.pictureSmall}" alt="Profile photo" class="rounded-circle" width="50" height="50"></td>
+                    <td><span class="d-inline-block text-truncate" style="max-width: 150px;"
+                        data-bs-toggle="tooltip" title="${friend.email}">${friend.email}</span></td>
+                    <td><span class="d-inline-block text-truncate" style="max-width: 150px;"
+                        data-bs-toggle="tooltip" title="${friend.username}">${friend.username}</span></td>
+                    <td>
+                        <button type="button" id="info-button" class="btn btn-outline-secondary" data-friend-id="${friend.username}">
+                            <span class="material-symbols-outlined">info</span>
+                        </button>
+                        <button type="button" id="delete-button" class="btn btn-outline-secondary" data-friend-id="${friend.username}">
+                            <span class="material-symbols-outlined">delete</span>
+                        </button>
+                    </td>
                     `;
                     friendTableBody.appendChild(friendDiv);
                     i += 1
                 });
-                friendTableBody.querySelectorAll('button').forEach(button => {
+                friendTableBody.querySelectorAll('#delete-button').forEach(button => {
                     button.addEventListener('click', deleteFriend);
+                });
+                friendTableBody.querySelectorAll('#info-button').forEach(button => {
+                    button.addEventListener('click', function() {
+                        showInfoFriend(this.getAttribute('data-friend-id'));
+                    });
                 });
                 friendTable.appendChild(friendTableHeader);
                 friendTable.appendChild(friendTableBody);
@@ -189,6 +213,40 @@ function loadFriendsList() {
         })
         .catch(error => alertError(error));
     }
+
+function showInfoFriend(username) {
+    console.log(username);
+    var url = new URL('http://localhost:8000/api/user-details/');
+    url.searchParams.append('username', username);
+    fetchWithToken(url, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + localStorage.getItem('access'),
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            var user = data;
+            var profilePopup = createUserDetailPopup(user);
+            document.body.appendChild(profilePopup);
+            var closeButton = profilePopup.querySelector('#close-button');
+            closeButton.addEventListener('click', function() {
+                document.body.removeChild(profilePopup);
+                var profilePopupButtons = document.querySelectorAll('#info-button');
+                profilePopupButtons.forEach(button => {
+                    button.disabled = false;
+                });
+            });
+            var profilePopupButtons = document.querySelectorAll('#info-button');
+            profilePopupButtons.forEach(button => {
+                button.disabled = true;
+            });
+        })
+        .catch(error => {
+            alertError(error);
+        });
+}
 
 function deleteFriend() {
     var friendUsername = this.getAttribute('data-friend-id');
@@ -237,7 +295,9 @@ function searchFriendQuery() {
                         dropdownMenu.appendChild(searchResults);
                     }
                     dropdownMenu.querySelectorAll('#dropdown-item').forEach(item => {
-                        item.addEventListener('click', sendFriendRequest);
+                        item.addEventListener('click', function () {
+                            sendFriendRequest(this.getAttribute('data-friend-id'))
+                        });
                     });
                 });
             }
@@ -249,8 +309,7 @@ function searchFriendQuery() {
     }
 }
 
-function sendFriendRequest() {
-    var username = this.getAttribute('data-friend-id');
+function sendFriendRequest(username) {
     fetchWithToken('http://localhost:8000/api/friends-requests/', {
             method: 'POST',
             headers: {

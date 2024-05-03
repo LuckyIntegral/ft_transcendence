@@ -1,6 +1,7 @@
 DB_FOLDER = ./data
 STATIC_FOLDER = ./srcs/staticfiles
 CACHE_FOLDER = ./srcs/pingpong/__pycache__ ./srcs/transcedence/__pycache__
+MIGRATION_FOLDER = ./srcs/pingpong/migrations
 
 run:
 	@docker-compose up -d --build
@@ -27,3 +28,4 @@ fclean: clean
 	@docker volume rm $(shell docker volume ls -q)
 	@rm -rf $(STATIC_FOLDER)
 	@rm -rf $(CACHE_FOLDER)
+	@rm -rf $(MIGRATION_FOLDER)

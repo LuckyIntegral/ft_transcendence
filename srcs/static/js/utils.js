@@ -14,15 +14,6 @@ function createPopup() {
 
 function createForgotPasswordPopup() {
     var forgotPasswordPopup = createPopup();
-    forgotPasswordPopup.style.display = 'flex';
-    forgotPasswordPopup.style.justifyContent = 'center';
-    forgotPasswordPopup.style.alignItems = 'center';
-    forgotPasswordPopup.style.position = 'fixed';
-    forgotPasswordPopup.style.top = '0';
-    forgotPasswordPopup.style.bottom = '0';
-    forgotPasswordPopup.style.left = '0';
-    forgotPasswordPopup.style.right = '0';
-    forgotPasswordPopup.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
     forgotPasswordPopup.innerHTML = `
         <div class="card mb-3" style="width: 300px;">
             <div class="card-header bg-primary text-white">
@@ -43,6 +34,47 @@ function createForgotPasswordPopup() {
         </div>
     `;
     return forgotPasswordPopup;
+}
+
+function createUserDetailPopup(user) {
+    var profilePopup = createPopup();
+    profilePopup.setAttribute('id', 'profile-popup');
+    profilePopup.innerHTML = `
+        <div class="card" style="width: 330px;">
+            <div class="card-header bg-dark text-white">
+                <button id="close-button" style="float: right; border: none; background: none; color: white;">&times;</button>
+            </div>
+            <img src="${user.picture}" class="card-img-top" alt="Profile image">
+            <div class="card-body">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>Username:</span>
+                        <span class="d-inline-block text-truncate" style="max-width: 150px;"
+                        data-bs-toggle="tooltip" title="${user.username}">${user.username}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>Email:</span>
+                        <span class="d-inline-block text-truncate" style="max-width: 150px;"
+                        data-bs-toggle="tooltip" title="${user.email}">${user.email}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>Display Name:</span>
+                        <span class="d-inline-block text-truncate" style="max-width: 150px;"
+                        data-bs-toggle="tooltip" title="${user.displayName}">${user.displayName}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>Games won:</span>
+                        <span>${user.wins}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>Games played:</span>
+                        <span>${user.games}</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    `;
+    return profilePopup;
 }
 
 function createVerificationSpan(is_verified) {
