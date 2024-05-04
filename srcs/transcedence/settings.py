@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 from pathlib import Path
 import os
 from datetime import timedelta
+import json
 
 MAX_UPLOAD_SIZE = 5 * 1024 * 1024
 
@@ -173,3 +174,10 @@ EMAIL_USE_TLS = True
 EMAIL_USE_SSL = False
 EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
+
+contract_abi = os.environ.get('WEB3_CONTRACT_ABI')
+WEB3_CONTRACT_ABI = json.loads(contract_abi)
+WEB3_PROVIDER = os.environ.get('WEB3_PROVIDER')
+WEB3_PRIVATE_KEY = os.environ.get('WEB3_PRIVATE_KEY')
+WEB3_CONTRACT_ADDRESS = os.environ.get('WEB3_CONTRACT_ADDRESS')
+WEB3_CHAIN_ID = int(os.environ.get('WEB3_CHAIN_ID'))
