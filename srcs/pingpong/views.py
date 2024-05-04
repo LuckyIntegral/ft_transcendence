@@ -17,7 +17,7 @@ from rest_framework_simplejwt.authentication import InvalidToken, TokenError
 from .validators import *
 from .models import *
 from .utils import sendVerificationEmail, sendTwoStepVerificationEmail, getUserFromToken, sendPasswordResetEmail,\
-            getCompressedPicture
+            getCompressedPicture, blockChainCreateGame
 from PIL import Image
 from django.core.files.uploadedfile import InMemoryUploadedFile
 
