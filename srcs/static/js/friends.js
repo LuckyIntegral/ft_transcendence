@@ -332,19 +332,39 @@ function showInfoFriend(username) {
             var closeButton = profilePopup.querySelector('#close-button');
             closeButton.addEventListener('click', function() {
                 document.body.removeChild(profilePopup);
-                var profilePopupButtons = document.querySelectorAll('#info-button');
-                profilePopupButtons.forEach(button => {
-                    button.disabled = false;
-                });
+                displayFriendActionButtons();
             });
-            var profilePopupButtons = document.querySelectorAll('#info-button');
-            profilePopupButtons.forEach(button => {
-                button.disabled = true;
-            });
+            hideFriendActionButtons()
         })
         .catch(error => {
             alertError(error);
         });
+}
+
+function displayFriendActionButtons() {
+    var profilePopupButtons = document.querySelectorAll('#info-button');
+    profilePopupButtons.forEach(button => {
+        button.disabled = false;
+        button.style.display = 'initial';
+    });
+    var profilePopupButtons = document.querySelectorAll('#delete-button');
+    profilePopupButtons.forEach(button => {
+        button.disabled = false;
+        button.style.display = 'initial';
+    });
+}
+
+function hideFriendActionButtons() {
+    var profilePopupButtons = document.querySelectorAll('#info-button');
+    profilePopupButtons.forEach(button => {
+        button.disabled = true;
+        button.style.display = 'none';
+    });
+    var profilePopupButtons = document.querySelectorAll('#delete-button');
+    profilePopupButtons.forEach(button => {
+        button.disabled = true;
+        button.style.display = 'none';
+    });
 }
 
 function deleteFriend() {
