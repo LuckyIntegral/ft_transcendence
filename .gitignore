@@ -6,3 +6,4 @@ TODO
 __pycache__/
 staticfiles/
 migrations/
+setup.sh

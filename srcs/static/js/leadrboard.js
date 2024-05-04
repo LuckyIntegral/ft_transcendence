@@ -1,12 +1,18 @@
-function loadLeaderboardPage() {
+PAGE_SIZE = 8;
+
+function loadLeaderboardPage(page = 0) {
+    if (document.getElementById('leaderboard') != null) {
+        document.getElementById('leaderboard').remove();
+    }
     var leaderboardSection = document.createElement('section');
     leaderboardSection.setAttribute('id', 'leaderboard');
     leaderboardSection.setAttribute('class', 'container col-12');
     leaderboardSection.innerHTML = `
     <div class="row">
-        <div class="col input-group p-3 rounded border border-secondary">
+        <div class="col justify-content-center input-group p-3 rounded border border-secondary">
             <legend class="p-2">Leaderboard</legend>
             <div id="leaderboard-table" class="container col-12"></div>
+            <div class="table-pagination"></div>
         </div>
     </div>
     `;
@@ -14,10 +20,52 @@ function loadLeaderboardPage() {
     document.getElementById('content').innerHTML = '';
     document.getElementById('content').appendChild(leaderboardSection);
 
-    loadLeaderboardTable();
+    loadLeaderboardTable(page);
 }
 
-function loadLeaderboardTable() {
+function loadPagination(page, totalPages) {
+    var pagination = document.querySelector('.table-pagination');
+    pagination.innerHTML = `
+    <ul class="pagination">
+        <li class="page-item">
+            <button class="page-link" id="left-btn" aria-label="Previous">
+                <span aria-hidden="true">&laquo;</span>
+            </button>
+        </li>
+        <li class="page-item"><a class="page-link" id="current-page"></a></li>
+        <li class="page-item">
+            <button class="page-link" id="right-btn" aria-label="Next">
+                <span aria-hidden="true">&raquo;</span>
+            </button>
+        </li>
+    </ul>
+    `;
+
+    var leftButton = document.getElementById('left-btn');
+    if (page <= 0) {
+        leftButton.setAttribute('disabled', true);
+    } else {
+        leftButton.addEventListener('click', function(e) {
+            e.preventDefault();
+            loadLeaderboardPage(page - 1);
+        });
+    }
+
+    var rightButton = document.getElementById('right-btn');
+    if (page + 1 >= totalPages) {
+        rightButton.setAttribute('disabled', true);
+    } else {
+        rightButton.addEventListener('click', function(e) {
+            e.preventDefault();
+            loadLeaderboardPage(page + 1);
+        });
+    }
+
+    var currentPage = document.getElementById('current-page');
+    currentPage.textContent = page + 1;
+}
+
+function loadLeaderboardTable(page = 0) {
     var leaderboardTable = document.getElementById('leaderboard-table');
     var table = document.createElement('table');
     table.setAttribute('class', 'table table-striped table-hover table-bordered text-center');
@@ -30,7 +78,7 @@ function loadLeaderboardTable() {
             <th scope="col">Games won</th>
             <th scope="col">Games played</th>
             <th scope="col">Win Rate</th>
-            <th scope="col" >Actions</th>
+            <th scope="col">Actions</th>
         </tr>
     </thead>
     <tbody id="leaderboard-table-body"></tbody>
@@ -38,7 +86,11 @@ function loadLeaderboardTable() {
 
     leaderboardTable.appendChild(table);
 
-    fetch('/api/leaderboard/', {
+    var url = new URL('http://localhost:8000/api/leaderboard/');
+    url.searchParams.append('page', page);
+    url.searchParams.append('pageSize', PAGE_SIZE);
+
+    fetchWithToken(url, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -46,17 +98,18 @@ function loadLeaderboardTable() {
             },
         })
         .then(response => response.json())
-        .then(data => {
+        .then(res => {
+            loadPagination(page, res.totalPages);
             var leaderboardTableBody = document.getElementById('leaderboard-table-body');
-            for (i = 0; i < data.length; i++) {
-                var user = data[i];
+            for (i = 0; i < res.data.length; i++) {
+                var user = res.data[i];
                 var row = document.createElement('tr');
                 var winRate = 0;
                 if (user.games != 0) {
                     winRate = (user.wins / user.games) * 100;
                 }
                 row.innerHTML = `
-                <th scope="row">${i + 1}</th>
+                <th scope="row">${(i + 1) + (page * PAGE_SIZE)}</th>
                 <td><img src="${user.photo}" alt="Profile photo" class="rounded-circle" width="50" height="50"></td>
                 <td>${user.username}</td>
                 <td>${user.wins}</td>
@@ -89,6 +142,9 @@ function loadLeaderboardTable() {
                     sendFriendRequest(username);
                 });
             });
+        })
+        .catch(error => {
+            alertError(error);
         });
 }
 

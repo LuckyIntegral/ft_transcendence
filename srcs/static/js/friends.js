@@ -1,3 +1,6 @@
+FRIEND_REQUESTS_LIST_PAGE_SIZE = 8;
+FRIEND_LIST_PAGE_SIZE = 6;
+
 function loadFriendsPage() {
     var friendsPage = document.createElement('section');
     friendsPage.setAttribute('id', 'friends-page');
@@ -14,14 +17,16 @@ function loadFriendsPage() {
         <div class="col input-group p-3 rounded border border-secondary justify-content-center">
             <div>
                 <legend class="p-2">Friends</legend>
-                <div id="friends-list" class="container col-12"></div>
+                <div id="friends-list" class="container col-12 mb-5"></div>
             </div>
+            <div class="friends-list-table-pagination position-absolute bottom-0 start-50 translate-middle-x"></div>
         </div>
         <div class="col input-group p-3 rounded border border-secondary justify-content-center">
             <div>
                 <legend class="p-2">Friend requests</legend>
-                <div id="friends-requests" class="container col-12"></div>
+                <div id="friends-requests" class="container col-12 mb-5"></div>
             </div>
+            <div class="friends-requests-table-pagination position-absolute bottom-0 start-50 translate-middle-x"></div>
         </div>
     </div>
     `;
@@ -32,9 +37,13 @@ function loadFriendsPage() {
     loadFriendsRequestsList();
 }
 
-function loadFriendsRequestsList() {
+function loadFriendsRequestsList(page = 0) {
     var friendsRequestsList = document.getElementById('friends-requests');
-    fetchWithToken('http://localhost:8000/api/friends-requests/', {
+    friendsRequestsList.innerHTML = '';
+    var url = new URL('http://localhost:8000/api/friends-requests/');
+    url.searchParams.append('page', page);
+    url.searchParams.append('pageSize', FRIEND_REQUESTS_LIST_PAGE_SIZE);
+    fetchWithToken(url, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -42,7 +51,7 @@ function loadFriendsRequestsList() {
             },
     }).then(response => response.json())
     .then(data => {
-        if (data.length === 0) {
+        if (data.data.length === 0) {
             var noFriendsRequests = document.createElement('table');
             noFriendsRequests.setAttribute('class', 'table table-striped table-hover table-bordered');
             noFriendsRequests.innerHTML = `
@@ -54,6 +63,7 @@ function loadFriendsRequestsList() {
             `;
             friendsRequestsList.appendChild(noFriendsRequests);
         } else {
+            loadFriendsRequestsListPagination(page, data.totalPages);
             var friendRequestTable = document.createElement('table');
             friendRequestTable.setAttribute('class', 'table table-striped table-hover table-bordered');
 
@@ -71,10 +81,10 @@ function loadFriendsRequestsList() {
 
             var friendRequestTableBody = document.createElement('tbody');
             let i = 1;
-            data.forEach(function(friendRequest) {
+            data.data.forEach(function(friendRequest) {
                 var friendRequestDiv = document.createElement('tr');
                 friendRequestDiv.innerHTML = `
-                <th scope="row">${i}</th>
+                <th scope="row">${i + (page * FRIEND_REQUESTS_LIST_PAGE_SIZE)}</th>
                 <td><span class="d-inline-block text-truncate" style="max-width: 150px;"
                 data-bs-toggle="tooltip" title="${friendRequest.email}">${friendRequest.email}</span></td>
                 <td><span class="d-inline-block text-truncate" style="max-width: 150px;"
@@ -107,6 +117,49 @@ function loadFriendsRequestsList() {
     ).catch(error => alertError(error));
 }
 
+function loadFriendsRequestsListPagination(page, totalPages) {
+    var pagination = document.querySelector('.friends-requests-table-pagination');
+    pagination.innerHTML = `
+    <ul class="pagination">
+        <li class="page-item">
+            <button class="page-link" id="friends-requests-left-btn" aria-label="Previous">
+                <span aria-hidden="true">&laquo;</span>
+            </button>
+        </li>
+        <li class="page-item"><a class="page-link" id="friends-requests-current-page"></a></li>
+        <li class="page-item">
+            <button class="page-link" id="friends-requests-right-btn" aria-label="Next">
+                <span aria-hidden="true">&raquo;</span>
+            </button>
+        </li>
+    </ul>
+    `;
+
+    var leftButton = document.getElementById('friends-requests-left-btn');
+    if (page <= 0) {
+        leftButton.setAttribute('disabled', true);
+    } else {
+        leftButton.addEventListener('click', function(e) {
+            e.preventDefault();
+            loadFriendsRequestsList(page - 1);
+        });
+    }
+
+    var rightButton = document.getElementById('friends-requests-right-btn');
+    if (page + 1 >= totalPages) {
+        rightButton.setAttribute('disabled', true);
+    } else {
+        rightButton.addEventListener('click', function(e) {
+            e.preventDefault();
+            loadFriendsRequestsList(page + 1);
+        });
+    }
+
+    var currentPage = document.getElementById('friends-requests-current-page');
+    currentPage.textContent = page + 1;
+
+}
+
 function acceptFriendRequest() {
     actionFriendRequest.call(this, 'accept');
 }
@@ -136,9 +189,13 @@ function actionFriendRequest(action = 'accept') {
     }).catch(error => alertError(error));
 }
 
-function loadFriendsList() {
+function loadFriendsList(page = 0) {
     var friendsList = document.getElementById('friends-list');
-    fetchWithToken('http://localhost:8000/api/friends/', {
+    friendsList.innerHTML = '';
+    var url = new URL('http://localhost:8000/api/friends/');
+    url.searchParams.append('page', page);
+    url.searchParams.append('pageSize', FRIEND_LIST_PAGE_SIZE);
+    fetchWithToken(url, {
         method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -147,7 +204,7 @@ function loadFriendsList() {
     })
     .then(response => response.json())
     .then(data => {
-            if (data.length === 0) {
+            if (data.data.length === 0) {
                 var noFriends = document.createElement('table');
                 noFriends.setAttribute('class', 'table table-striped table-hover table-bordered');
                 noFriends.innerHTML = `
@@ -159,6 +216,7 @@ function loadFriendsList() {
                 `;
                 friendsList.appendChild(noFriends);
             } else {
+                loadFriendsListPagination(page, data.totalPages);
                 var friendTable = document.createElement('table');
                 friendTable.setAttribute('class', 'table table-striped table-hover table-bordered');
 
@@ -177,10 +235,10 @@ function loadFriendsList() {
 
                 var friendTableBody = document.createElement('tbody');
                 let i = 1;
-                data.forEach(function(friend) {
+                data.data.forEach(function(friend) {
                     var friendDiv = document.createElement('tr');
                     friendDiv.innerHTML = `
-                    <th scope="row">${i}</th>
+                    <th scope="row">${i + (page * FRIEND_LIST_PAGE_SIZE)}</th>
                     <td><img src="${friend.pictureSmall}" alt="Profile photo" class="rounded-circle" width="50" height="50"></td>
                     <td><span class="d-inline-block text-truncate" style="max-width: 150px;"
                         data-bs-toggle="tooltip" title="${friend.email}">${friend.email}</span></td>
@@ -212,10 +270,51 @@ function loadFriendsList() {
             }
         })
         .catch(error => alertError(error));
+}
+
+function loadFriendsListPagination(page, totalPages) {
+    var pagination = document.querySelector('.friends-list-table-pagination');
+    pagination.innerHTML = `
+    <ul class="pagination">
+        <li class="page-item">
+            <button class="page-link" id="friends-list-left-btn" aria-label="Previous">
+                <span aria-hidden="true">&laquo;</span>
+            </button>
+        </li>
+        <li class="page-item"><a class="page-link" id="friends-list-current-page"></a></li>
+        <li class="page-item">
+            <button class="page-link" id="friends-list-right-btn" aria-label="Next">
+                <span aria-hidden="true">&raquo;</span>
+            </button>
+        </li>
+    </ul>
+    `;
+
+    var leftButton = document.getElementById('friends-list-left-btn');
+    if (page <= 0) {
+        leftButton.setAttribute('disabled', true);
+    } else {
+        leftButton.addEventListener('click', function(e) {
+            e.preventDefault();
+            loadFriendsList(page - 1);
+        });
     }
 
+    var rightButton = document.getElementById('friends-list-right-btn');
+    if (page + 1 >= totalPages) {
+        rightButton.setAttribute('disabled', true);
+    } else {
+        rightButton.addEventListener('click', function(e) {
+            e.preventDefault();
+            loadFriendsList(page + 1);
+        });
+    }
+
+    var currentPage = document.getElementById('friends-list-current-page');
+    currentPage.textContent = page + 1;
+}
+
 function showInfoFriend(username) {
-    console.log(username);
     var url = new URL('http://localhost:8000/api/user-details/');
     url.searchParams.append('username', username);
     fetchWithToken(url, {

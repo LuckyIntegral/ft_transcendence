@@ -2,12 +2,15 @@
     Views are used to handle http requests and return responses.
 """
 import random
+import math
+from PIL import Image
 from django.shortcuts import render
 from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.mail import send_mail
+from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.http import HttpResponse
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -16,10 +19,8 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.authentication import InvalidToken, TokenError
 from .validators import *
 from .models import *
-from .utils import sendVerificationEmail, sendTwoStepVerificationEmail, getUserFromToken, sendPasswordResetEmail,\
-            getCompressedPicture
-from PIL import Image
-from django.core.files.uploadedfile import InMemoryUploadedFile
+from .utils import sendVerificationEmail, sendTwoStepVerificationEmail, getUserFromToken,\
+        sendPasswordResetEmail, getCompressedPicture
 
 
 # Create your views here.
@@ -251,14 +252,32 @@ class FriendsRequestsView(APIView):
         except ValidationError as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-        friend_request_list = FriendRequest.objects.filter(toUser=user.id)
-        data = []
+        page = request.query_params.get('page')
+        page = 0 if not page else int(page)
+        page_size = request.query_params.get('pageSize')
+        page_size = 10 if not page_size else int(page_size)
+
+        friend_request_list = FriendRequest.objects.filter(toUser=user.id).order_by('fromUser__username')
+        request_list_count = friend_request_list.count()
+        response = {'data':[], 'page':0, 'totalPages':0,}
+
+        if request_list_count == 0:
+            return Response(response, status=status.HTTP_200_OK)
+
+        if page_size * page >= request_list_count or page < 0 or page_size < 1:
+            return Response(response, status=status.HTTP_400_BAD_REQUEST)
+
+        response['page'] = page
+        response['totalPages'] = math.ceil(request_list_count / page_size)
+
+        friend_request_list = friend_request_list[page_size * page : min(page_size * (page + 1), request_list_count)]
+
         for friend_request in friend_request_list:
-            data.append({
+            response['data'].append({
                 'email': friend_request.fromUser.email,
                 'username': friend_request.fromUser.username,
             })
-        return Response(data, status=status.HTTP_200_OK)
+        return Response(response, status=status.HTTP_200_OK)
 
     def post(self, request):
         """ This method is used to send a friend request to a user. """
@@ -345,15 +364,33 @@ class FriendsView(APIView):
         except ValidationError as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-        friend_list = user.userprofile.friendList.all()
-        data = []
+        page = request.query_params.get('page')
+        page = 0 if not page else int(page)
+        page_size = request.query_params.get('pageSize')
+        page_size = 10 if not page_size else int(page_size)
+
+        friend_list = user.userprofile.friendList.all().order_by('user__username')
+        friend_list_count = friend_list.count()
+        response = {'data':[], 'page':0, 'totalPages':0,}
+
+        if friend_list_count == 0:
+            return Response(response, status=status.HTTP_200_OK)
+
+        if page_size * page >= friend_list_count or page < 0 or page_size < 1:
+            return Response(response, status=status.HTTP_400_BAD_REQUEST)
+
+        response['page'] = page
+        response['totalPages'] = math.ceil(friend_list_count / page_size)
+
+        friend_list = friend_list[page_size * page : min(page_size * (page + 1), friend_list_count)]
+
         for friend in friend_list:
-            data.append({
+            response['data'].append({
                 'pictureSmall': friend.pictureSmall.url,
                 'email': friend.user.email,
                 'username': friend.user.username,
             })
-        return Response(data, status=status.HTTP_200_OK)
+        return Response(response, status=status.HTTP_200_OK)
 
     def delete(self, request):
         """ This method is used to remove a friend from the user's friend list. """
@@ -623,7 +660,7 @@ class FriendsSearchView(APIView):
                 friend_list = UserProfile.objects.filter(user__username__icontains=search_query)
             except UserProfile.DoesNotExist:
                 return Response(data, status=status.HTTP_200_OK)
-            for friend in friend_list:
+            for friend in friend_list[:min(10, friend_list.count())]:
                 data.append({
                     'email': friend.user.email,
                     'username': friend.user.username,
@@ -642,16 +679,36 @@ class LeaderboardView(APIView):
             JWTTokenValidator().validate(auth_header)
         except ValidationError as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-        data = []
-        player_list = UserProfile.objects.all() # .order_by('-gamesWon')
+
+        page = request.query_params.get('page')
+        page = 0 if not page else int(page)
+        page_size = request.query_params.get('pageSize')
+        page_size = 10 if not page_size else int(page_size)
+
+        player_list = UserProfile.objects.all().order_by('-gamesWon', 'user__username')
+        player_list_count = player_list.count()
+        response = {'data':[], 'page':0, 'totalPages':0,}
+
+        if player_list_count == 0:
+            return Response(response, status=status.HTTP_200_OK)
+
+        if page_size * page >= player_list_count or page < 0 or page_size < 1:
+            return Response(response, status=status.HTTP_400_BAD_REQUEST)
+
+        response['page'] = page
+        response['totalPages'] = math.ceil(player_list_count / page_size)
+
+        player_list = player_list[page_size * page : min(page_size * (page + 1), player_list_count)]
+
         for player in player_list:
-            data.append({
+            response['data'].append({
                 'photo': player.pictureSmall.url,
                 'username': player.user.username,
                 'wins': player.gamesWon,
                 'games': player.gamesPlayed,
             })
-        return Response(data, status=status.HTTP_200_OK)
+
+        return Response(response, status=status.HTTP_200_OK)
 
 class UserDetailsView(APIView):
     """ This view is used to get the details of a user.
