@@ -22,7 +22,6 @@ class UserProfile(models.Model):
             to store the friends of the user.
     """
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    # additional fields
     displayName = models.CharField(max_length=50, blank=True)
     emailVerified = models.BooleanField(default=False)
     isTwoStepEmailAuthEnabled = models.BooleanField(default=False)
@@ -33,6 +32,8 @@ class UserProfile(models.Model):
     gamesPlayed = models.IntegerField(default=0)
     picture = models.ImageField(upload_to=userDirectoryPath, default='images/default.jpg')
     pictureSmall = models.ImageField(upload_to=userDirectoryPath, default='images/defaultSmall.jpg')
+    isOnline = models.BooleanField(default=False)
+    lastOnline = models.DateTimeField(auto_now=True)
 
 class FriendRequest(models.Model):
     """ This model represents the friend request.
@@ -45,3 +46,10 @@ class FriendRequest(models.Model):
     fromUser = models.ForeignKey(User, on_delete=models.CASCADE, related_name='fromUser')
     toUser = models.ForeignKey(User, on_delete=models.CASCADE, related_name='toUser')
     accepted = models.BooleanField(default=False)
+
+
+class Messages(models.Model):
+    fromUser = models.ForeignKey(User, on_delete=models.CASCADE, related_name='fromUserMessage')
+    toUser = models.ForeignKey(User, on_delete=models.CASCADE, related_name='toUserMessage')
+    message = models.TextField()
+    timestamp = models.DateTimeField(auto_now_add=True)

@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'pingpong',
     'rest_framework_simplejwt',
     'rest_framework.authtoken',
+    'channels',
 ]
 
 MIDDLEWARE = [
@@ -55,6 +56,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
 ]
 
 ROOT_URLCONF = 'transcedence.urls'
@@ -76,6 +78,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'transcedence.wsgi.application'
+ASGI_APPLICATION = 'transcedence.asgi.application'
 
 
 # Database
