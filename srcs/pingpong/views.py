@@ -20,7 +20,9 @@ from rest_framework_simplejwt.authentication import InvalidToken, TokenError
 from .validators import *
 from .models import *
 from .utils import sendVerificationEmail, sendTwoStepVerificationEmail, getUserFromToken,\
-        sendPasswordResetEmail, getCompressedPicture
+        sendPasswordResetEmail, getCompressedPicture, blockChainCreateGame
+from PIL import Image
+from django.core.files.uploadedfile import InMemoryUploadedFile
 
 
 # Create your views here.
@@ -628,7 +630,7 @@ class UploadPictureView(APIView):
 
         commpressedPicture = getCompressedPicture(image)
         smallImageField = user.userprofile.pictureSmall
-        smallImageName = user.username + '_small.jpg'
+        smallImageName = user.username + '_picture_small.jpg'
         smallImagePath = settings.MEDIA_ROOT + smallImageName
 
         smallImageField.save(smallImageName, InMemoryUploadedFile(commpressedPicture,

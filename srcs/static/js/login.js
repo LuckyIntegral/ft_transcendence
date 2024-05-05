@@ -24,17 +24,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     })
                 }).then(function(response) {
                     if (response.ok) {
-                        var successMessage = document.createElement('p');
-                        successMessage.textContent = 'An email has been sent to you with instructions on how to reset your password.';
-                        successMessage.style.color = 'green';
-                        forgotPasswordForm.removeChild(forgotPasswordForm.lastChild);
-                        forgotPasswordForm.appendChild(successMessage);
+                        alertSuccess('An email has been sent to you with instructions to reset your password.');
+                        document.body.removeChild(forgotPasswordPopup);
                     } else {
-                        throw new Error('Error: ' + response.statusText);
+                        popupAlertError('Invalid email. Please try again.');
                     }
-                }).catch(function(error) {
-                    popupAlertError(error); // TODO: Implement alertError
-                });
+                })
             });
         }
     }

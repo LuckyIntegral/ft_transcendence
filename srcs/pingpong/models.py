@@ -6,6 +6,7 @@
 """
 from django.db import models
 from django.contrib.auth.models import User
+from .utils import userDirectoryPath
 
 # Create your models here.
 class UserProfile(models.Model):
@@ -28,10 +29,10 @@ class UserProfile(models.Model):
     verificationEmailCode = models.CharField(max_length=6, blank=True)
     passwordResetToken = models.CharField(max_length=100, blank=True)
     friendList = models.ManyToManyField("self", related_name='friendList', blank=True)
-    picture = models.ImageField(upload_to='pictures/', default='images/default.jpg')
-    pictureSmall = models.ImageField(upload_to='pictures/', default='images/defaultSmall.jpg')
     gamesWon = models.IntegerField(default=0)
     gamesPlayed = models.IntegerField(default=0)
+    picture = models.ImageField(upload_to=userDirectoryPath, default='images/default.jpg')
+    pictureSmall = models.ImageField(upload_to=userDirectoryPath, default='images/defaultSmall.jpg')
 
 class FriendRequest(models.Model):
     """ This model represents the friend request.
