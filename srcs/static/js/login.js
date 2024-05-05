@@ -125,7 +125,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     } else if (response.status == 202) {
                         document.body.removeChild(loginPopup);
                         document.body.appendChild(twoStepVerificationPopup);
-                        // sendVerificationCodeEmail(username, password); // TODO: Uncomment this line later
+                        sendVerificationCodeEmail(username, password); // TODO: Uncomment this line later
                         var twoStepVerificationForm = document.getElementById('two-step-verification-form');
                         closeButton = twoStepVerificationPopup.querySelector('#close-button');
                         closeButton.addEventListener('click', function() {

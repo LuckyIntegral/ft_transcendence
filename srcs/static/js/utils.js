@@ -84,9 +84,8 @@ function createVerificationSpan(is_verified) {
         span.style.color = 'green';
         span.textContent = 'check_circle';
     } else {
-        span.setAttribute('class', 'material-symbols-outlined');
-        span.style.color = 'red';
-        span.textContent = 'unpublished';
+        span.setAttribute('class', 'btn btn-outline-success');
+        span.textContent = 'Verify';
         span.title = 'Click to send verification email';
         span.style.cursor = 'pointer';
         span.addEventListener('click', function() {
