@@ -9,8 +9,8 @@ function loadFriendsPage() {
     <div class="row">
         <div class="input-group p-3 rounded border border-secondary">
             <legend class=" p-2">Add friends</legend>
-            <input type="text" class="form-control rounded-end" id="friendRequestInput" placeholder="Search..." data-bs-toggle="dropdown" aria-expanded="true">
-            <ul class="dropdown-menu" aria-labelledby="friendRequestInput" id="friendRequestResultsDropdown"></ul>
+            <input type="text" class="form-control rounded-end" id="friendRequestInput" placeholder="Add friend..." data-bs-toggle="dropdown" aria-expanded="true">
+            <ul class="dropdown-menu" aria-labelledby="friendRequestInput" id="friendRequestResultsDropdown" style></ul>
         </div>
     </div>
     <div class="row">
@@ -408,8 +408,18 @@ function searchFriendQuery() {
                     dropdownMenu.innerHTML = '';
                     for (var i = 0; i < data.length; i++) {
                         var searchResults = document.createElement('li');
+                        searchResults.setAttribute('class', '');
                         searchResults.innerHTML = `
-                        <a class="dropdown-item" id="dropdown-item" data-friend-id="${data[i].username}">${data[i].username}</a>
+                        <a class="dropdown-item ml-2 justify-content-center" id="dropdown-item" data-friend-id="${data[i].username}">
+                            <div>
+                            <span class="material-symbols-outlined">
+                                group_add
+                            </span>
+                            <span class="align-top">
+                            ${data[i].username}
+                            </span>
+                            </div>
+                        </a>
                         `;
                         dropdownMenu.appendChild(searchResults);
                     }
