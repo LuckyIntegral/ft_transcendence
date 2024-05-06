@@ -56,7 +56,6 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',
 ]
 
 ROOT_URLCONF = 'transcedence.urls'
@@ -184,3 +183,12 @@ WEB3_PROVIDER = os.environ.get('WEB3_PROVIDER')
 WEB3_PRIVATE_KEY = os.environ.get('WEB3_PRIVATE_KEY')
 WEB3_CONTRACT_ADDRESS = os.environ.get('WEB3_CONTRACT_ADDRESS')
 WEB3_CHAIN_ID = int(os.environ.get('WEB3_CHAIN_ID'))
+
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            "hosts": [('127.0.0.1', 6379)],
+        },
+    },
+}

@@ -34,6 +34,7 @@ class UserProfile(models.Model):
     pictureSmall = models.ImageField(upload_to=userDirectoryPath, default='images/defaultSmall.jpg')
     isOnline = models.BooleanField(default=False)
     lastOnline = models.DateTimeField(auto_now=True)
+    blockedChatUsers = models.ManyToManyField("self", related_name='blockedChatUsers', blank=True)
 
 class FriendRequest(models.Model):
     """ This model represents the friend request.
@@ -47,9 +48,21 @@ class FriendRequest(models.Model):
     toUser = models.ForeignKey(User, on_delete=models.CASCADE, related_name='toUser')
     accepted = models.BooleanField(default=False)
 
+class MessagesRecipient(models.Model):
+    recipient = models.ForeignKey(User, on_delete=models.CASCADE, related_name='recipient')
+    message = models.ForeignKey('Message', on_delete=models.CASCADE)
+    isRead = models.BooleanField(default=False)
 
-class Messages(models.Model):
-    fromUser = models.ForeignKey(User, on_delete=models.CASCADE, related_name='fromUserMessage')
-    toUser = models.ForeignKey(User, on_delete=models.CASCADE, related_name='toUserMessage')
+class Message(models.Model):
+    sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sender')
     message = models.TextField()
     timestamp = models.DateTimeField(auto_now_add=True)
+    messageRecepient = models.OneToOneField(MessagesRecipient, on_delete=models.CASCADE, related_name='messageRecepient')
+
+class Chat(models.Model):
+    userOne = models.ForeignKey(User, on_delete=models.CASCADE, related_name='userOne')
+    userTwo = models.ForeignKey(User, on_delete=models.CASCADE, related_name='userTwo')
+    messages = models.ManyToManyField(Message, related_name='messages', blank=True)
+    token = models.CharField(max_length=100)
+    isUserOneBlocked = models.BooleanField(default=False)
+    isUserTwoBlocked = models.BooleanField(default=False)
