@@ -36,8 +36,12 @@
     border-radius: 3px
 }
 
+.people-list .chat-list li.unread {
+    background: #efefef
+}
+
 .people-list .chat-list li:hover {
-    background: #efefef;
+    background: #add8e6;
     cursor: pointer
 }
 
@@ -45,14 +49,9 @@
     background: #add8e6
 }
 
-.people-list .chat-list li.unread {
-    background: #efefef
-}
-
 .people-list .chat-list li .name {
     font-size: 15px
 }
-
 
 .people-list .chat-list img {
     width: 45px;

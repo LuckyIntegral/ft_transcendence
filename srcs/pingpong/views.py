@@ -749,34 +749,30 @@ class ChatView(APIView):
         It has following methods:
         1. get: This method is used to get the chat messages.
     """
-    def get(self, request, format=None):
+    def put(self, request, format=None):
         """ This method is used to get the chat messages. """
         auth_header = request.headers.get('Authorization')
         try:
-            JWTTokenValidator().validate(auth_header)
+            token = JWTTokenValidator().validate(auth_header)
         except ValidationError as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         try:
             user = getUserFromToken(token)
         except ValidationError as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-        secondUser = request.data.get('secondUser')
-        if not secondUser:
-            return Response({'error': 'Please provide a second user'}, status=status.HTTP_400_BAD_REQUEST)
         try:
-            secondUser = User.objects.get(username=secondUser)
-        except User.DoesNotExist:
-            return Response({'error': 'User does not exist'}, status=status.HTTP_404_NOT_FOUND)
-        chat = Chat.objects.filter(Q(userOne=user, toUser=secondUser) | Q(userOne=secondUser, toUser=user))
-        if not chat:
-            chat = Chat.objects.create(userOne=user, userTwo=secondUser, token=generateToken())
+            chat = Chat.objects.get(token=request.data.get('token'))
+        except Chat.DoesNotExist:
+            return Response({'error': 'Chat does not exist'}, status=status.HTTP_404_NOT_FOUND)
+        secondUser = chat.userOne if chat.userOne != user else chat.userTwo
         data = []
         for message in chat.messages.order_by('timestamp'):
             data.append({
                 'message': message.message,
+                'type': 'income' if message.sender != user else 'outcome',
                 'timestamp': message.timestamp,
                 'sender': message.sender.username,
-                'recipient': message.messageRecepient.recipient.username,
+                'picture': message.sender.userprofile.pictureSmall.url,
                 'token': chat.token,
             })
         return Response(data, status=status.HTTP_200_OK)
@@ -807,7 +803,7 @@ class MessagesView(APIView):
                     'isOnline': secondUserIsOnline,
                     'lastOnline': secondUserLastOnline,
                     'picture': secondUserPicture,
-                    'isRead': lastMessage.isRead if lastMessage.sender != user else True,
+                    'isRead': lastMessage.messageRecepient.isRead if lastMessage.sender != user else True,
                     'token': chat.token,
                 })
         return Response(data, status=status.HTTP_200_OK)

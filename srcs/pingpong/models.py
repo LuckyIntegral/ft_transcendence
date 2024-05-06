@@ -50,14 +50,14 @@ class FriendRequest(models.Model):
 
 class MessagesRecipient(models.Model):
     recipient = models.ForeignKey(User, on_delete=models.CASCADE, related_name='recipient')
-    message = models.ForeignKey('Message', on_delete=models.CASCADE)
+    message = models.ForeignKey('Message', on_delete=models.CASCADE, null=True)
     isRead = models.BooleanField(default=False)
 
 class Message(models.Model):
     sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sender')
     message = models.TextField()
     timestamp = models.DateTimeField(auto_now_add=True)
-    messageRecepient = models.OneToOneField(MessagesRecipient, on_delete=models.CASCADE, related_name='messageRecepient')
+    messageRecepient = models.OneToOneField(MessagesRecipient, on_delete=models.CASCADE, related_name='messageRecepient', null=True)
 
 class Chat(models.Model):
     userOne = models.ForeignKey(User, on_delete=models.CASCADE, related_name='userOne')
