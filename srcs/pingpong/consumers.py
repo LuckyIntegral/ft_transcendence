@@ -14,6 +14,22 @@ class PingPongConsumer(AsyncWebsocketConsumer):
     def getChatExists(self, chatToken):
         return Chat.objects.filter(token=chatToken).exists()
 
+    @database_sync_to_async
+    def getChat(self, chatToken):
+        return Chat.objects.filter(token=chatToken).first()
+
+    @database_sync_to_async
+    def createMessageRecipient(self, recipient):
+        return MessagesRecipient.objects.create(recipient=recipient)
+
+    @database_sync_to_async
+    def createMessage(self, sender, message, messageRecipient):
+        return Messages.objects.create(sender=sender, message=message, messageRecipient=messageRecipient)
+
+    @database_sync_to_async
+    def addMessageToChat(self, chat, message):
+        chat.messages.add(message)
+
     async def connect(self):
         try:
             chatToken = self.scope['url_route']['kwargs']['token']
@@ -41,27 +57,21 @@ class PingPongConsumer(AsyncWebsocketConsumer):
         except:
             await self.close()
             return
-        chat = Chat.objects.filter(token=chatToken).first()
-        if not chat.exists():
+        if not await self.getChatExists(chatToken):
             await self.close()
             return
         text_data_json = json.loads(text_data)
         message = text_data_json['message']
         sender = text_data_json['sender']
-        try:
-            fromUser = User.objects.get(username=fromUser)
-            toUser = User.objects.get(username=toUser)
-        except User.DoesNotExist as e:
-            await self.close()
-            return
-        messageRecepient = MessagesRecipient.objects.create(recipient=toUser)
-        message = Messages.objects.create(sender=fromUser, message=message, messageRecepient=messageRecepient)
-        chat.messages.add(message)
+        timestamp = text_data_json['timestamp']
+        self.messageRecepient = await self.createMessageRecipient(sender)
+        self.message = await self.createMessage(sender, message, self.messageRecepient)
+        chat = await self.getChat(chatToken)
+        await self.addMessageToChat(chat, self.message)
         await self.send(chatToken, {
             'type': 'chat_message',
             'message': message.message({
-                'from': fromUser.username,
-                'to': toUser.username,
+                'sender': message.sender,
                 'message': message.message,
                 'timestamp': message.timestamp
             })

@@ -97,7 +97,8 @@ function getChatMessages(chatToken) {
     .then(data => {
         document.getElementById('messagesList').innerHTML = '';
         data.forEach(message => {
-            if (message['type'] === 'income') {
+            console.log(message);
+            if (message['sender'] !== localStorage.getItem('username')) {
                 document.getElementById('messagesList').appendChild(createIncomeMessageItemLi(message['message'], formatTimestamp(message['timestamp']), message['picture']));
             } else {
                 document.getElementById('messagesList').appendChild(createOutcomeMessageItemLi(message['message'], formatTimestamp(message['timestamp']), message['picture']));
@@ -140,6 +141,7 @@ function sendMessage(socket, chatToken) {
     socket.send(JSON.stringify({
         'sender': localStorage.getItem('username'),
         'message': message,
+        'timestamp': new Date().toISOString(),
     }));
     document.getElementById('messageInput').value = '';
 }
@@ -163,6 +165,7 @@ function updateActiveChat(chatToken) {
     document.getElementById('messagesList').innerHTML = '';
     getChatMessages(chatToken);
     socket = connectToSocket(chatToken);
+    document.getElementById('inputDiv').setAttribute('style', '');
     document.getElementById('messageInput').addEventListener('keypress', function(event) {
         if (event.keyCode === 13) {
             sendMessage(socket, chatToken);
