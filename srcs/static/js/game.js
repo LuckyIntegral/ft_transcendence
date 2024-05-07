@@ -8,10 +8,12 @@ function loadGamePage() {
 
     var canvas = document.createElement('canvas');
     canvas.id = 'game';
-    content.appendChild(canvas);
+
+    var popup = createPopup();
+    popup.appendChild(canvas);
 
     document.getElementById('content').textContent = '';
-    document.getElementById('content').appendChild(canvas);
+    document.getElementById('content').appendChild(popup);
     var Game = {
         init: function() {
             this.canvas = document.getElementById('game');
@@ -187,6 +189,6 @@ function loadGamePage() {
                 this.player.y += this.player.speed;
         }
     };
-
+    document.body.appendChild(popup);
     Game.init();
 };

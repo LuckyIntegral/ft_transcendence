@@ -2,25 +2,45 @@
 // import loadProfilePage from './profile.js';
 
 // Define your routes
+var previousRoute = null;
+
+function checkAndReload() {
+    if (previousRoute === 'pong') {
+        location.reload();
+    }
+}
+
+// Define your routes
 document.addEventListener('DOMContentLoaded', function() {
     var routes = {
         'profile': function() {
+            checkAndReload();
             loadProfilePage();
+            previousRoute = 'profile';
         },
         'pong': function() {
             loadGamePage();
+            previousRoute = 'pong';
         },
         'friends': function() {
+            checkAndReload();
             loadFriendsPage();
+            previousRoute = 'friends';
         },
         'leadrboard': function() {
+            checkAndReload();
             loadLeaderboardPage();
+            previousRoute = 'leadrboard';
         },
         'messages': function() {
+            checkAndReload();
             loadMessagesPage();
+            previousRoute = 'messages';
         },
         'default': function() {
+            checkAndReload();
             document.getElementById('content').textContent = 'Default page';
+            previousRoute = 'default';
         }
     };
 
