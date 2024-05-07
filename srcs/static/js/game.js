@@ -177,15 +177,12 @@ function loadGamePage() {
         },
 
         calculateOptimalY: function() {
-            // Calculate where the ball will be when it reaches the AI
             let ballYWhenReachingAI = this.ball.y + this.ball.velocityY * ((this.width - this.ai.x) / this.ball.velocityX);
         
-            // If the ball is moving away from the AI, aim for the center of the field
             if (this.ball.velocityX < 0) {
                 return this.height / 2;
             }
-        
-            // If the ball will intersect above or below the field, aim for the top or bottom of the field
+
             if (ballYWhenReachingAI < 0) {
                 return 0;
             }
@@ -193,16 +190,13 @@ function loadGamePage() {
                 return this.height - this.ai.height;
             }
         
-            // Calculate the y-coordinate that will make the ball land the furthest from the player
             let playerYWhenBallReachesAI = this.player.y + this.player.speed * ((this.width - this.ai.x) / this.ball.velocityX);
             let optimalY = (playerYWhenBallReachesAI < this.height / 2) ? this.height - this.ai.height : 0;
         
-            // If the AI can hit the ball towards the optimal y-coordinate without missing the ball, do so
             if (Math.abs(optimalY - ballYWhenReachingAI) <= this.ai.height / 2) {
                 return optimalY;
             }
         
-            // Otherwise, aim for the point of intersection
             return ballYWhenReachingAI - this.ai.height / 2;
         },
 
