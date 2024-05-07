@@ -113,7 +113,7 @@ function loadGamePage() {
                 width: 10,
                 height: 100,
                 score: 0,
-                speed: 100
+                speed: 1000
             };
             this.ball = {
                 x: this.width / 2,
@@ -171,7 +171,27 @@ function loadGamePage() {
                 this.playerScored();
             }
 
-            this.ai.y += ((this.ball.y - (this.ai.y + this.ai.height / 2))) * this.ai.speed / 1000;
+            let optimalY = this.calculateOptimalY();
+            let dy = optimalY - this.ai.y;
+            this.ai.y += dy * 0.08;
+        },
+
+        calculateOptimalY: function() {
+            let ballYWhenReachingAI = this.ball.y + this.ball.velocityY * ((this.width - this.ai.x) / this.ball.velocityX);
+        
+            if (this.ball.velocityX < 0) {
+                return this.height / 2;
+            }
+        
+            if (ballYWhenReachingAI < 0) {
+                return 0;
+            }
+        
+            if (ballYWhenReachingAI > this.height) {
+                return this.height - this.ai.height;
+            }
+        
+            return ballYWhenReachingAI - this.ai.height / 2;
         },
 
         draw: function() {
