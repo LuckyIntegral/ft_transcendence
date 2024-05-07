@@ -35,25 +35,42 @@ function loadGamePage() {
         },
 
         checkIfGameOver: function() {
-            if (this.player.score >= 5 || this.ai.score >= 5) {
-                this.drawGameOverScreen();
-                window.removeEventListener('keypress', this.onKeyPress.bind(this));
+            if (this.ai.score >= 5) {
+                this.playerLost();
+                window.removeEventListener('keydown', this.onKeyPress.bind(this));
+                window.removeEventListener('keyup', this.onKeyPress.bind(this));
+                this.gameOver = true;
+            } else if ( this.player.score >= 5) {
+                this.playerWon();
+                window.removeEventListener('keydown', this.onKeyPress.bind(this));
+                window.removeEventListener('keyup', this.onKeyPress.bind(this));
                 this.gameOver = true;
             }
         },
 
         startNewGame: function() {
             this.reset();
-            window.addEventListener('keypress', this.onKeyPress.bind(this));
+            window.addEventListener('keydown', this.onKeyPress.bind(this));
+            window.addEventListener('keyup', this.onKeyPress.bind(this));
             this.loop();
         },
 
-        drawGameOverScreen: function() {
+        playerLost: function() {
             this.ctx.fillStyle = 'BLACK';
             this.ctx.fillRect(0, 0, this.width, this.height);
             this.ctx.fillStyle = 'WHITE';
             this.ctx.font = '40px Arial';
             this.ctx.fillText('GAME OVER', this.width / 4, this.height / 2);
+            this.ctx.fillText('Click to play again', this.width / 4, this.height / 2 + 100);
+            this.canvas.addEventListener('click', this.boundReset);
+        },
+
+        playerWon: function() {
+            this.ctx.fillStyle = 'BLACK';
+            this.ctx.fillRect(0, 0, this.width, this.height);
+            this.ctx.fillStyle = 'WHITE';
+            this.ctx.font = '40px Arial';
+            this.ctx.fillText('YOU WIN', this.width / 4, this.height / 2);
             this.ctx.fillText('Click to play again', this.width / 4, this.height / 2 + 100);
             this.canvas.addEventListener('click', this.boundReset);
         },
@@ -86,7 +103,9 @@ function loadGamePage() {
                 width: 10,
                 height: 100,
                 score: 0,
-                speed: 50
+                speed: 10,
+                moveUp: false,
+                moveDown: false,
             };
             this.ai = {
                 x: this.width - 30,
@@ -121,6 +140,13 @@ function loadGamePage() {
         update: function() {
             this.ball.x += this.ball.velocityX;
             this.ball.y += this.ball.velocityY;
+
+            if (this.player.moveUp === true) {
+                this.player.y -= this.player.speed;
+            }
+            if (this.player.moveDown === true) {
+                this.player.y += this.player.speed;
+            }
 
             if (this.ball.y + this.ball.radius > this.height || this.ball.y - this.ball.radius < 0) {
                 this.ball.velocityY = -this.ball.velocityY;
@@ -182,16 +208,22 @@ function loadGamePage() {
             );
         },
 
-        onKeyPress: function(event)
-        {
-            if (this.player.y < 0)
-                this.player.y = 0;
-            if (this.player.y + this.player.height > this.height)
-                this.player.y = this.height - this.player.height;
-            if (event.key === 'w' || event.key === 'W')
-                this.player.y -= this.player.speed;
-            if (event.key === 's' || event.key === 'S')
-                this.player.y += this.player.speed;
+        onKeyPress: function(event) {
+            if (event.type === 'keydown') {
+                if (event.key === 'w' || event.key === 'W') {
+                    this.player.moveUp = true;
+                }
+                if (event.key === 's' || event.key === 'S') {
+                    this.player.moveDown = true;
+                }
+            } else if (event.type === 'keyup') {
+                if (event.key === 'w' || event.key === 'W') {
+                    this.player.moveUp = false;
+                }
+                if (event.key === 's' || event.key === 'S') {
+                    this.player.moveDown = false;
+                }
+            }
         }
     };
     document.body.appendChild(popup);
