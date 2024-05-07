@@ -247,10 +247,16 @@
     .chat-app .chat .chat-header {
         border-radius: 0.55rem 0.55rem 0 0
     }
-    .chat-app .chat-history {
+    /* .chat-app .chat-history {
         height: 300px;
         overflow-x: auto
-    }
+    } */
+    .chat-app .chat-history {
+        display: flex; /* Enable flexbox layout */
+        flex-direction: column; /* Stack content vertically */
+        flex-grow: 1; /* Allow chat history to fill available space */
+        overflow-x: auto; /* Maintain horizontal scroll for long messages */
+      }
 }
 
 @media only screen and (min-width: 768px) and (max-width: 992px) {

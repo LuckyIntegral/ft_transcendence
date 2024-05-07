@@ -10,6 +10,7 @@ function loadMessagesPage() {
             document.getElementById('content').appendChild(messagesPage);
         })
         .then(() => {
+            document.getElementById('messagesList').innerHTML = '';
             getUserListChats();
         });
 }
@@ -94,6 +95,7 @@ function getChatMessages(chatToken) {
         throw new Error('Failed to load messages');
     })
     .then(data => {
+        document.getElementById('messagesList').innerHTML = '';
         data.forEach(message => {
             if (message['type'] === 'income') {
                 document.getElementById('messagesList').appendChild(createIncomeMessageItemLi(message['message'], formatTimestamp(message['timestamp']), message['picture']));
