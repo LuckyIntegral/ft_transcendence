@@ -109,6 +109,41 @@ function getChatMessages(chatToken) {
     });
 }
 
+function connectToSocket(chatToken) {
+    var socket = new WebSocket(`ws://${window.location.host}/ws/chat/${chatToken}/`);
+    socket.onmessage = function(event) {
+        var data = JSON.parse(event.data);
+        if (data['type'] === 'income') {
+            document.getElementById('messagesList').appendChild(createIncomeMessageItemLi(data['message'], formatTimestamp(data['timestamp']), data['picture']));
+        } else {
+            document.getElementById('messagesList').appendChild(createOutcomeMessageItemLi(data['message'], formatTimestamp(data['timestamp']), data['picture']));
+        }
+    };
+    socket.onclose = function(event) {
+        if (event.wasClean) {
+            console.log('Connection closed cleanly');
+        } else {
+            console.error('Connection died');
+        }
+    };
+    socket.onerror = function(error) {
+        console.error('Error: ' + error.message);
+    };
+    return socket;
+}
+
+function sendMessage(socket, chatToken) {
+    var message = document.getElementById('messageInput').value;
+    if (message === '') {
+        return;
+    }
+    socket.send(JSON.stringify({
+        'sender': localStorage.getItem('username'),
+        'message': message,
+    }));
+    document.getElementById('messageInput').value = '';
+}
+
 function updateActiveChat(chatToken) {
     var chatToken = this.getAttribute('data-chat-token');
     var chatItems = document.querySelectorAll('#userList li');
@@ -127,7 +162,12 @@ function updateActiveChat(chatToken) {
     }
     document.getElementById('messagesList').innerHTML = '';
     getChatMessages(chatToken);
-    // connectToSocket(chatToken);
+    socket = connectToSocket(chatToken);
+    document.getElementById('messageInput').addEventListener('keypress', function(event) {
+        if (event.keyCode === 13) {
+            sendMessage(socket, chatToken);
+        }
+    });
 }
 
 function getUserListChats () {

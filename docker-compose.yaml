@@ -1,6 +1,10 @@
 version: '3.8'
 
 services:
+  redis:
+    image: redis:latest
+    ports:
+      - "6666:6379"
   db:
     image: postgres
     volumes:
@@ -23,6 +27,7 @@ services:
     working_dir: /code/srcs
     command: sh ./scripts/entrypoint.sh
     #command: tail -f /dev/null
+    restart: always
     volumes:
       - .:/code
       - socket_volume:/tmp

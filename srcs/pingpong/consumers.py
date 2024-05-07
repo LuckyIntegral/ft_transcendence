@@ -1,5 +1,6 @@
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.layers import get_channel_layer
+from channels.db import database_sync_to_async
 from asgiref.sync import async_to_sync
 from pingpong.validators import JWTTokenValidator
 from pingpong.models import UserProfile, Message, Chat, MessagesRecipient
@@ -8,26 +9,19 @@ from django.db.models import Q
 import json
 
 class PingPongConsumer(AsyncWebsocketConsumer):
+
+    @database_sync_to_async
+    def getChatExists(self, chatToken):
+        return Chat.objects.filter(token=chatToken).exists()
+
     async def connect(self):
-        headers = self.scope.get('headers')
-        if not headers:
-            await self.close()
-        authHeader = headers.get('Authorization')
-        try:
-            accessToken = JWTTokenValidator().validate(authHeader)
-        except ValidationError as e:
-            await self.close()
-        try:
-            user = getUserFromToken(accessToken)
-        except User.DoesNotExist as e:
-            await self.close()
         try:
             chatToken = self.scope['url_route']['kwargs']['token']
         except KeyError as e:
             await self.close()
-        chat = Chat.objects.filter((Q(userOne=user) | Q(userTwo=user)) & Q(token=chatToken)).first()
-        if not chat.exists():
+        if not await self.getChatExists(chatToken):
             await self.close()
+            return
         await self.channel_layer.group_add(
             chatToken,
             self.channel_name
@@ -42,25 +36,18 @@ class PingPongConsumer(AsyncWebsocketConsumer):
 
 
     async def receive(self, text_data):
-        headers = self.scope.get('headers')
-        if not headers:
-            await self.close()
-        authHeader = headers.get('Authorization')
         try:
-            accessToken = JWTTokenValidator().validate(authHeader)
-            user = getUserFromToken(accessToken)
             chatToken = self.scope['url_route']['kwargs']['token']
         except:
             await self.close()
             return
-        chat = Chat.objects.filter((Q(userOne=user) | Q(userTwo=user)) & Q(token=chatToken)).first()
+        chat = Chat.objects.filter(token=chatToken).first()
         if not chat.exists():
             await self.close()
             return
         text_data_json = json.loads(text_data)
         message = text_data_json['message']
-        fromUser = text_data_json['fromUser']
-        toUser = text_data_json['toUser']
+        sender = text_data_json['sender']
         try:
             fromUser = User.objects.get(username=fromUser)
             toUser = User.objects.get(username=toUser)
