@@ -72,14 +72,14 @@ function loadGamePage() {
             this.ball.x = this.width / 2;
             this.ball.y = this.height / 2;
             this.ball.radius = 10;
-            this.ball.speed = 5;
-            this.ball.velocityX = 3;
-            this.ball.velocityY = 4;
+            this.ball.speed = 10;
+            this.ball.velocityX = 5;
+            this.ball.velocityY = 5;
             this.ball.color = 'WHITE';
             this.checkIfGameOver();
         },
 
-        reset: function() {
+        reset: function(keepScore=true) {
             this.player = {
                 x: 20,
                 y: this.height / 2 - 50,
@@ -100,9 +100,9 @@ function loadGamePage() {
                 x: this.width / 2,
                 y: this.height / 2,
                 radius: 10,
-                speed: 5,
-                velocityX: 3,
-                velocityY: 4,
+                speed: 10,
+                velocityX: 5,
+                velocityY: 5,
                 color: 'WHITE'
             };
             this.canvas.removeEventListener('click', this.boundReset);
@@ -134,7 +134,7 @@ function loadGamePage() {
                 let direction = (this.ball.x < this.width / 2) ? 1 : -1;
                 this.ball.velocityX = direction * this.ball.speed * Math.cos(angleRad);
                 this.ball.velocityY = direction * this.ball.speed * Math.sin(angleRad);
-                this.ball.speed += 0.1;
+                this.ball.speed *= 1.05;
             }
 
             if (this.ball.x - this.ball.radius < 0) {
@@ -174,7 +174,12 @@ function loadGamePage() {
             ball.left = ball.x - ball.radius;
             ball.right = ball.x + ball.radius;
 
-            return ball.right > player.left && ball.top < player.bottom && ball.left < player.right && ball.bottom > player.top;
+            return (
+                ball.right > player.left &&
+                ball.top < player.bottom &&
+                ball.left < player.right &&
+                ball.bottom > player.top
+            );
         },
 
         onKeyPress: function(event)
