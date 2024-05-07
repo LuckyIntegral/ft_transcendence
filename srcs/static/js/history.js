@@ -1,7 +1,3 @@
-// import loadGamePage from './game.js';
-// import loadProfilePage from './profile.js';
-
-// Define your routes
 var previousRoute = null;
 
 function checkAndReload() {
@@ -10,7 +6,6 @@ function checkAndReload() {
     }
 }
 
-// Define your routes
 document.addEventListener('DOMContentLoaded', function() {
     var routes = {
         'profile': function() {
