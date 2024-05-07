@@ -141,10 +141,10 @@ function loadGamePage() {
             this.ball.x += this.ball.velocityX;
             this.ball.y += this.ball.velocityY;
 
-            if (this.player.moveUp === true) {
+            if (this.player.moveUp === true && this.player.y > 0) {
                 this.player.y -= this.player.speed;
             }
-            if (this.player.moveDown === true) {
+            if (this.player.moveDown === true && this.player.y < this.canvas.height - this.player.height) {
                 this.player.y += this.player.speed;
             }
 
@@ -160,7 +160,7 @@ function loadGamePage() {
                 let direction = (this.ball.x < this.width / 2) ? 1 : -1;
                 this.ball.velocityX = direction * this.ball.speed * Math.cos(angleRad);
                 this.ball.velocityY = direction * this.ball.speed * Math.sin(angleRad);
-                this.ball.speed *= 1.05;
+                this.ball.speed *= 1.02;
             }
 
             if (this.ball.x - this.ball.radius < 0) {
