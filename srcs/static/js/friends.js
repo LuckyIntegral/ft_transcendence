@@ -40,7 +40,7 @@ function loadFriendsPage() {
 function loadFriendsRequestsList(page = 0) {
     var friendsRequestsList = document.getElementById('friends-requests');
     friendsRequestsList.innerHTML = '';
-    var url = new URL('http://localhost:8000/api/friends-requests/');
+    var url = new URL('http://localhost:8080/api/friends-requests/');
     url.searchParams.append('page', page);
     url.searchParams.append('pageSize', FRIEND_REQUESTS_LIST_PAGE_SIZE);
     fetchWithToken(url, {
@@ -170,7 +170,7 @@ function deleteFriendRequest() {
 
 function actionFriendRequest(action = 'accept') {
     var friendUsername = this.getAttribute('data-friend-request-id');
-    fetchWithToken('http://localhost:8000/api/friends-requests/', {
+    fetchWithToken('http://localhost:8080/api/friends-requests/', {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
@@ -192,7 +192,7 @@ function actionFriendRequest(action = 'accept') {
 function loadFriendsList(page = 0) {
     var friendsList = document.getElementById('friends-list');
     friendsList.innerHTML = '';
-    var url = new URL('http://localhost:8000/api/friends/');
+    var url = new URL('http://localhost:8080/api/friends/');
     url.searchParams.append('page', page);
     url.searchParams.append('pageSize', FRIEND_LIST_PAGE_SIZE);
     fetchWithToken(url, {
@@ -315,7 +315,7 @@ function loadFriendsListPagination(page, totalPages) {
 }
 
 function showInfoFriend(username) {
-    var url = new URL('http://localhost:8000/api/user-details/');
+    var url = new URL('http://localhost:8080/api/user-details/');
     url.searchParams.append('username', username);
     fetchWithToken(url, {
             method: 'GET',
@@ -369,7 +369,7 @@ function hideFriendActionButtons() {
 
 function deleteFriend() {
     var friendUsername = this.getAttribute('data-friend-id');
-    fetchWithToken('http://localhost:8000/api/friends/', {
+    fetchWithToken('http://localhost:8080/api/friends/', {
         method: 'DELETE',
             headers: {
                 'Content-Type': 'application/json',
@@ -390,7 +390,7 @@ function deleteFriend() {
 function searchFriendQuery() {
     var searchInput = document.getElementById('friendRequestInput');
     if (searchInput.value !== '') {
-        var url = new URL('http://localhost:8000/api/friends-search/');
+        var url = new URL('http://localhost:8080/api/friends-search/');
         url.searchParams.append('search_query', searchInput.value);
         fetchWithToken(url, {
             method: 'GET',
@@ -439,7 +439,7 @@ function searchFriendQuery() {
 }
 
 function sendFriendRequest(username) {
-    fetchWithToken('http://localhost:8000/api/friends-requests/', {
+    fetchWithToken('http://localhost:8080/api/friends-requests/', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

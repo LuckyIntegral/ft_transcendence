@@ -8,11 +8,12 @@ from web3 import Web3
 from django.conf import settings
 from eth_account import Account
 import asyncio
+import uuid
 
 def sendVerificationEmail(email, token):
     send_mail(
         'Email Verification',
-        'Verify your email address by clicking the link below: http://localhost:8000/verify-email?token=' + token,
+        'Verify your email address by clicking the link below: http://localhost:8080/verify-email?token=' + token,
         'admin@localhost',
         [email],
         fail_silently=False,
@@ -30,7 +31,7 @@ def sendTwoStepVerificationEmail(email, code):
 def sendPasswordResetEmail(email, token):
     send_mail(
         'Password Reset',
-        'Reset your password by clicking the link below: http://localhost:8000/reset-password/?token=' + token,
+        'Reset your password by clicking the link below: http://localhost:8080/reset-password/?token=' + token,
         'admin@localhost',
         [email],
         fail_silently=False,
@@ -93,3 +94,6 @@ async def blockChainCreateGame(tournamentId, players):
             gameId = log['args']['gameId']
     # instead of returning should update db to set gameId for the tournament
     return gameId
+
+def generateToken():
+    return str(uuid.uuid4())

@@ -288,3 +288,13 @@ function handlePhotoUpload() {
         reader.readAsDataURL(file);
     }
 }
+
+function formatTimestamp(timestamp) {
+    var date;
+    if (isNaN(timestamp)) {
+        date = moment(timestamp);
+    } else {
+        date = moment(timestamp * 1000);
+    }
+    return date.fromNow();
+}

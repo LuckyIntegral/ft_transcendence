@@ -12,6 +12,7 @@ from django.core.exceptions import ValidationError
 from django.core.mail import send_mail
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.http import HttpResponse
+from django.db.models import Q
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -20,7 +21,7 @@ from rest_framework_simplejwt.authentication import InvalidToken, TokenError
 from .validators import *
 from .models import *
 from .utils import sendVerificationEmail, sendTwoStepVerificationEmail, getUserFromToken,\
-        sendPasswordResetEmail, getCompressedPicture, blockChainCreateGame
+        sendPasswordResetEmail, getCompressedPicture, blockChainCreateGame, generateToken
 from PIL import Image
 from django.core.files.uploadedfile import InMemoryUploadedFile
 
@@ -552,12 +553,10 @@ class VerificationEmailView(APIView):
         try:
             token = JWTTokenValidator().validate(auth_header)
         except ValidationError as e:
-            print("Token error")
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         try:
             user = getUserFromToken(token)
         except ValidationError as e:
-            print("User error")
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
         if user.userprofile.emailVerified:
@@ -742,4 +741,69 @@ class UserDetailsView(APIView):
             'wins': userProfile.gamesWon,
             'games': userProfile.gamesPlayed,
         }
+        return Response(data, status=status.HTTP_200_OK)
+
+
+class ChatView(APIView):
+    """ This view is used to get the chat messages.
+        It has following methods:
+        1. get: This method is used to get the chat messages.
+    """
+    def put(self, request, format=None):
+        """ This method is used to get the chat messages. """
+        auth_header = request.headers.get('Authorization')
+        try:
+            token = JWTTokenValidator().validate(auth_header)
+        except ValidationError as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            user = getUserFromToken(token)
+        except ValidationError as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            chat = Chat.objects.get(token=request.data.get('token'))
+        except Chat.DoesNotExist:
+            return Response({'error': 'Chat does not exist'}, status=status.HTTP_404_NOT_FOUND)
+        secondUser = chat.userOne if chat.userOne != user else chat.userTwo
+        data = []
+        for message in chat.messages.order_by('timestamp'):
+            data.append({
+                'message': message.message,
+                'type': 'income' if message.sender != user else 'outcome',
+                'timestamp': message.timestamp,
+                'sender': message.sender.username,
+                'picture': message.sender.userprofile.pictureSmall.url,
+                'token': chat.token,
+            })
+        return Response(data, status=status.HTTP_200_OK)
+
+class MessagesView(APIView):
+    def get(self, request, format=None):
+        auth_header = request.headers.get('Authorization')
+        try:
+            token = JWTTokenValidator().validate(auth_header)
+        except ValidationError as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            user = getUserFromToken(token)
+        except ValidationError as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        chats = Chat.objects.filter(Q(userOne=user) | Q(userTwo=user))
+        data = []
+        for chat in chats:
+            secondUserUsername = chat.userOne.username if chat.userOne != user else chat.userTwo.username
+            secondUser = User.objects.get(username=secondUserUsername)
+            secondUserIsOnline = secondUser.userprofile.isOnline
+            secondUserLastOnline = secondUser.userprofile.lastOnline
+            secondUserPicture = secondUser.userprofile.pictureSmall.url
+            lastMessage = chat.messages.order_by('-timestamp').first()
+            if lastMessage is not None:
+                data.append({
+                    'username': chat.userOne.username if chat.userOne != user else chat.userTwo.username,
+                    'isOnline': secondUserIsOnline,
+                    'lastOnline': secondUserLastOnline,
+                    'picture': secondUserPicture,
+                    'isRead': lastMessage.messageRecepient.isRead if lastMessage.sender != user else True,
+                    'token': chat.token,
+                })
         return Response(data, status=status.HTTP_200_OK)

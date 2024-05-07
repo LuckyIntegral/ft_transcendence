@@ -7,3 +7,6 @@ django-filter
 djangorestframework_simplejwt
 Pillow>=8.0.1
 web3
+channels
+channels-redis
+whitenoise
