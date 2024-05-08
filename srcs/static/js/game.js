@@ -15,6 +15,12 @@ function loadGamePage() {
     document.getElementById('content').textContent = '';
     document.getElementById('content').appendChild(popup);
     var Game = {
+
+        Winner: {
+            PLAYER: 'PLAYER',
+            AI: 'AI'
+        },
+
         init: function() {
             this.canvas = document.getElementById('game');
             this.ctx = this.canvas.getContext('2d');
@@ -35,44 +41,40 @@ function loadGamePage() {
         },
 
         checkIfGameOver: function() {
-            if (this.ai.score >= 5) {
-                this.playerLost();
-                window.removeEventListener('keydown', this.onKeyPress.bind(this));
-                window.removeEventListener('keyup', this.onKeyPress.bind(this));
-                this.gameOver = true;
-            } else if ( this.player.score >= 5) {
-                this.playerWon();
-                window.removeEventListener('keydown', this.onKeyPress.bind(this));
-                window.removeEventListener('keyup', this.onKeyPress.bind(this));
-                this.gameOver = true;
+            if (this.ai.score >= 0) {
+                this.endGame(this.Winner.AI);
+            } else if (this.player.score >= 5) {
+                this.endGame(this.Winner.PLAYER);
             }
+        },
+
+        endGame: function(winner) {
+            this.ctx.fillStyle = 'BLACK';
+            this.ctx.fillRect(0, 0, this.width, this.height);
+            this.ctx.textBaseline = 'middle'
+            this.ctx.textAlign = 'center'
+            this.ctx.fillStyle = 'WHITE';
+            this.ctx.font = '40px Arial';
+
+            if (winner === this.Winner.AI) {
+                this.ctx.fillText('GAME OVER', this.width / 2, this.height / 2 - 50);
+            } else {
+                this.ctx.fillText('YOU WIN', this.width / 2, this.height / 2 - 50);
+            }
+
+            this.ctx.fillText('Click to play again', this.width / 2, this.height / 2 + 50);
+            window.removeEventListener('keydown', this.boundKeyPress);
+            window.removeEventListener('keyup', this.boundKeyPress);
+            this.canvas.addEventListener('click', this.boundReset);
+            this.gameOver = true;
         },
 
         startNewGame: function() {
             this.reset();
-            window.addEventListener('keydown', this.onKeyPress.bind(this));
-            window.addEventListener('keyup', this.onKeyPress.bind(this));
+            this.boundKeyPress = this.onKeyPress.bind(this);
+            window.addEventListener('keydown', this.boundKeyPress);
+            window.addEventListener('keyup', this.boundKeyPress);
             this.loop();
-        },
-
-        playerLost: function() {
-            this.ctx.fillStyle = 'BLACK';
-            this.ctx.fillRect(0, 0, this.width, this.height);
-            this.ctx.fillStyle = 'WHITE';
-            this.ctx.font = '40px Arial';
-            this.ctx.fillText('GAME OVER', this.width / 4, this.height / 2);
-            this.ctx.fillText('Click to play again', this.width / 4, this.height / 2 + 100);
-            this.canvas.addEventListener('click', this.boundReset);
-        },
-
-        playerWon: function() {
-            this.ctx.fillStyle = 'BLACK';
-            this.ctx.fillRect(0, 0, this.width, this.height);
-            this.ctx.fillStyle = 'WHITE';
-            this.ctx.font = '40px Arial';
-            this.ctx.fillText('YOU WIN', this.width / 4, this.height / 2);
-            this.ctx.fillText('Click to play again', this.width / 4, this.height / 2 + 100);
-            this.canvas.addEventListener('click', this.boundReset);
         },
 
         playerScored: function() {
@@ -130,7 +132,7 @@ function loadGamePage() {
 
         loop: function() {
             this.update();
-            if (this.gameOver) {
+            if (this.gameOver === true) {
                 return;
             }
             this.draw();
@@ -173,7 +175,7 @@ function loadGamePage() {
 
             let optimalY = this.calculateOptimalY();
             let dy = optimalY - this.ai.y;
-            this.ai.y += dy * 0.1;
+            this.ai.y += dy * 0.09;
         },
 
         calculateOptimalY: function() {
@@ -187,7 +189,7 @@ function loadGamePage() {
                 return 0;
             }
             if (ballYWhenReachingAI > this.height) {
-                return this.height - this.ai.height;
+                return this.height - this.ai.height
             }
         
             let playerYWhenBallReachesAI = this.player.y + this.player.speed * ((this.width - this.ai.x) / this.ball.velocityX);
