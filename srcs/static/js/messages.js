@@ -1,3 +1,12 @@
+var socket;
+var chatToken;
+
+function scrollDownMessageList() {
+    var messageList = document.getElementById('messagesList');
+    var lastMessage = messageList.lastElementChild;
+    lastMessage.scrollIntoView();
+}
+
 function loadMessagesPage() {
     var messagesPage = document.createElement('section');
     messagesPage.setAttribute('style', 'background-color: #eee;');
@@ -23,7 +32,7 @@ function createIncomeMessageItemLi(message, time, avatarUrl) {
                         <span class="message-data-time">${time}</span>
                         <img src=${avatarUrl} alt="avatar">
                     </div>
-                    <div class="message my-message">${message}</div>
+                    <div class="message my-message message-content" >${message}</div>
                     `;
     return li;
 }
@@ -36,7 +45,7 @@ function createOutcomeMessageItemLi(message, time, avatarUrl) {
                         <span class="message-data-time">${time}</span>
                         <img src=${avatarUrl} alt="avatar">
                     </div>
-                    <div class="message other-message float-right">${message}</div>
+                    <div class="message other-message float-right message-content">${message}</div>
                     `;
     return li;
 }
@@ -77,7 +86,7 @@ function createUserListItemLi(data, type) {
 }
 
 
-function getChatMessages(chatToken) {
+function getChatMessages() {
     fetchWithToken('/api/chat/', {
         method: 'PUT',
         headers: {
@@ -97,27 +106,29 @@ function getChatMessages(chatToken) {
     .then(data => {
         document.getElementById('messagesList').innerHTML = '';
         data.forEach(message => {
-            console.log(message);
             if (message['sender'] !== localStorage.getItem('username')) {
                 document.getElementById('messagesList').appendChild(createIncomeMessageItemLi(message['message'], formatTimestamp(message['timestamp']), message['picture']));
             } else {
                 document.getElementById('messagesList').appendChild(createOutcomeMessageItemLi(message['message'], formatTimestamp(message['timestamp']), message['picture']));
             }
         })
+        scrollDownMessageList();
     })
     .catch(error => {
         console.error(error);
     });
 }
 
-function connectToSocket(chatToken) {
-    var socket = new WebSocket(`ws://${window.location.host}/ws/chat/${chatToken}/`);
+function connectToSocket() {
+    socket = new WebSocket(`ws://${window.location.host}/ws/chat/${chatToken}/`);
     socket.onmessage = function(event) {
         var data = JSON.parse(event.data);
-        if (data['type'] === 'income') {
-            document.getElementById('messagesList').appendChild(createIncomeMessageItemLi(data['message'], formatTimestamp(data['timestamp']), data['picture']));
+        if (data['sender'] !== localStorage.getItem('username')) {
+            document.getElementById('messagesList').appendChild(createIncomeMessageItemLi(data['message'], formatTimestamp(data['timestamp']), localStorage.getItem('companionPicture')));
+            scrollDownMessageList();
         } else {
-            document.getElementById('messagesList').appendChild(createOutcomeMessageItemLi(data['message'], formatTimestamp(data['timestamp']), data['picture']));
+            document.getElementById('messagesList').appendChild(createOutcomeMessageItemLi(data['message'], formatTimestamp(data['timestamp']), localStorage.getItem('companionPicture')));
+            scrollDownMessageList();
         }
     };
     socket.onclose = function(event) {
@@ -133,7 +144,7 @@ function connectToSocket(chatToken) {
     return socket;
 }
 
-function sendMessage(socket, chatToken) {
+function sendMessage() {
     var message = document.getElementById('messageInput').value;
     if (message === '') {
         return;
@@ -146,8 +157,8 @@ function sendMessage(socket, chatToken) {
     document.getElementById('messageInput').value = '';
 }
 
-function updateActiveChat(chatToken) {
-    var chatToken = this.getAttribute('data-chat-token');
+function updateActiveChat() {
+    chatToken = this.getAttribute('data-chat-token');
     var chatItems = document.querySelectorAll('#userList li');
     for (var i = 0; i < chatItems.length; i++) {
         var itemStatus = chatItems[i].getAttribute('class')
@@ -162,13 +173,22 @@ function updateActiveChat(chatToken) {
     if (unreadDiv) {
         unreadDiv.setAttribute('style', 'display: none;');
     }
-    document.getElementById('messagesList').innerHTML = '';
-    getChatMessages(chatToken);
-    socket = connectToSocket(chatToken);
+    var imgElement = this.querySelector('img');
+    var companionPicture = imgElement.src
+    console.log(companionPicture);
+    localStorage.setItem('companionPicture', companionPicture);
+    getChatMessages();
+    if (socket) {
+        socket.close();
+    }
+    socket = connectToSocket();
     document.getElementById('inputDiv').setAttribute('style', '');
     document.getElementById('messageInput').addEventListener('keypress', function(event) {
         if (event.keyCode === 13) {
-            sendMessage(socket, chatToken);
+            if (!event.shiftKey) {
+                event.preventDefault();
+                sendMessage();
+            }
         }
     });
 }

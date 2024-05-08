@@ -803,7 +803,7 @@ class MessagesView(APIView):
                     'isOnline': secondUserIsOnline,
                     'lastOnline': secondUserLastOnline,
                     'picture': secondUserPicture,
-                    'isRead': lastMessage.messageRecepient.isRead if lastMessage.sender != user else True,
+                    'isRead': lastMessage.messageRecipient.isRead if lastMessage.sender != user else True,
                     'token': chat.token,
                 })
         return Response(data, status=status.HTTP_200_OK)

@@ -203,6 +203,7 @@ async function obtainToken(username, password) {
     }).then(function(data) {
         localStorage.setItem('access', data.access);
         localStorage.setItem('refresh', data.refresh);
+        localStorage.setItem('username', username);
         location.reload();
     }).catch(function(error) {
         alertError(error);

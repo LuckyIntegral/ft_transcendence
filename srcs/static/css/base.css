@@ -229,6 +229,12 @@
     color: #333; /* Darker text color for better contrast */
 }
 
+.message-content {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    max-width: 50%; /* or a fixed value like 300px */
+}
+
 @media only screen and (max-width: 767px) {
     .chat-app .people-list {
         height: 465px;
