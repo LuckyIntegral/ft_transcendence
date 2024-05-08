@@ -1,6 +1,5 @@
 const WINNING_SCORE = 5
-const BALL_SPEED = 6
-const BALL_ACCELERATION = 8
+const BALL_SPEED = 5
 const BALL_RADIUS = 10
 const BALL_COLOR = 'WHITE'
 const GAME_WIDTH = 800
@@ -17,14 +16,14 @@ class Ball {
     resetPosition() {
         this.xSpeed = BALL_SPEED;
         this.ySpeed = BALL_SPEED;
-        this.speed = BALL_ACCELERATION;
+        this.speed = BALL_SPEED;
         this.x = GAME_WIDTH / 2;
         this.y = GAME_HEIGHT / 2;
     }
 
     move() {
-        this.x += this.xSpeed;
-        this.y += this.ySpeed;
+        this.x += this.speed;
+        this.y += this.speed;
     }
 
     bounce() {
@@ -63,7 +62,7 @@ class Player {
         }
     }
 
-    scoreGoal() {
+    score() {
         this.score++;
     }
 }
@@ -83,7 +82,7 @@ class AI {
         this.y = GAME_HEIGHT / 2 - 50;
     }
 
-    scoreGoal() {
+    score() {
         this.score++;
     }
 
@@ -157,7 +156,7 @@ class Game {
 
     startNewGame() {
         this.reset();
-        this.boundKeyPress = this.eventHandler.bind(this);
+        this.boundKeyPress = this.onKeyPress.bind(this);
         window.addEventListener('keydown', this.boundKeyPress);
         window.addEventListener('keyup', this.boundKeyPress);
         this.loop();
@@ -175,46 +174,40 @@ class Game {
     update() {
         this.ball.move();
         this.player.move();
-        this.ball.bounce();
-    
-        console.log('x:')
-        console.log(this.ball.xSpeed);
-        console.log(' y:')
-        console.log(this.ball.ySpeed);
+        this.ball.updateDirection();
+
         let player = (this.ball.x < GAME_WIDTH / 2) ? this.player : this.ai;
         if (this.collision(this.ball, player)) {
-            this.ball.accelerate();
-    
             let collidePoint = this.ball.y - (player.y + PADDLE_HEIGHT / 2);
             collidePoint = collidePoint / (PADDLE_HEIGHT / 2);
             let angleRadius = (Math.PI / 4) * collidePoint;
-            let direction = (player === this.player) ? 1 : -1;
-    
-            this.ball.xSpeed = direction * this.ball.speed * Math.cos(angleRadius);
-            this.ball.ySpeed = this.ball.speed * Math.sin(angleRadius);
+            let direction = (this.ball.x < GAME_WIDTH / 2) ? 1 : -1;
+            this.ball.xSpeed = direction * BALL_SPEED * Math.cos(angleRad);
+            this.ball.ySpeed = direction * BALL_SPEED * Math.sin(angleRad);
+            this.ball.accelerate();
         }
-    
+
         if (this.ball.x - BALL_RADIUS < 0) {
-            this.ai.scoreGoal();
+            this.ai.score();
             this.goal();
         } else if (this.ball.x + BALL_RADIUS > GAME_WIDTH) {
-            this.player.scoreGoal();
+            this.player.score();
             this.goal();
         }
-    
+
         this.ai.move(this.ball, this.player);
     }
 
     collision(ball, player) {
-        player.left = player.x;
-        player.right = player.x + PADDLE_WIDTH;
         player.top = player.y;
-        player.bottom = player.y + PADDLE_HEIGHT;
+        player.bottom = player.y + player.height;
+        player.left = player.x;
+        player.right = player.x + player.width;
 
-        ball.top = ball.y - BALL_RADIUS;
-        ball.bottom = ball.y + BALL_RADIUS;
-        ball.left = ball.x - BALL_RADIUS;
-        ball.right = ball.x + BALL_RADIUS;
+        ball.top = ball.y - ball.radius;
+        ball.bottom = ball.y + ball.radius;
+        ball.left = ball.x - ball.radius;
+        ball.right = ball.x + ball.radius;
 
         return (
             ball.right > player.left &&
@@ -229,13 +222,13 @@ class Game {
         this.context.fillRect(0, 0, this.width, this.height);
         this.context.fillStyle = 'WHITE';
         this.context.font = '75px Arial';
-        this.context.fillText(this.player.score, GAME_WIDTH / 4, GAME_HEIGHT / 5);
-        this.context.fillText(this.ai.score, 3 * GAME_WIDTH / 4, GAME_HEIGHT / 5);
-        this.context.fillRect(this.player.x, this.player.y, PADDLE_WIDTH, PADDLE_HEIGHT);
-        this.context.fillRect(this.ai.x, this.ai.y, PADDLE_WIDTH, PADDLE_HEIGHT);
+        this.context.fillText(this.player.score, this.width / 4, this.height / 5);
+        this.context.fillText(this.ai.score, 3 * this.width / 4, this.height / 5);
+        this.context.fillRect(this.player.x, this.player.y, this.player.width, this.player.height);
+        this.context.fillRect(this.ai.x, this.ai.y, this.ai.width, this.ai.height);
         this.context.beginPath();
-        this.context.arc(this.ball.x, this.ball.y, BALL_RADIUS, 0, Math.PI * 2);
-        this.context.fillStyle = BALL_COLOR;
+        this.context.arc(this.ball.x, this.ball.y, this.ball.radius, 0, Math.PI * 2);
+        this.context.fillStyle = this.ball.color;
         this.context.fill();
     }
 
@@ -266,12 +259,12 @@ class Game {
         this.context.font = '40px Arial';
 
         if (winner === this.ai) {
-            this.context.fillText('GAME OVER', this.width / 2, this.height / 2 - 50);
+            this.ctx.fillText('GAME OVER', this.width / 2, this.height / 2 - 50);
         } else {
-            this.context.fillText('YOU WIN', this.width / 2, this.height / 2 - 50);
+            this.ctx.fillText('YOU WIN', this.width / 2, this.height / 2 - 50);
         }
 
-        this.context.fillText('Click to play again', this.width / 2, this.height / 2 + 50);
+        this.ctx.fillText('Click to play again', this.width / 2, this.height / 2 + 50);
         window.removeEventListener('keydown', this.boundKeyPress);
         window.removeEventListener('keyup', this.boundKeyPress);
         this.canvas.addEventListener('click', this.boundReset);
