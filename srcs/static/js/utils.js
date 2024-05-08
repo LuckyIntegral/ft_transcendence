@@ -1,5 +1,7 @@
 function createPopup() {
     var popup = document.createElement('div');
+    popup.setAttribute('id', 'searchPopup');
+    popup.style.zIndex = '1000';
     popup.style.display = 'flex';
     popup.style.justifyContent = 'center';
     popup.style.alignItems = 'center';
@@ -10,6 +12,68 @@ function createPopup() {
     popup.style.right = '0';
     popup.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
     return popup;
+}
+
+
+function createUserSearchPopup() {
+    var searchPopup = createPopup();
+    searchPopup.innerHTML = `
+        <div class="card" style="width: 300px;">
+            <div class="card-header bg-primary text-white">
+                <button id="close-button" style="float: right; border: none; background: none; color: white;">&times;</button>
+            </div>
+            <div class="card-body">
+                <form id="search-form">
+                    <input type="text" id="searchInput" class="form-control" placeholder="Search for users" required>
+                    <button id="submit" type="submit" class="btn btn-primary" style="margin-top: 10px;">Search</button>
+                </form>
+                <div id="popupContent"></div>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(searchPopup);
+    var closeSearchPopupButton = searchPopup.querySelector('#close-button');
+    closeSearchPopupButton.addEventListener('click', function() {
+        var searchPopup = document.getElementById('searchPopup');
+        searchPopup.remove();
+    });
+    var searchForm = searchPopup.querySelector('#search-form');
+    console.log(searchForm);
+    searchForm.addEventListener('submit', function(event) {
+        event.preventDefault();
+        if (document.getElementById('searchInput').value === '') {
+            return;
+        }
+        console.log('searching for: ' + document.getElementById('searchInput').value);
+        var url = new URL('/api/friends-search/', window.location.origin);
+        url.searchParams.append('search_query', document.getElementById('searchInput').value);
+        fetchWithToken(url, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + localStorage.getItem('token'),
+            },
+        })
+        .then(response => {
+            searchPopupContent = document.getElementById('popupContent');
+            searchPopupContent.innerHTML = '';
+            if (response.status !== 200) {
+                response.json().then(data => alertError(data.error));
+            } else {
+                response.json().then(data => {
+                    for (var i = 0; i < data.length; i++) {
+                        var userItem = createSearchResultItem(data[i]);
+                        searchPopupContent.appendChild(userItem);
+                    }
+                });
+            }
+        })
+        .catch(error => {
+            console.error(error);
+        });
+    });
+    console.log(searchPopup);
+    return searchPopup;
 }
 
 function createForgotPasswordPopup() {

@@ -665,6 +665,7 @@ class FriendsSearchView(APIView):
                 data.append({
                     'email': friend.user.email,
                     'username': friend.user.username,
+                    'picture': friend.pictureSmall.url,
                 })
         return Response(data, status=status.HTTP_200_OK)
 

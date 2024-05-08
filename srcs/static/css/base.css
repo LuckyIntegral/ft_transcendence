@@ -235,6 +235,17 @@
     max-width: 50%; /* or a fixed value like 300px */
 }
 
+.search-and-button {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.addChatButton {
+    flex-grow: 1;
+    margin-bottom: 10px; /* Adjust as needed */
+}
+
 @media only screen and (max-width: 767px) {
     .chat-app .people-list {
         height: 465px;

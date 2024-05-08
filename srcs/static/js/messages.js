@@ -1,6 +1,25 @@
 var socket;
 var chatToken;
 
+function createSearchResultItem(data) {
+    var li = document.createElement('li');
+    li.setAttribute('class', 'clearfix');
+    li.innerHTML = `<img src="${data['picture']}" alt="avatar">
+                    <div class="about">
+                        <div class="name">${data['username']}</div>
+                    </div>
+                    <button class="add-button float-right" data-username="${data['username']}" data-token="${data['token']}">Start char</button>
+                    `;
+    return li;
+}
+
+function setAddChatButtonListener() {
+    var addChatButton = document.getElementById('addChatButton');
+    addChatButton.addEventListener('click', function() {
+        createUserSearchPopup();
+    });
+}
+
 function scrollDownMessageList() {
     var messageList = document.getElementById('messagesList');
     var lastMessage = messageList.lastElementChild;
@@ -217,7 +236,18 @@ function getUserListChats () {
         for (var i = 0; i < chatItems.length; i++) {
             chatItems[i].addEventListener('click', updateActiveChat);
         }
-    }).catch(error => {
+    }).then(function() {
+        $(document).ready(function(){
+            $('#searchInput').on('keyup', function(){
+                var value = $(this).val().toLowerCase();
+                $("#userList li").filter(function() {
+                    $(this).toggle($(this).find('.name').text().toLowerCase().indexOf(value) > -1)
+                });
+            });
+        });
+        setAddChatButtonListener();
+    })
+    .catch(error => {
         console.error(error);
     });
 }
