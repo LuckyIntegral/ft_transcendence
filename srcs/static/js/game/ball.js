@@ -6,7 +6,7 @@ class Ball {
   resetPosition () {
     this.xSpeed = GameConstants.BALL_SPEED
     this.ySpeed = GameConstants.BALL_SPEED
-    this.speed = GameConstants.BALL_ACCELERATION
+    this.speed = GameConstants.BALL_BASE_ACCELERATION
     this.x = GameConstants.GAME_WIDTH / 2
     this.y = GameConstants.GAME_HEIGHT / 2
   }
@@ -26,6 +26,6 @@ class Ball {
   }
 
   accelerate () {
-    this.speed *= 1.02
+    this.speed *= GameConstants.BALL_ACCELERATION_RATE
   }
 }

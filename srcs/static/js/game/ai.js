@@ -20,7 +20,7 @@ class AI {
   move (ball, player) {
     let optimalY = this.calculateOptimalY(ball, player)
     let dy = optimalY - this.y
-    this.y += dy * 0.09
+    this.y += dy * GameConstants.AI_SPEED
   }
 
   calculateOptimalY (ball, player) {
