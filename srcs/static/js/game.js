@@ -123,6 +123,8 @@ class Game {
         this.player = new Player();
         this.ai = new AI();
         this.gameOver = false;
+        this.boundContextMenu = this.contextMenuHandler.bind(this);
+        window.addEventListener('contextmenu', this.boundContextMenu);
     }
 
     loadGamePage() {
@@ -157,7 +159,7 @@ class Game {
 
     startNewGame() {
         this.reset();
-        this.boundKeyPress = this.eventHandler.bind(this);
+        this.boundKeyPress = this.keyPressHandler.bind(this);
         window.addEventListener('keydown', this.boundKeyPress);
         window.addEventListener('keyup', this.boundKeyPress);
         this.loop();
@@ -285,7 +287,7 @@ class Game {
         this.ball.resetPosition();
     }
 
-    eventHandler(event) {
+    keyPressHandler(event) {
         if (event.type === 'keydown') {
             if (event.key === 'w' || event.key === 'W') {
                 this.player.moveUp = true;
@@ -301,5 +303,9 @@ class Game {
                 this.player.moveDown = false;
             }
         }
+    }
+
+    contextMenuHandler(event) {
+        event.preventDefault();
     }
 }
