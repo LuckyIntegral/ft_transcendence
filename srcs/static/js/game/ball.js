@@ -4,11 +4,11 @@ class Ball {
   }
 
   resetPosition () {
-    this.xSpeed = BALL_SPEED
-    this.ySpeed = BALL_SPEED
-    this.speed = BALL_ACCELERATION
-    this.x = GAME_WIDTH / 2
-    this.y = GAME_HEIGHT / 2
+    this.xSpeed = GameConstants.BALL_SPEED
+    this.ySpeed = GameConstants.BALL_SPEED
+    this.speed = GameConstants.BALL_ACCELERATION
+    this.x = GameConstants.GAME_WIDTH / 2
+    this.y = GameConstants.GAME_HEIGHT / 2
   }
 
   move () {
@@ -17,7 +17,10 @@ class Ball {
   }
 
   bounce () {
-    if (this.y + BALL_RADIUS > GAME_HEIGHT || this.y - BALL_RADIUS < 0) {
+    if (
+      this.y + GameConstants.BALL_RADIUS > GameConstants.GAME_HEIGHT ||
+      this.y - GameConstants.BALL_RADIUS < 0
+    ) {
       this.ySpeed = -this.ySpeed
     }
   }
