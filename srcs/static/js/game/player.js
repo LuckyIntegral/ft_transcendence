@@ -10,31 +10,31 @@ const PADDLE_HEIGHT = 100
 const PLAYER_SPEED = 10
 
 class Player {
-    constructor() {
-        this.moveUp = false;
-        this.moveDown = false;
-        this.resetScore();
-        this.resetPosition();
-    }
+  constructor () {
+    this.moveUp = false
+    this.moveDown = false
+    this.resetScore()
+    this.resetPosition()
+  }
 
-    resetScore() {
-        this.score = 0;
-    }
+  resetScore () {
+    this.score = 0
+  }
 
-    resetPosition() {
-        this.x = 20;
-        this.y = GAME_HEIGHT / 2 - 50;
-    }
+  resetPosition () {
+    this.x = 20
+    this.y = GAME_HEIGHT / 2 - 50
+  }
 
-    move() {
-        if (this.moveUp === true && this.y > 0) {
-            this.y -= PLAYER_SPEED;
-        } else if (this.moveDown === true && this.y < GAME_HEIGHT - PADDLE_HEIGHT) {
-            this.y += PLAYER_SPEED;
-        }
+  move () {
+    if (this.moveUp === true && this.y > 0) {
+      this.y -= PLAYER_SPEED
+    } else if (this.moveDown === true && this.y < GAME_HEIGHT - PADDLE_HEIGHT) {
+      this.y += PLAYER_SPEED
     }
+  }
 
-    scoreGoal() {
-        this.score++;
-    }
+  scoreGoal () {
+    this.score++
+  }
 }
