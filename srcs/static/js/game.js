@@ -125,6 +125,8 @@ class Game {
         this.gameOver = false;
         this.boundContextMenu = this.contextMenuHandler.bind(this);
         window.addEventListener('contextmenu', this.boundContextMenu);
+        this.boundVisibilityChange = this.visibilityChangeHandler.bind(this);
+        document.addEventListener('visibilitychange', this.boundVisibilityChange);
     }
 
     loadGamePage() {
@@ -305,5 +307,11 @@ class Game {
 
     contextMenuHandler(event) {
         event.preventDefault();
+    }
+
+    visibilityChangeHandler() {
+        if (document.hidden) {
+            this.endGame(this.ai);    
+        }
     }
 }
