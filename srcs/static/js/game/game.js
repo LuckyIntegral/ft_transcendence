@@ -131,6 +131,14 @@ class Game {
   }
 
   draw () {
+    this.clearCanvas()
+    this.drawScores()
+    this.drawPlayer()
+    this.drawAI()
+    this.drawBall()
+  }
+
+  clearCanvas () {
     this.context.fillStyle = 'BLACK'
     this.context.fillRect(
       0,
@@ -138,6 +146,9 @@ class Game {
       GameConstants.GAME_WIDTH,
       GameConstants.GAME_HEIGHT
     )
+  }
+
+  drawScores () {
     this.context.fillStyle = 'WHITE'
     this.context.font = '75px Arial'
     this.context.fillText(
@@ -150,18 +161,27 @@ class Game {
       (3 * GameConstants.GAME_WIDTH) / 4,
       GameConstants.GAME_HEIGHT / 5
     )
+  }
+
+  drawPlayer () {
     this.context.fillRect(
       this.player.x,
       this.player.y,
       GameConstants.PADDLE_WIDTH,
       GameConstants.PADDLE_HEIGHT
     )
+  }
+
+  drawAI () {
     this.context.fillRect(
       this.ai.x,
       this.ai.y,
       GameConstants.PADDLE_WIDTH,
       GameConstants.PADDLE_HEIGHT
     )
+  }
+
+  drawBall () {
     this.context.beginPath()
     this.context.arc(
       this.ball.x,
@@ -193,41 +213,35 @@ class Game {
   }
 
   endGame (winner) {
-    this.context.fillStyle = 'BLACK'
-    this.context.fillRect(
-      0,
-      0,
-      GameConstants.GAME_WIDTH,
-      GameConstants.GAME_HEIGHT
-    )
+    this.clearCanvas()
+
+    if (winner === this.ai) {
+      this.drawEndGameMessage('GAME OVER')
+    } else {
+      this.drawEndGameMessage('YOU WIN')
+    }
+
+    window.removeEventListener('keydown', this.boundKeyPress)
+    window.removeEventListener('keyup', this.boundKeyPress)
+    this.canvas.addEventListener('click', this.boundReset)
+    this.gameOver = true
+  }
+
+  drawEndGameMessage (message) {
     this.context.textBaseline = 'middle'
     this.context.textAlign = 'center'
     this.context.fillStyle = 'WHITE'
     this.context.font = '40px Arial'
-
-    if (winner === this.ai) {
-      this.context.fillText(
-        'GAME OVER',
-        GameConstants.GAME_WIDTH / 2,
-        GameConstants.GAME_HEIGHT / 2 - 50
-      )
-    } else {
-      this.context.fillText(
-        'YOU WIN',
-        GameConstants.GAME_WIDTH / 2,
-        GameConstants.GAME_HEIGHT / 2 - 50
-      )
-    }
-
+    this.context.fillText(
+      message,
+      GameConstants.GAME_WIDTH / 2,
+      GameConstants.GAME_HEIGHT / 2 - 50
+    )
     this.context.fillText(
       'Click to play again',
       GameConstants.GAME_WIDTH / 2,
       GameConstants.GAME_HEIGHT / 2 + 50
     )
-    window.removeEventListener('keydown', this.boundKeyPress)
-    window.removeEventListener('keyup', this.boundKeyPress)
-    this.canvas.addEventListener('click', this.boundReset)
-    this.gameOver = true
   }
 
   goal () {
@@ -237,20 +251,16 @@ class Game {
     this.ball.resetPosition()
   }
 
-  keyPressHandler (event) {
-    if (event.type === 'keydown') {
-      if (event.key === 'w' || event.key === 'W') {
-        this.player.moveUp = true
-      } else if (event.key === 's' || event.key === 'S') {
-        this.player.moveDown = true
-      }
-    } else if (event.type === 'keyup') {
-      if (event.key === 'w' || event.key === 'W') {
-        this.player.moveUp = false
-      } else if (event.key === 's' || event.key === 'S') {
-        this.player.moveDown = false
-      }
-    }
+  keyPressHandler = event => {
+    const isKeyDown = event.type === 'keydown'
+    const isKeyUp = event.type === 'keyup'
+    const isWKey = event.key === 'w' || event.key === 'W'
+    const isSKey = event.key === 's' || event.key === 'S'
+
+    if (isKeyDown && isWKey) this.player.moveUp = true
+    else if (isKeyDown && isSKey) this.player.moveDown = true
+    else if (isKeyUp && isWKey) this.player.moveUp = false
+    else if (isKeyUp && isSKey) this.player.moveDown = false
   }
 
   setListeners () {
