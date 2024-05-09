@@ -1,23 +1,51 @@
 var socket;
 var chatToken;
 
-function createSearchResultItem(data) {
+function createSearchResultItem(data, popup) {
     var li = document.createElement('li');
     li.setAttribute('class', 'clearfix');
-    li.innerHTML = `<img src="${data['picture']}" alt="avatar">
-                    <div class="about">
+    li.innerHTML = `<div class="about">
+                        <img src="${data['picture']}" alt="avatar">
                         <div class="name">${data['username']}</div>
                     </div>
-                    <button class="add-button float-right" data-username="${data['username']}" data-token="${data['token']}">Start char</button>
+                    <div class="button-container">
+                        <button class="add-button" data-username="${data['username']}" data-token="${data['token']}">Start char</button>
+                    </div>
                     `;
+    li.querySelector('.add-button').addEventListener('click', function() {
+        var chatToken = this.getAttribute('data-token');
+        fetchWithToken('/api/chat/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + localStorage.getItem('token'),
+            },
+            body: JSON.stringify({
+                'username': data['username'],
+            })
+        })
+        .then(response => {
+            if (response.ok) {
+                return response.json();
+            }
+            throw new Error('Failed to create chat');
+        })
+        .then(data => {
+            chatToken = data['token'];
+            getUserListChats();
+            popup.remove();
+        })
+        .catch(error => {
+            alertError("Something went wrong. Please try again later.");
+        });
+    });
     return li;
 }
 
 function setAddChatButtonListener() {
     var addChatButton = document.getElementById('addChatButton');
-    addChatButton.addEventListener('click', function() {
-        createUserSearchPopup();
-    });
+    addChatButton.removeEventListener('click', createUserSearchPopup);
+    addChatButton.addEventListener('click', createUserSearchPopup);
 }
 
 function scrollDownMessageList() {

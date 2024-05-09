@@ -24,10 +24,12 @@ function createUserSearchPopup() {
             </div>
             <div class="card-body">
                 <form id="search-form">
-                    <input type="text" id="searchInput" class="form-control" placeholder="Search for users" required>
-                    <button id="submit" type="submit" class="btn btn-primary" style="margin-top: 10px;">Search</button>
+                    <input type="text" id="search-input" class="form-control" placeholder="Search for users" required>
+                    <button type="submit" class="btn btn-primary" style="margin-top: 10px;">Search</button>
                 </form>
-                <div id="popupContent"></div>
+            </div>
+            <div class="people-list">
+                <ul id="popupContent" class="list-unstyled chat-list mt-2 mb-0 overflow-y-auto"></ul>
             </div>
         </div>
     `;
@@ -37,16 +39,18 @@ function createUserSearchPopup() {
         var searchPopup = document.getElementById('searchPopup');
         searchPopup.remove();
     });
-    var searchForm = searchPopup.querySelector('#search-form');
+    var searchForm = document.getElementById('search-form');
     console.log(searchForm);
     searchForm.addEventListener('submit', function(event) {
+        console.log("Before default")
         event.preventDefault();
-        if (document.getElementById('searchInput').value === '') {
+        console.log(document.getElementById('search-input').value.length);
+        if (document.getElementById('search-input').value.length < 1) {
             return;
         }
-        console.log('searching for: ' + document.getElementById('searchInput').value);
+        console.log('searching for: ' + document.getElementById('search-input').value);
         var url = new URL('/api/friends-search/', window.location.origin);
-        url.searchParams.append('search_query', document.getElementById('searchInput').value);
+        url.searchParams.append('search_query', document.getElementById('search-input').value);
         fetchWithToken(url, {
             method: 'GET',
             headers: {
@@ -62,7 +66,10 @@ function createUserSearchPopup() {
             } else {
                 response.json().then(data => {
                     for (var i = 0; i < data.length; i++) {
-                        var userItem = createSearchResultItem(data[i]);
+                        if (data[i].username === localStorage.getItem('username')) {
+                            continue;
+                        }
+                        var userItem = createSearchResultItem(data[i], searchPopup);
                         searchPopupContent.appendChild(userItem);
                     }
                 });

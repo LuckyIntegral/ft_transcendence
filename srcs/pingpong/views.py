@@ -778,6 +778,37 @@ class ChatView(APIView):
             })
         return Response(data, status=status.HTTP_200_OK)
 
+    def post(self, request, format=None):
+        """ Method to create a chat """
+        auth_header = request.headers.get('Authorization')
+        try:
+            token = JWTTokenValidator().validate(auth_header)
+        except ValidationError as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            user = getUserFromToken(token)
+        except ValidationError as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+        username = request.data.get('username')
+        if not username:
+            return Response({'error': 'Please provide a username'}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            secondUser = User.objects.get(username=username)
+        except User.DoesNotExist:
+            return Response({'error': 'User does not exist'}, status=status.HTTP_404_NOT_FOUND)
+        if secondUser == user:
+            return Response({'error': 'You cannot chat with yourself'}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            chat = Chat.objects.get(Q(userOne=user, userTwo=secondUser) | Q(userOne=secondUser, userTwo=user))
+        except Chat.DoesNotExist:
+            chatToken = generateToken()
+            while Chat.objects.filter(token=chatToken).exists():
+                chatToken = generateToken()
+            chat = Chat.objects.create(userOne=user, userTwo=secondUser, token=chatToken)
+            chat.save()
+        return Response({'token': chat.token}, status=status.HTTP_200_OK)
+
 class MessagesView(APIView):
     def get(self, request, format=None):
         auth_header = request.headers.get('Authorization')
@@ -805,6 +836,15 @@ class MessagesView(APIView):
                     'lastOnline': secondUserLastOnline,
                     'picture': secondUserPicture,
                     'isRead': lastMessage.messageRecipient.isRead if lastMessage.sender != user else True,
+                    'token': chat.token,
+                })
+            else:
+                data.append({
+                    'username': chat.userOne.username if chat.userOne != user else chat.userTwo.username,
+                    'isOnline': secondUserIsOnline,
+                    'lastOnline': secondUserLastOnline,
+                    'picture': secondUserPicture,
+                    'isRead': True,
                     'token': chat.token,
                 })
         return Response(data, status=status.HTTP_200_OK)
