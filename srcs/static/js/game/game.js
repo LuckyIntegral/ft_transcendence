@@ -1,132 +1,10 @@
-const WINNING_SCORE = 5
-const BALL_SPEED = 6
-const BALL_ACCELERATION = 8
-const BALL_RADIUS = 10
-const BALL_COLOR = 'WHITE'
-const GAME_WIDTH = 800
-const GAME_HEIGHT = 600
-const PADDLE_WIDTH = 10
-const PADDLE_HEIGHT = 100
-const PLAYER_SPEED = 10
-
-class Ball {
-    constructor(){
-        this.resetPosition();
-    }
-
-    resetPosition() {
-        this.xSpeed = BALL_SPEED;
-        this.ySpeed = BALL_SPEED;
-        this.speed = BALL_ACCELERATION;
-        this.x = GAME_WIDTH / 2;
-        this.y = GAME_HEIGHT / 2;
-    }
-
-    move() {
-        this.x += this.xSpeed;
-        this.y += this.ySpeed;
-    }
-
-    bounce() {
-        if (this.y + BALL_RADIUS > GAME_HEIGHT || this.y - BALL_RADIUS < 0) {
-            this.ySpeed = -this.ySpeed;
-        }
-    }
-
-    accelerate() {
-        this.speed *= 1.02;
-    }
-}
-
-class Player {
-    constructor() {
-        this.moveUp = false;
-        this.moveDown = false;
-        this.resetScore();
-        this.resetPosition();
-    }
-
-    resetScore() {
-        this.score = 0;
-    }
-
-    resetPosition() {
-        this.x = 20;
-        this.y = GAME_HEIGHT / 2 - 50;
-    }
-
-    move() {
-        if (this.moveUp === true && this.y > 0) {
-            this.y -= PLAYER_SPEED;
-        } else if (this.moveDown === true && this.y < GAME_HEIGHT - PADDLE_HEIGHT) {
-            this.y += PLAYER_SPEED;
-        }
-    }
-
-    scoreGoal() {
-        this.score++;
-    }
-}
-
-class AI {
-    constructor() {
-        this.resetScore();
-        this.resetPosition();
-    }
-
-    resetScore() {
-        this.score = 0;
-    }
-
-    resetPosition() {
-        this.x = GAME_WIDTH - 30;
-        this.y = GAME_HEIGHT / 2 - 50;
-    }
-
-    scoreGoal() {
-        this.score++;
-    }
-
-    move(ball, player) {
-        let optimalY = this.calculateOptimalY(ball, player);
-        let dy = optimalY - this.y;
-        this.y += dy * 0.09;
-    }
-
-    calculateOptimalY(ball, player) {
-        let ballYWhenReachingAI = ball.y + ball.ySpeed * ((GAME_WIDTH - this.x) / ball.xSpeed);
-
-        if (ball.xSpeed < 0) {
-            return GAME_HEIGHT / 2;
-        }
-
-        if (ballYWhenReachingAI > GAME_HEIGHT) {
-            return GAME_HEIGHT - PADDLE_HEIGHT;
-        } else if (ballYWhenReachingAI < 0) {
-            return 0;
-        }
-
-        let playerYWhenBallReachesAI = player.y + PLAYER_SPEED * ((GAME_WIDTH - this.x) / ball.xSpeed);
-        let optimalY = (playerYWhenBallReachesAI < GAME_HEIGHT / 2) ? GAME_HEIGHT - PADDLE_HEIGHT : 0;
-
-        if (Math.abs(optimalY - ballYWhenReachingAI) <= PADDLE_HEIGHT / 2) {
-            return optimalY;
-        } else {
-            return ballYWhenReachingAI - PADDLE_HEIGHT / 2;
-        }
-    }
-}
-
 class Game {
     constructor() {
         this.ball = new Ball();
         this.player = new Player();
         this.ai = new AI();
         this.gameOver = false;
-        this.boundContextMenu = this.contextMenuHandler.bind(this);
-        window.addEventListener('contextmenu', this.boundContextMenu);
-        this.boundVisibilityChange = this.visibilityChangeHandler.bind(this);
-        document.addEventListener('visibilitychange', this.boundVisibilityChange);
+        this.setListeners();
     }
 
     loadGamePage() {
@@ -179,10 +57,6 @@ class Game {
         this.player.move();
         this.ball.bounce();
     
-        console.log('x:')
-        console.log(this.ball.xSpeed);
-        console.log(' y:')
-        console.log(this.ball.ySpeed);
         let player = (this.ball.x < GAME_WIDTH / 2) ? this.player : this.ai;
         if (this.collision(this.ball, player)) {
             this.ball.accelerate();
@@ -291,18 +165,27 @@ class Game {
         if (event.type === 'keydown') {
             if (event.key === 'w' || event.key === 'W') {
                 this.player.moveUp = true;
-            }
-            if (event.key === 's' || event.key === 'S') {
+            } else if (event.key === 's' || event.key === 'S') {
                 this.player.moveDown = true;
             }
         } else if (event.type === 'keyup') {
             if (event.key === 'w' || event.key === 'W') {
                 this.player.moveUp = false;
-            }
-            if (event.key === 's' || event.key === 'S') {
+            } else if (event.key === 's' || event.key === 'S') {
                 this.player.moveDown = false;
             }
         }
+    }
+
+    setListeners() {
+        this.boundContextMenu = this.contextMenuHandler.bind(this);
+        window.addEventListener('contextmenu', this.boundContextMenu);
+
+        this.boundVisibilityChange = this.visibilityChangeHandler.bind(this);
+        document.addEventListener('visibilitychange', this.boundVisibilityChange);
+
+        this.boundBlur = this.blurHandler.bind(this);
+        window.addEventListener('blur', this.boundBlur);
     }
 
     contextMenuHandler(event) {
@@ -311,7 +194,12 @@ class Game {
 
     visibilityChangeHandler() {
         if (document.hidden) {
-            this.endGame(this.ai);    
+            this.endGame(this.ai);
         }
+    }
+
+    blurHandler() {
+        this.player.moveUp = false;
+        this.player.moveDown = false;
     }
 }
