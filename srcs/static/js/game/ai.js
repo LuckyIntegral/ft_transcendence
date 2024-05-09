@@ -20,7 +20,20 @@ class AI {
   move (ball, player) {
     let optimalY = this.calculateOptimalY(ball, player)
     let dy = optimalY - this.y
-    this.y += dy * GameConstants.AI_SPEED
+
+    if (Math.abs(dy) > GameConstants.PLAYER_SPEED) {
+      dy = GameConstants.PLAYER_SPEED * Math.sign(dy)
+    }
+
+    let newY = this.y + dy
+
+    if (newY < 0) {
+      newY = 0
+    } else if (newY + GameConstants.PADDLE_HEIGHT > GameConstants.GAME_HEIGHT) {
+      newY = GameConstants.GAME_HEIGHT - GameConstants.PADDLE_HEIGHT
+    }
+
+    this.y = newY
   }
 
   calculateOptimalY (ball, player) {
@@ -28,7 +41,7 @@ class AI {
       ball.y + ball.ySpeed * ((GameConstants.GAME_WIDTH - this.x) / ball.xSpeed)
 
     if (ball.xSpeed < 0) {
-      return GameConstants.GAME_HEIGHT / 2
+      return GameConstants.GAME_HEIGHT / 2 - GameConstants.PADDLE_HEIGHT / 2
     }
 
     if (ballYWhenReachingAI > GameConstants.GAME_HEIGHT) {

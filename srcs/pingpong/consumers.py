@@ -5,6 +5,8 @@ from pingpong.validators import JWTTokenValidator
 from pingpong.models import UserProfile, Message, Chat, MessagesRecipient
 from django.contrib.auth.models import User
 from django.db.models import Q
+from django.core.exceptions import ValidationError
+from .utils import getUserFromToken
 import json
 
 class PingPongConsumer(AsyncWebsocketConsumer):
@@ -68,7 +70,7 @@ class PingPongConsumer(AsyncWebsocketConsumer):
             await self.close()
             return
         messageRecepient = MessagesRecipient.objects.create(recipient=toUser)
-        message = Messages.objects.create(sender=fromUser, message=message, messageRecepient=messageRecepient)
+        message = Message.objects.create(sender=fromUser, message=message, messageRecepient=messageRecepient)
         chat.messages.add(message)
         await self.send(chatToken, {
             'type': 'chat_message',
