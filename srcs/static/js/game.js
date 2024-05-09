@@ -151,8 +151,6 @@ class Game {
         this.context = this.canvas.getContext('2d');
         this.canvas.width = GAME_WIDTH;
         this.canvas.height = GAME_HEIGHT;
-        this.width = GAME_WIDTH;
-        this.height = GAME_HEIGHT;
         this.boundReset = this.startNewGame.bind(this);
         this.startNewGame();
     }
@@ -228,7 +226,7 @@ class Game {
 
     draw() {
         this.context.fillStyle = 'BLACK';
-        this.context.fillRect(0, 0, this.width, this.height);
+        this.context.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
         this.context.fillStyle = 'WHITE';
         this.context.font = '75px Arial';
         this.context.fillText(this.player.score, GAME_WIDTH / 4, GAME_HEIGHT / 5);
@@ -268,12 +266,12 @@ class Game {
         this.context.font = '40px Arial';
 
         if (winner === this.ai) {
-            this.context.fillText('GAME OVER', this.width / 2, this.height / 2 - 50);
+            this.context.fillText('GAME OVER', GAME_WIDTH / 2, GAME_HEIGHT / 2 - 50);
         } else {
-            this.context.fillText('YOU WIN', this.width / 2, this.height / 2 - 50);
+            this.context.fillText('YOU WIN', GAME_WIDTH / 2, GAME_HEIGHT / 2 - 50);
         }
 
-        this.context.fillText('Click to play again', this.width / 2, this.height / 2 + 50);
+        this.context.fillText('Click to play again', GAME_WIDTH / 2, GAME_HEIGHT / 2 + 50);
         window.removeEventListener('keydown', this.boundKeyPress);
         window.removeEventListener('keyup', this.boundKeyPress);
         this.canvas.addEventListener('click', this.boundReset);
