@@ -1,13 +1,22 @@
 class Game {
   constructor () {
+    this.initGameElements()
+    this.setListeners()
+  }
+
+  initGameElements () {
     this.ball = new Ball()
     this.player = new Player()
     this.ai = new AI()
     this.gameOver = false
-    this.setListeners()
   }
 
   loadGamePage () {
+    this.createCanvas()
+    this.init()
+  }
+
+  createCanvas () {
     var content = document.getElementById('content')
 
     if (content === null) {
@@ -17,22 +26,20 @@ class Game {
 
     var canvas = document.createElement('canvas')
     canvas.id = 'game'
-
-    document.getElementById('content').textContent = ''
-    document.getElementById('content').appendChild(canvas)
-
-    var content = document.getElementById('content')
+    content.textContent = ''
     content.appendChild(canvas)
-    this.init()
   }
 
   init () {
+    this.setUpCanvas()
+    this.startNewGame()
+  }
+
+  setUpCanvas () {
     this.canvas = document.getElementById('game')
     this.context = this.canvas.getContext('2d')
     this.canvas.width = GameConstants.GAME_WIDTH
     this.canvas.height = GameConstants.GAME_HEIGHT
-    this.boundReset = this.startNewGame.bind(this)
-    this.startNewGame()
   }
 
   startNewGame () {
@@ -43,47 +50,52 @@ class Game {
     this.loop()
   }
 
+  setKeyPressListeners () {
+    this.boundKeyPress = this.keyPressHandler.bind(this)
+    window.addEventListener('keydown', this.boundKeyPress)
+    window.addEventListener('keyup', this.boundKeyPress)
+  }
+
   loop () {
     this.update()
-    if (this.gameOver === true) {
-      return
+    if (!this.gameOver) {
+      this.draw()
+      window.requestAnimationFrame(this.loop.bind(this))
     }
-    this.draw()
-    window.requestAnimationFrame(this.loop.bind(this))
   }
 
   update () {
+    this.moveElements()
+    this.checkCollisions()
+    this.checkGoals()
+    this.ai.move(this.ball, this.player)
+  }
+
+  moveElements () {
     this.ball.move()
     this.player.move()
     this.ball.bounce()
+  }
 
+  checkCollisions () {
     let player =
       this.ball.x < GameConstants.GAME_WIDTH / 2 ? this.player : this.ai
     if (this.collision(this.ball, player)) {
-      this.ball.accelerate()
-
-      let collidePoint =
-        this.ball.y - (player.y + GameConstants.PADDLE_HEIGHT / 2)
-      collidePoint = collidePoint / (GameConstants.PADDLE_HEIGHT / 2)
-      let angleRadius = (Math.PI / 4) * collidePoint
-      let direction = player === this.player ? 1 : -1
-
-      this.ball.xSpeed = direction * this.ball.speed * Math.cos(angleRadius)
-      this.ball.ySpeed = this.ball.speed * Math.sin(angleRadius)
+      this.handleCollision(player)
     }
+  }
 
-    if (this.ball.x - GameConstants.BALL_RADIUS < 0) {
-      this.ai.scoreGoal()
-      this.goal()
-    } else if (
-      this.ball.x + GameConstants.BALL_RADIUS >
-      GameConstants.GAME_WIDTH
-    ) {
-      this.player.scoreGoal()
-      this.goal()
-    }
+  handleCollision (player) {
+    this.ball.accelerate()
 
-    this.ai.move(this.ball, this.player)
+    let collidePoint =
+      this.ball.y - (player.y + GameConstants.PADDLE_HEIGHT / 2)
+    collidePoint = collidePoint / (GameConstants.PADDLE_HEIGHT / 2)
+    let angleRadius = (Math.PI / 4) * collidePoint
+    let direction = player === this.player ? 1 : -1
+
+    this.ball.xSpeed = direction * this.ball.speed * Math.cos(angleRadius)
+    this.ball.ySpeed = this.ball.speed * Math.sin(angleRadius)
   }
 
   collision (ball, player) {
@@ -103,6 +115,19 @@ class Game {
       ball.left < player.right &&
       ball.bottom > player.top
     )
+  }
+
+  checkGoals () {
+    if (this.ball.x - GameConstants.BALL_RADIUS < 0) {
+      this.ai.scoreGoal()
+      this.goal()
+    } else if (
+      this.ball.x + GameConstants.BALL_RADIUS >
+      GameConstants.GAME_WIDTH
+    ) {
+      this.player.scoreGoal()
+      this.goal()
+    }
   }
 
   draw () {
