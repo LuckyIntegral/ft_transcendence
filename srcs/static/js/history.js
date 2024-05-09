@@ -14,8 +14,8 @@ document.addEventListener('DOMContentLoaded', function() {
             previousRoute = 'profile';
         },
         'pong': function() {
-            let game = new Game();
-            game.loadGamePage();
+            let menu = new Menu()
+            menu.start()
             previousRoute = 'pong';
         },
         'friends': function() {
