@@ -24,3 +24,14 @@ const MenuConstants = {
   BUTTON_INTENSITY: 100,
   BUTTON_COLOR: 'WHITE'
 }
+
+const PlayerPosition = {
+  PLAYER1: {
+    x: 20,
+    y: GameConstants.GAME_HEIGHT / 2 - 50
+  },
+  PLAYER2: {
+    x: GameConstants.GAME_WIDTH - 30,
+    y: GameConstants.GAME_HEIGHT / 2 - 50
+  }
+}

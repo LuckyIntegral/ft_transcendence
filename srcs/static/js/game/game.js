@@ -5,11 +5,11 @@ class Game {
 
   initGameElements (gameMode) {
     this.ball = new Ball()
-    this.player1 = new Player()
+    this.player1 = new Player(PlayerPosition.PLAYER1)
     if (gameMode === GameModes.PLAYER_VS_AI) {
       this.player2 = new AI()
     } else {
-      this.player2 = new Player()
+      this.player2 = new Player(PlayerPosition.PLAYER2)
     }
     this.gameOver = false
   }

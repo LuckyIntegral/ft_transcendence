@@ -1,5 +1,6 @@
 class Player {
-  constructor () {
+  constructor (position) {
+    this.position = position
     this.moveUp = false
     this.moveDown = false
     this.resetScore()
@@ -11,8 +12,8 @@ class Player {
   }
 
   resetPosition () {
-    this.x = 20
-    this.y = GameConstants.GAME_HEIGHT / 2 - 50
+    this.x = this.position.x
+    this.y = this.position.y
   }
 
   move () {
