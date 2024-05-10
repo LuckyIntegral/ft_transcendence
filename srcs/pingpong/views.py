@@ -3,6 +3,7 @@
 """
 import random
 import math
+import time
 from PIL import Image
 from django.shortcuts import render
 from django.contrib.auth.password_validation import validate_password
@@ -768,7 +769,7 @@ class ChatView(APIView):
         secondUser = chat.userOne if chat.userOne != user else chat.userTwo
         data = []
         for message in chat.messages.order_by('timestamp'):
-            if message.sender != user:
+            if message.sender != user and message.messageRecipient.isRead == False:
                 message.messageRecipient.isRead = True
                 message.messageRecipient.save()
             data.append({
@@ -851,3 +852,21 @@ class MessagesView(APIView):
                     'token': chat.token,
                 })
         return Response(data, status=status.HTTP_200_OK)
+
+
+# class MessagesLongPollView(APIView):
+#     def get(self, request, format=None):
+#         auth_header = request.headers.get('Authorization')
+#         try:
+#             token = JWTTokenValidator().validate(auth_header)
+#         except ValidationError as e:
+#             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+#         try:
+#             user = getUserFromToken(token)
+#         except ValidationError as e:
+#             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+#         while (True):
+#             newMessagesReceived = MessagesRecipient.objects.filter(recipient=user, isRead=False, isNotified=False)
+#             if newMessagesReceived.count() > 0:
+#                 return Response({'status': 'New messages received'}, status=status.HTTP_200_OK)
+#             time.sleep(1)

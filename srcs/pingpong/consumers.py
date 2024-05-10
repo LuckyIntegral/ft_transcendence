@@ -1,4 +1,5 @@
 from channels.generic.websocket import AsyncWebsocketConsumer
+from channels.generic.http import AsyncHttpConsumer
 from channels.layers import get_channel_layer
 from channels.db import database_sync_to_async
 from asgiref.sync import async_to_sync
@@ -6,7 +7,11 @@ from pingpong.validators import JWTTokenValidator
 from pingpong.models import UserProfile, Message, Chat, MessagesRecipient
 from django.contrib.auth.models import User
 from django.db.models import Q
+from rest_framework_simplejwt.tokens import UntypedToken
+from rest_framework_simplejwt.state import token_backend
+from rest_framework_simplejwt.authentication import InvalidToken, TokenError
 import json
+import asyncio
 
 class PingPongConsumer(AsyncWebsocketConsumer):
     userCounter = 0
@@ -22,7 +27,7 @@ class PingPongConsumer(AsyncWebsocketConsumer):
     @database_sync_to_async
     def createMessageRecipient(self, recipient):
         if PingPongConsumer.userCounter == 2:
-            return MessagesRecipient.objects.create(recipient=recipient, isRead=True)
+            return MessagesRecipient.objects.create(recipient=recipient, isRead=True, isNotified=True)
         return MessagesRecipient.objects.create(recipient=recipient)
 
     @database_sync_to_async
@@ -55,6 +60,7 @@ class PingPongConsumer(AsyncWebsocketConsumer):
 
 
     async def receive(self, text_data):
+        print("Users connected", PingPongConsumer.userCounter, sep=': ')
         text_data_json = json.loads(text_data)
         messageText = text_data_json['message']
         sender = text_data_json['sender']
@@ -63,9 +69,7 @@ class PingPongConsumer(AsyncWebsocketConsumer):
         self.messageRecipient = await self.createMessageRecipient(self.user)
         self.message = await self.createMessage(self.user, messageText, self.messageRecipient)
         self.chat = await self.getChat(self.chatToken)
-        print("Message received")
         await self.addMessageToChat(self.chat, self.message)
-        print("Message added to chat")
         await self.channel_layer.group_send(
             "chat",
             {
@@ -77,7 +81,6 @@ class PingPongConsumer(AsyncWebsocketConsumer):
         )
 
     async def chat_message(self, event):
-        print("Chat message")
         message = event['message']
         sender = event['sender']
         timestamp = event['timestamp']
@@ -86,3 +89,63 @@ class PingPongConsumer(AsyncWebsocketConsumer):
             'sender': sender,
             'timestamp': timestamp,
         }))
+
+class MessagesLongPollConsumer(AsyncWebsocketConsumer):
+    async def connect(self):
+        await self.accept()
+    async def disconnect(self, close_code):
+        pass
+
+    async def receive(self, text_data):
+        text_data = json.loads(text_data)
+        accessToken = text_data['token']
+        if not accessToken:
+            print('error token')
+            await self.send(text_data=json.dumps({'error': 'error'}))
+            return
+        try:
+            user = await self.get_user_from_token(accessToken)
+            while True:
+                new_messages = await self.get_new_messages(user)
+                print(new_messages)
+                if (new_messages):
+                    break
+                await asyncio.sleep(1)
+            await self.set_notified(user)
+            await  self.send(text_data=json.dumps({'new_messages': 'received'}))
+        except Exception as e:
+            print(str(e))
+            await self.send(text_data=json.dumps({'error': 'error'}))
+
+    @database_sync_to_async
+    def get_token_from_key(self, key):
+        try:
+            token_type, token_key = token.split(' ')
+            if token_type.lower() != 'bearer':
+                raise ValidationError('Token is invalid.')
+            UntypedToken(token_key)
+        except (InvalidToken, TokenError) as e:
+            raise ValidationError(f'Token is invalid: {str(e)}')
+        return token_key
+
+    @database_sync_to_async
+    def get_user_from_token(self, token):
+        decoded_token = token_backend.decode(token)
+        user_id = decoded_token['user_id']
+        try:
+            user = User.objects.get(id=user_id)
+        except User.DoesNotExist:
+            raise ValidationError('User does not exist.')
+        return user
+
+
+    @database_sync_to_async
+    def get_new_messages(self, user):
+        return MessagesRecipient.objects.filter(recipient=user, isRead=False, isNotified=False).exists()
+
+    @database_sync_to_async
+    def set_notified(self, user):
+        messages = MessagesRecipient.objects.filter(recipient=user, isRead=False, isNotified=False)
+        for message in messages:
+            message.isNotified = True
+            message.save()

@@ -9,7 +9,7 @@ function createSearchResultItem(data, popup) {
                         <div class="name">${data['username']}</div>
                     </div>
                     <div class="button-container">
-                        <button class="add-button" data-username="${data['username']}" data-token="${data['token']}">Start char</button>
+                        <button class="add-button" data-username="${data['username']}" data-token="${data['token']}">Add chat</button>
                     </div>
                     `;
     li.querySelector('.add-button').addEventListener('click', function() {

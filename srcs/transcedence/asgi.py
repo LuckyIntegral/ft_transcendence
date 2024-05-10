@@ -12,7 +12,7 @@ import os
 from django.core.asgi import get_asgi_application
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'transcedence.settings')
-application = get_asgi_application()
+django_asgi_app = get_asgi_application()
 
 from channels.auth import AuthMiddlewareStack
 from channels.routing import ProtocolTypeRouter, URLRouter
@@ -22,9 +22,9 @@ from pingpong import routing as pingpong_routing
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'transcedence.settings')
 
-application = WhiteNoise(application, os.path.join(os.path.dirname(os.path.abspath(__file__)), '../static'))
+application = WhiteNoise(django_asgi_app, os.path.join(os.path.dirname(os.path.abspath(__file__)), '../static'))
 application = ProtocolTypeRouter({
-    "http": get_asgi_application(),
+    'http': get_asgi_application(),
     'websocket': AuthMiddlewareStack(
         URLRouter(
             pingpong_routing.websocket_urlpatterns
