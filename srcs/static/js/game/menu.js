@@ -2,10 +2,10 @@ class Menu {
   constructor (game) {
     this.game = game
     this.menuItems = [
-      { text: 'Play against AI', action: () => this.game.startNewGame(true) },
+      { text: 'Play against AI', action: () => this.game.loadGamePage(true) },
       {
         text: 'Play against another player',
-        action: () => this.game.startNewGame(false)
+        action: () => this.game.loadGamePage(false)
       }
     ]
     this.selectedItemIndex = 0
@@ -47,34 +47,63 @@ class Menu {
     const startY = this.canvas.height / 2 - 50
 
     this.menuItems.forEach((item, index) => {
-      this.context.fillStyle =
-        index === this.selectedItemIndex ? 'RED' : 'WHITE'
+      this.context.fillStyle = index === this.selectedItemIndex ? 'RED' : 'WHITE'
       this.context.fillText(item.text, startX, startY + index * 60)
+      this.context.strokeStyle = 'WHITE'
+      this.context.strokeRect(startX - 200, startY + index * 60 - 25, 400, 50)
     })
   }
 
   setMouseListeners () {
     this.canvas.addEventListener('click', this.handleMouseClick.bind(this))
+    this.canvas.addEventListener('mousemove', this.handleMouseMove.bind(this));
   }
 
   handleMouseClick (event) {
     const rect = this.canvas.getBoundingClientRect()
     const x = event.clientX - rect.left
     const y = event.clientY - rect.top
-
-    const startX = this.canvas.width / 2 - 150
-    const startY = this.canvas.height / 2 - 60
-
+  
+    const startX = this.canvas.width / 2 - 200
+    const startY = this.canvas.height / 2 - 50
+  
     for (let i = 0; i < this.menuItems.length; i++) {
       if (
         x >= startX &&
-        x <= startX + 300 &&
-        y >= startY + i * 60 &&
-        y <= startY + 40 + i * 60
+        x <= startX + 400 &&
+        y >= startY + i * 60 - 25 &&
+        y <= startY + 50 + i * 60 - 25
       ) {
         this.menuItems[i].action()
         break
       }
+    }
+  }
+
+  handleMouseMove (event) {
+    const rect = this.canvas.getBoundingClientRect()
+    const x = event.clientX - rect.left
+    const y = event.clientY - rect.top
+
+    const startX = this.canvas.width / 2 - 200
+    const startY = this.canvas.height / 2 - 50
+
+    let selectedIndex = null
+    for (let i = 0; i < this.menuItems.length; i++) {
+      if (
+        x >= startX &&
+        x <= startX + 400 &&
+        y >= startY + i * 60 - 25 &&
+        y <= startY + 50 + i * 60 - 25
+      ) {
+        selectedIndex = i
+        break
+      }
+    }
+
+    if (selectedIndex !== this.selectedItemIndex) {
+      this.selectedItemIndex = selectedIndex
+      this.drawMenu()
     }
   }
 }
