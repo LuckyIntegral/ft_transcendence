@@ -9,12 +9,33 @@ class Menu {
       }
     ]
     this.selectedItemIndex = null
+    this.hoverIntensity = new Array(this.menuItems.length).fill(0)
+    this.clickIntensity = new Array(this.menuItems.length).fill(0)
   }
 
   start () {
     this.createCanvas()
     this.drawMenu()
     this.setMouseListeners()
+    this.animate()
+  }
+
+  animate () {
+    for (let i = 0; i < this.menuItems.length; i++) {
+      if (i === this.selectedItemIndex) {
+        this.hoverIntensity[i] = Math.min(this.hoverIntensity[i] + 0.15, 1)
+      } else {
+        this.hoverIntensity[i] = Math.max(this.hoverIntensity[i] - 0.2, 0)
+      }
+    }
+
+    for (let i = 0; i < this.menuItems.length; i++) {
+      this.clickIntensity[i] = Math.max(this.clickIntensity[i] - 0.02, 0)
+    }
+
+    this.drawMenu()
+
+    requestAnimationFrame(this.animate.bind(this))
   }
 
   createCanvas () {
@@ -47,13 +68,18 @@ class Menu {
     const startY = this.canvas.height / 2 - 50
 
     this.menuItems.forEach((item, index) => {
-      this.context.fillStyle =
-        index === this.selectedItemIndex ? 'GRAY' : 'BLACK'
+      const intensity = Math.floor(20 + this.hoverIntensity[index] * 100)
+      this.context.fillStyle = `rgb(${intensity}, ${intensity}, ${intensity})`
       this.context.fillRect(startX - 200, startY + index * 60 - 25, 400, 50)
       this.context.fillStyle = 'WHITE'
       this.context.fillText(item.text, startX, startY + index * 60)
       this.context.strokeStyle = 'WHITE'
       this.context.strokeRect(startX - 200, startY + index * 60 - 25, 400, 50)
+      if (this.clickIntensity[index] > 0) {
+        this.context.fillStyle =
+          'rgba(0, 0, 0, ' + this.clickIntensity[index] + ')'
+        this.context.fillRect(startX - 200, startY + index * 60 - 25, 400, 50)
+      }
     })
   }
 
@@ -77,7 +103,10 @@ class Menu {
         y >= startY + i * 60 - 25 &&
         y <= startY + 50 + i * 60 - 25
       ) {
-        this.menuItems[i].action()
+        this.clickIntensity[i] = 1
+        setTimeout(() => {
+          this.menuItems[i].action()
+        }, 100)
         break
       }
     }
