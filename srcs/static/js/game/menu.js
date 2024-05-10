@@ -180,7 +180,6 @@ class Menu {
         44
       )
     }
-    
   }
 
   setFont () {
@@ -240,19 +239,18 @@ class Menu {
     )
   }
 
-  fetchOnlineFriends() {
-    var url = new URL('http://localhost:8080/api/friends/');
+  fetchOnlineFriends () {
+    var url = new URL('http://localhost:8080/api/friends/')
     return fetchWithToken(url, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
         Authorization: 'Bearer ' + localStorage.getItem('access')
       }
-    })
-    .then(response => response.json());
+    }).then(response => response.json())
   }
-  
-  updateMenuWithFriends(data) {
+
+  updateMenuWithFriends (data) {
     if (data.data.length === 0) {
       this.title = 'You have no friends lol'
     } else {
@@ -261,19 +259,34 @@ class Menu {
           text: player.username,
           image: player.pictureSmall,
           action: () => {
-            cancelAnimationFrame(this.animationFrameId);
-            this.game.loadGame(GameModes.PLAYER_VS_PLAYER, player.id);
+            cancelAnimationFrame(this.animationFrameId)
+            this.sendGameRequest(player.username).then(() => {
+              console.log('Game request sent to: ', player.username)
+              this.game.loadGame(GameModes.PLAYER_VS_PLAYER, player.username)
+            })
           }
-        };
-      });
-      this.preloadImages(this.menuItems.map(item => item.image));
-      this.title = 'Online friends';
+        }
+      })
+      this.preloadImages(this.menuItems.map(item => item.image))
+      this.title = 'Online friends'
     }
-    this.init();
+    this.init()
   }
-  
-  displayOnlineFriends() {
-    this.clear();
-    this.fetchOnlineFriends().then(data => this.updateMenuWithFriends(data));
+
+  sendGameRequest (username) {
+    var url = new URL('http://localhost:8080/api/game/request/')
+    return fetchWithToken(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: 'Bearer ' + localStorage.getItem('access')
+      },
+      body: JSON.stringify({ username: username })
+    })
+  }
+
+  displayOnlineFriends () {
+    this.clear()
+    this.fetchOnlineFriends().then(data => this.updateMenuWithFriends(data))
   }
 }
