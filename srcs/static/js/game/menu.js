@@ -2,25 +2,39 @@ class Menu {
   constructor () {
     this.game = new Game()
     this.menuItems = [
-      { text: 'PLAYER VS AI', action: () => this.game.loadGame(GameModes.PLAYER_VS_AI) },
+      {
+        text: 'PLAYER VS AI',
+        action: () => this.game.loadGame(GameModes.PLAYER_VS_AI)
+      },
       {
         text: 'PLAYER VS PLAYER',
-        action: () => this.game.loadGamePage(GameModes.PLAYER_VS_PLAYER)
+        action: () => this.connectPlayers()
       }
     ]
-    this.selectedItemIndex = null
-    this.hoverIntensity = new Array(this.menuItems.length).fill(0)
-    this.clickIntensity = new Array(this.menuItems.length).fill(0)
+    this.init()
   }
 
   start () {
     this.createCanvas()
+    this.setFont()
     this.drawMenu()
     this.setMouseListeners()
     this.animate()
   }
 
+  init () {
+    this.title = null
+    this.selectedItemIndex = null
+    this.hoverIntensity = new Array(this.menuItems.length).fill(0)
+    this.clickIntensity = new Array(this.menuItems.length).fill(0)
+  }
+
   animate () {
+    if (this.stopAnimation === true) {
+      cancelAnimationFrame(this.animationFrameId)
+      return
+    }
+
     for (let i = 0; i < this.menuItems.length; i++) {
       if (i === this.selectedItemIndex) {
         this.hoverIntensity[i] = Math.min(this.hoverIntensity[i] + 0.15, 1)
@@ -35,7 +49,7 @@ class Menu {
 
     this.drawMenu()
 
-    requestAnimationFrame(this.animate.bind(this))
+    this.animationFrameId = requestAnimationFrame(this.animate.bind(this))
   }
 
   createCanvas () {
@@ -56,39 +70,72 @@ class Menu {
     this.context = canvas.getContext('2d')
   }
 
-  drawMenu () {
+  clear () {
     this.context.fillStyle = 'BLACK'
     this.context.fillRect(0, 0, this.canvas.width, this.canvas.height)
+  }
 
-    this.context.font = '30px Arial'
-    this.context.textAlign = 'center'
-    this.context.textBaseline = 'middle'
+  clearListeners () {
+    this.canvas.removeEventListener('click', this.boundClick)
+    this.canvas.removeEventListener('mousemove', this.boundMove)
+  }
+
+  drawMenu () {
+    this.clear()
+
+    if (this.title !== null) {
+      this.context.fillStyle = 'WHITE'
+      this.context.fillText(this.title, this.canvas.width / 2, 50)
+    }
 
     const startX = this.canvas.width / 2
     const startY = this.canvas.height / 2 - 50
 
     this.menuItems.forEach((item, index) => {
-      const intensity = Math.floor(this.hoverIntensity[index] * 100)
-      this.context.fillStyle = `rgb(${intensity}, ${intensity}, ${intensity})`
-      this.context.fillRect(startX - 200, startY + index * 60 - 25, 400, 50)
-      this.context.fillStyle = 'WHITE'
-      this.context.fillText(item.text, startX, startY + index * 60)
-      this.context.strokeStyle = 'WHITE'
-      this.context.strokeRect(startX - 200, startY + index * 60 - 25, 400, 50)
-      if (this.clickIntensity[index] > 0) {
-        this.context.fillStyle =
-          'rgba(0, 0, 0, ' + this.clickIntensity[index] + ')'
-        this.context.fillRect(startX - 200, startY + index * 60 - 25, 400, 50)
-      }
+      this.drawButton(
+        item.text,
+        startX - 200,
+        startY + index * 60,
+        400,
+        50,
+        index
+      )
     })
   }
 
-  setMouseListeners () {
-    this.canvas.addEventListener('click', this.handleMouseClick.bind(this))
-    this.canvas.addEventListener('mousemove', this.handleMouseMove.bind(this))
+  drawButton (text, x, y, width, height, index) {
+    const intensity = Math.floor(this.hoverIntensity[index] * 100)
+    this.context.fillStyle = `rgb(${intensity}, ${intensity}, ${intensity})`
+    this.context.fillRect(x, y, width, height)
+    this.context.fillStyle = 'WHITE'
+    this.context.fillText(text, x + width / 2, y + height / 2)
+    this.context.strokeStyle = 'WHITE'
+    this.context.strokeRect(x, y, width, height)
+    if (this.clickIntensity[index] > 0) {
+      this.context.fillStyle =
+        'rgba(0, 0, 0, ' + this.clickIntensity[index] + ')'
+      this.context.fillRect(x, y, width, height)
+    }
   }
 
-  handleMouseClick (event) {
+  setFont () {
+    this.context.font = '30px Arial'
+    this.context.textAlign = 'center'
+    this.context.textBaseline = 'middle'
+    this.context.fillStyle = 'WHITE'
+  }
+
+  setMouseListeners () {
+    this.clearListeners()
+
+    this.boundClick = this.mouseClickHandler.bind(this)
+    this.canvas.addEventListener('click', this.boundClick)
+
+    this.boundMove = this.mouseMoveHandler.bind(this)
+    this.canvas.addEventListener('mousemove', this.boundMove)
+  }
+
+  mouseClickHandler (event) {
     const rect = this.canvas.getBoundingClientRect()
     const x = event.clientX - rect.left
     const y = event.clientY - rect.top
@@ -107,7 +154,7 @@ class Menu {
     }
   }
 
-  handleMouseMove (event) {
+  mouseMoveHandler (event) {
     const x = event.clientX - this.canvas.getBoundingClientRect().left
     const y = event.clientY - this.canvas.getBoundingClientRect().top
 
@@ -127,7 +174,7 @@ class Menu {
       this.drawMenu()
     }
 
-    this.updateCursor()
+    this.updateCursor(selectedIndex)
   }
 
   updateCursor (selectedIndex) {
@@ -142,8 +189,44 @@ class Menu {
     return (
       x >= startX &&
       x <= startX + 400 &&
-      y >= startY + i * 60 - 25 &&
-      y <= startY + 50 + i * 60 - 25
+      y >= startY + i * 60 &&
+      y <= startY + 50 + i * 60
     )
+  }
+
+  displayOnlineFriends () {
+    this.clear()
+    var url = new URL('http://localhost:8080/api/friends/')
+    fetchWithToken(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: 'Bearer ' + localStorage.getItem('access')
+      }
+    })
+      .then(response => response.json())
+      .then(data => {
+        if (data.data.length === 0) {
+          alert('lol')
+        } else {
+          this.menuItems = data.data.map(player => {
+            return {
+              text: player.username,
+              action: () => {
+                cancelAnimationFrame(this.animationFrameId)
+                this.game.loadGame(GameModes.PLAYER_VS_PLAYER, player.id)
+              }
+            }
+          })
+          this.init()
+          this.title = 'Online friends'
+          this.drawMenu()
+          this.setMouseListeners()
+        }
+      })
+  }
+
+  connectPlayers () {
+    this.displayOnlineFriends()
   }
 }

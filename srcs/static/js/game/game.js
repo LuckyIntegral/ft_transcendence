@@ -11,9 +11,10 @@ class Game {
     this.gameOver = false
   }
 
-  loadGame (gameMode) {
+  loadGame (gameMode, player) {
+    this.stop()
     this.createCanvas()
-    this.init()
+    this.start()
   }
 
   createCanvas () {
@@ -30,9 +31,14 @@ class Game {
     content.appendChild(canvas)
   }
 
-  init () {
+  start () {
+    this.gameOver = false
     this.setUpCanvas()
     this.startNewGame()
+  }
+
+  stop () {
+    this.gameOver = true
   }
 
   setUpCanvas () {
@@ -58,7 +64,7 @@ class Game {
 
   loop () {
     this.update()
-    if (!this.gameOver) {
+    if (this.gameOver === false) {
       this.draw()
       window.requestAnimationFrame(this.loop.bind(this))
     }
