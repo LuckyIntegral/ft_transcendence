@@ -1,16 +1,17 @@
 class Menu {
   constructor () {
     this.game = new Game()
+    this.title = ''
     this.menuItems = [
       {
         text: 'PLAYER VS AI',
         action: () => this.game.loadGame(GameModes.PLAYER_VS_AI),
-        image: 'static/images/defaultSmall.jpg'
+        image: 'static/images/ai.png'
       },
       {
         text: 'PLAYER VS PLAYER',
         action: () => this.displayOnlineFriends(),
-        image: 'static/images/defaultSmall.jpg'
+        image: 'static/images/pvp.png'
       }
     ]
     this.images = {}
@@ -179,6 +180,7 @@ class Menu {
         44
       )
     }
+    
   }
 
   setFont () {
@@ -238,35 +240,40 @@ class Menu {
     )
   }
 
-  displayOnlineFriends () {
-    this.clear()
-    var url = new URL('http://localhost:8080/api/friends/')
-    fetchWithToken(url, {
+  fetchOnlineFriends() {
+    var url = new URL('http://localhost:8080/api/friends/');
+    return fetchWithToken(url, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
         Authorization: 'Bearer ' + localStorage.getItem('access')
       }
     })
-      .then(response => response.json())
-      .then(data => {
-        if (data.data.length === 0) {
-          alert('No online friends')
-        } else {
-          this.menuItems = data.data.map(player => {
-            return {
-              text: player.username,
-              image: player.pictureSmall,
-              action: () => {
-                cancelAnimationFrame(this.animationFrameId)
-                this.game.loadGame(GameModes.PLAYER_VS_PLAYER, player.id)
-              }
-            }
-          })
-          this.preloadImages(this.menuItems.map(item => item.image))
-          this.title = 'Online friends'
-          this.init()
-        }
-      })
+    .then(response => response.json());
+  }
+  
+  updateMenuWithFriends(data) {
+    if (data.data.length === 0) {
+      this.title = 'You have no friends lol'
+    } else {
+      this.menuItems = data.data.map(player => {
+        return {
+          text: player.username,
+          image: player.pictureSmall,
+          action: () => {
+            cancelAnimationFrame(this.animationFrameId);
+            this.game.loadGame(GameModes.PLAYER_VS_PLAYER, player.id);
+          }
+        };
+      });
+      this.preloadImages(this.menuItems.map(item => item.image));
+      this.title = 'Online friends';
+    }
+    this.init();
+  }
+  
+  displayOnlineFriends() {
+    this.clear();
+    this.fetchOnlineFriends().then(data => this.updateMenuWithFriends(data));
   }
 }

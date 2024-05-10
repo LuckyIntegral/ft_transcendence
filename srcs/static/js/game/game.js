@@ -1,17 +1,21 @@
 class Game {
   constructor () {
-    this.initGameElements()
     this.setListeners()
   }
 
-  initGameElements () {
+  initGameElements (gameMode) {
     this.ball = new Ball()
-    this.player = new Player()
-    this.ai = new AI()
+    this.player1 = new Player()
+    if (gameMode === GameModes.PLAYER_VS_AI) {
+      this.player2 = new AI()
+    } else {
+      this.player2 = new Player()
+    }
     this.gameOver = false
   }
 
-  loadGame (gameMode, player) {
+  loadGame (gameMode) {
+    this.initGameElements(gameMode)
     this.stop()
     this.createCanvas()
     this.start()
@@ -74,18 +78,18 @@ class Game {
     this.moveElements()
     this.checkCollisions()
     this.checkGoals()
-    this.ai.move(this.ball, this.player)
+    this.player2.move(this.ball, this.player1)
   }
 
   moveElements () {
     this.ball.move()
-    this.player.move()
+    this.player1.move()
     this.ball.bounce()
   }
 
   checkCollisions () {
     let player =
-      this.ball.x < GameConstants.GAME_WIDTH / 2 ? this.player : this.ai
+      this.ball.x < GameConstants.GAME_WIDTH / 2 ? this.player1 : this.player2
     if (this.collision(this.ball, player)) {
       this.handleCollision(player)
     }
@@ -98,7 +102,7 @@ class Game {
       this.ball.y - (player.y + GameConstants.PADDLE_HEIGHT / 2)
     collidePoint = collidePoint / (GameConstants.PADDLE_HEIGHT / 2)
     let angleRadius = (Math.PI / 4) * collidePoint
-    let direction = player === this.player ? 1 : -1
+    let direction = player === this.player1 ? 1 : -1
 
     this.ball.xSpeed = direction * this.ball.speed * Math.cos(angleRadius)
     this.ball.ySpeed = this.ball.speed * Math.sin(angleRadius)
@@ -125,13 +129,13 @@ class Game {
 
   checkGoals () {
     if (this.ball.x - GameConstants.BALL_RADIUS < 0) {
-      this.ai.scoreGoal()
+      this.player2.scoreGoal()
       this.goal()
     } else if (
       this.ball.x + GameConstants.BALL_RADIUS >
       GameConstants.GAME_WIDTH
     ) {
-      this.player.scoreGoal()
+      this.player1.scoreGoal()
       this.goal()
     }
   }
@@ -158,12 +162,12 @@ class Game {
     this.context.fillStyle = 'WHITE'
     this.context.font = '75px Arial'
     this.context.fillText(
-      this.player.score,
+      this.player1.score,
       GameConstants.GAME_WIDTH / 4,
       GameConstants.GAME_HEIGHT / 5
     )
     this.context.fillText(
-      this.ai.score,
+      this.player2.score,
       (3 * GameConstants.GAME_WIDTH) / 4,
       GameConstants.GAME_HEIGHT / 5
     )
@@ -171,8 +175,8 @@ class Game {
 
   drawPlayer () {
     this.context.fillRect(
-      this.player.x,
-      this.player.y,
+      this.player1.x,
+      this.player1.y,
       GameConstants.PADDLE_WIDTH,
       GameConstants.PADDLE_HEIGHT
     )
@@ -180,8 +184,8 @@ class Game {
 
   drawAI () {
     this.context.fillRect(
-      this.ai.x,
-      this.ai.y,
+      this.player2.x,
+      this.player2.y,
       GameConstants.PADDLE_WIDTH,
       GameConstants.PADDLE_HEIGHT
     )
@@ -201,27 +205,27 @@ class Game {
   }
 
   reset () {
-    this.player.resetScore()
-    this.player.resetPosition()
-    this.ai.resetScore()
-    this.ai.resetPosition()
+    this.player1.resetScore()
+    this.player1.resetPosition()
+    this.player2.resetScore()
+    this.player2.resetPosition()
     this.ball.resetPosition()
     this.canvas.removeEventListener('click', this.boundReset)
     this.gameOver = false
   }
 
   checkIfOver () {
-    if (this.ai.score >= 5) {
-      this.endGame(this.ai)
-    } else if (this.player.score >= 5) {
-      this.endGame(this.player)
+    if (this.player2.score >= 5) {
+      this.endGame(this.player2)
+    } else if (this.player1.score >= 5) {
+      this.endGame(this.player1)
     }
   }
 
   endGame (winner) {
     this.clearCanvas()
 
-    if (winner === this.ai) {
+    if (winner === this.player2) {
       this.drawEndGameMessage('GAME OVER')
     } else {
       this.drawEndGameMessage('YOU WIN')
@@ -252,8 +256,8 @@ class Game {
 
   goal () {
     this.checkIfOver()
-    this.player.resetPosition()
-    this.ai.resetPosition()
+    this.player1.resetPosition()
+    this.player2.resetPosition()
     this.ball.resetPosition()
   }
 
@@ -263,10 +267,10 @@ class Game {
     const isWKey = event.key === 'w' || event.key === 'W'
     const isSKey = event.key === 's' || event.key === 'S'
 
-    if (isKeyDown && isWKey) this.player.moveUp = true
-    else if (isKeyDown && isSKey) this.player.moveDown = true
-    else if (isKeyUp && isWKey) this.player.moveUp = false
-    else if (isKeyUp && isSKey) this.player.moveDown = false
+    if (isKeyDown && isWKey) this.player1.moveUp = true
+    else if (isKeyDown && isSKey) this.player1.moveDown = true
+    else if (isKeyUp && isWKey) this.player1.moveUp = false
+    else if (isKeyUp && isSKey) this.player1.moveDown = false
   }
 
   setListeners () {
@@ -288,13 +292,13 @@ class Game {
 
   visibilityChangeHandler () {
     if (document.hidden) {
-      this.endGame(this.ai)
+      this.endGame(this.player2)
     }
   }
 
   blurHandler () {
-    this.player.moveUp = false
-    this.player.moveDown = false
+    this.player1.moveUp = false
+    this.player1.moveDown = false
   }
 
   resetHandler () {
