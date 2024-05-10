@@ -768,6 +768,9 @@ class ChatView(APIView):
         secondUser = chat.userOne if chat.userOne != user else chat.userTwo
         data = []
         for message in chat.messages.order_by('timestamp'):
+            if message.sender != user:
+                message.messageRecipient.isRead = True
+                message.messageRecipient.save()
             data.append({
                 'message': message.message,
                 'type': 'income' if message.sender != user else 'outcome',

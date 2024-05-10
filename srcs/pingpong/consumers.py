@@ -9,6 +9,7 @@ from django.db.models import Q
 import json
 
 class PingPongConsumer(AsyncWebsocketConsumer):
+    userCounter = 0
 
     @database_sync_to_async
     def getChatExists(self, chatToken):
@@ -20,6 +21,8 @@ class PingPongConsumer(AsyncWebsocketConsumer):
 
     @database_sync_to_async
     def createMessageRecipient(self, recipient):
+        if PingPongConsumer.userCounter == 2:
+            return MessagesRecipient.objects.create(recipient=recipient, isRead=True)
         return MessagesRecipient.objects.create(recipient=recipient)
 
     @database_sync_to_async
@@ -29,21 +32,22 @@ class PingPongConsumer(AsyncWebsocketConsumer):
     @database_sync_to_async
     def addMessageToChat(self, chat, message):
         chat.messages.add(message)
-    
+
     @database_sync_to_async
     def getSender(self, sender):
         return User.objects.get(username=sender)
 
     async def connect(self):
-        print("Connected")
         self.chatToken = self.scope['url_route']['kwargs']['token']
         await self.channel_layer.group_add(
             "chat",
             self.channel_name
         )
+        PingPongConsumer.userCounter += 1
         await self.accept()
 
     async def disconnect(self, close_code):
+        PingPongConsumer.userCounter -= 1
         await self.channel_layer.group_discard(
             "chat",
             self.channel_name
@@ -71,7 +75,7 @@ class PingPongConsumer(AsyncWebsocketConsumer):
                 'timestamp': timestamp,
             }
         )
-        
+
     async def chat_message(self, event):
         print("Chat message")
         message = event['message']
@@ -82,4 +86,3 @@ class PingPongConsumer(AsyncWebsocketConsumer):
             'sender': sender,
             'timestamp': timestamp,
         }))
-
