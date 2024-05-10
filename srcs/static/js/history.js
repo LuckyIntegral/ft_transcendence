@@ -14,8 +14,7 @@ document.addEventListener('DOMContentLoaded', function() {
             previousRoute = 'profile';
         },
         'pong': function() {
-            let game = new Game()
-            let menu = new Menu(game)
+            let menu = new Menu()
             menu.start()
             previousRoute = 'pong';
         },

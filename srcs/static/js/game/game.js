@@ -11,7 +11,7 @@ class Game {
     this.gameOver = false
   }
 
-  loadGamePage () {
+  loadGame (gameMode) {
     this.createCanvas()
     this.init()
   }

@@ -12,3 +12,8 @@ const GameConstants = {
   PLAYER_SPEED: 10,
   AI_SPEED: 1.12
 }
+
+const GameModes = {
+  PLAYER_VS_AI: 0,
+  PLAYER_VS_PLAYER: 1
+}

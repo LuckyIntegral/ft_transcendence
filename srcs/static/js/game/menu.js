@@ -1,11 +1,11 @@
 class Menu {
-  constructor (game) {
-    this.game = game
+  constructor () {
+    this.game = new Game()
     this.menuItems = [
-      { text: 'Play against AI', action: () => this.game.loadGamePage(true) },
+      { text: 'PLAYER VS AI', action: () => this.game.loadGame(GameModes.PLAYER_VS_AI) },
       {
-        text: 'Play against another player',
-        action: () => this.game.loadGamePage(false)
+        text: 'PLAYER VS PLAYER',
+        action: () => this.game.loadGamePage(GameModes.PLAYER_VS_PLAYER)
       }
     ]
     this.selectedItemIndex = null
@@ -68,7 +68,7 @@ class Menu {
     const startY = this.canvas.height / 2 - 50
 
     this.menuItems.forEach((item, index) => {
-      const intensity = Math.floor(20 + this.hoverIntensity[index] * 100)
+      const intensity = Math.floor(this.hoverIntensity[index] * 100)
       this.context.fillStyle = `rgb(${intensity}, ${intensity}, ${intensity})`
       this.context.fillRect(startX - 200, startY + index * 60 - 25, 400, 50)
       this.context.fillStyle = 'WHITE'
@@ -97,12 +97,7 @@ class Menu {
     const startY = this.canvas.height / 2 - 50
 
     for (let i = 0; i < this.menuItems.length; i++) {
-      if (
-        x >= startX &&
-        x <= startX + 400 &&
-        y >= startY + i * 60 - 25 &&
-        y <= startY + 50 + i * 60 - 25
-      ) {
+      if (this.mouseOverButton(x, y, startX, startY, i) === true) {
         this.clickIntensity[i] = 1
         setTimeout(() => {
           this.menuItems[i].action()
@@ -113,21 +108,15 @@ class Menu {
   }
 
   handleMouseMove (event) {
-    const rect = this.canvas.getBoundingClientRect()
-    const x = event.clientX - rect.left
-    const y = event.clientY - rect.top
+    const x = event.clientX - this.canvas.getBoundingClientRect().left
+    const y = event.clientY - this.canvas.getBoundingClientRect().top
 
     const startX = this.canvas.width / 2 - 200
     const startY = this.canvas.height / 2 - 50
 
     let selectedIndex = null
     for (let i = 0; i < this.menuItems.length; i++) {
-      if (
-        x >= startX &&
-        x <= startX + 400 &&
-        y >= startY + i * 60 - 25 &&
-        y <= startY + 50 + i * 60 - 25
-      ) {
+      if (this.mouseOverButton(x, y, startX, startY, i) === true) {
         selectedIndex = i
         break
       }
@@ -137,5 +126,24 @@ class Menu {
       this.selectedItemIndex = selectedIndex
       this.drawMenu()
     }
+
+    this.updateCursor()
+  }
+
+  updateCursor (selectedIndex) {
+    if (selectedIndex !== null) {
+      this.canvas.style.cursor = 'pointer'
+    } else {
+      this.canvas.style.cursor = 'default'
+    }
+  }
+
+  mouseOverButton (x, y, startX, startY, i) {
+    return (
+      x >= startX &&
+      x <= startX + 400 &&
+      y >= startY + i * 60 - 25 &&
+      y <= startY + 50 + i * 60 - 25
+    )
   }
 }
