@@ -272,7 +272,7 @@ class Game {
 
     this.boundBlur = this.blurHandler.bind(this)
     window.addEventListener('blur', this.boundBlur)
-  
+
     this.boundReset = this.resetHandler.bind(this)
   }
 

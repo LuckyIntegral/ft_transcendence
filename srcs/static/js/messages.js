@@ -1,3 +1,59 @@
+var socket;
+var chatToken;
+
+function createSearchResultItem(data, popup) {
+    var li = document.createElement('li');
+    li.setAttribute('class', 'clearfix');
+    li.innerHTML = `<div class="about">
+                        <img src="${data['picture']}" alt="avatar">
+                        <div class="name">${data['username']}</div>
+                    </div>
+                    <div class="button-container">
+                        <button class="add-button" data-username="${data['username']}" data-token="${data['token']}">Start char</button>
+                    </div>
+                    `;
+    li.querySelector('.add-button').addEventListener('click', function() {
+        var chatToken = this.getAttribute('data-token');
+        fetchWithToken('/api/chat/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + localStorage.getItem('token'),
+            },
+            body: JSON.stringify({
+                'username': data['username'],
+            })
+        })
+        .then(response => {
+            if (response.ok) {
+                return response.json();
+            }
+            throw new Error('Failed to create chat');
+        })
+        .then(data => {
+            chatToken = data['token'];
+            getUserListChats();
+            popup.remove();
+        })
+        .catch(error => {
+            alertError("Something went wrong. Please try again later.");
+        });
+    });
+    return li;
+}
+
+function setAddChatButtonListener() {
+    var addChatButton = document.getElementById('addChatButton');
+    addChatButton.removeEventListener('click', createUserSearchPopup);
+    addChatButton.addEventListener('click', createUserSearchPopup);
+}
+
+function scrollDownMessageList() {
+    var messageList = document.getElementById('messagesList');
+    var lastMessage = messageList.lastElementChild;
+    lastMessage.scrollIntoView();
+}
+
 function loadMessagesPage() {
     var messagesPage = document.createElement('section');
     messagesPage.setAttribute('style', 'background-color: #eee;');
@@ -23,7 +79,7 @@ function createIncomeMessageItemLi(message, time, avatarUrl) {
                         <span class="message-data-time">${time}</span>
                         <img src=${avatarUrl} alt="avatar">
                     </div>
-                    <div class="message my-message">${message}</div>
+                    <div class="message my-message message-content" >${message}</div>
                     `;
     return li;
 }
@@ -36,7 +92,7 @@ function createOutcomeMessageItemLi(message, time, avatarUrl) {
                         <span class="message-data-time">${time}</span>
                         <img src=${avatarUrl} alt="avatar">
                     </div>
-                    <div class="message other-message float-right">${message}</div>
+                    <div class="message other-message float-right message-content">${message}</div>
                     `;
     return li;
 }
@@ -77,7 +133,7 @@ function createUserListItemLi(data, type) {
 }
 
 
-function getChatMessages(chatToken) {
+function getChatMessages() {
     fetchWithToken('/api/chat/', {
         method: 'PUT',
         headers: {
@@ -97,20 +153,59 @@ function getChatMessages(chatToken) {
     .then(data => {
         document.getElementById('messagesList').innerHTML = '';
         data.forEach(message => {
-            if (message['type'] === 'income') {
+            if (message['sender'] !== localStorage.getItem('username')) {
                 document.getElementById('messagesList').appendChild(createIncomeMessageItemLi(message['message'], formatTimestamp(message['timestamp']), message['picture']));
             } else {
                 document.getElementById('messagesList').appendChild(createOutcomeMessageItemLi(message['message'], formatTimestamp(message['timestamp']), message['picture']));
             }
         })
+        scrollDownMessageList();
     })
     .catch(error => {
         console.error(error);
     });
 }
 
-function updateActiveChat(chatToken) {
-    var chatToken = this.getAttribute('data-chat-token');
+function connectToSocket() {
+    socket = new WebSocket(`ws://${window.location.host}/ws/chat/${chatToken}/`);
+    socket.onmessage = function(event) {
+        var data = JSON.parse(event.data);
+        if (data['sender'] !== localStorage.getItem('username')) {
+            document.getElementById('messagesList').appendChild(createIncomeMessageItemLi(data['message'], formatTimestamp(data['timestamp']), localStorage.getItem('companionPicture')));
+            scrollDownMessageList();
+        } else {
+            document.getElementById('messagesList').appendChild(createOutcomeMessageItemLi(data['message'], formatTimestamp(data['timestamp']), localStorage.getItem('companionPicture')));
+            scrollDownMessageList();
+        }
+    };
+    socket.onclose = function(event) {
+        if (event.wasClean) {
+            console.log('Connection closed cleanly');
+        } else {
+            console.error('Connection died');
+        }
+    };
+    socket.onerror = function(error) {
+        console.error('Error: ' + error.message);
+    };
+    return socket;
+}
+
+function sendMessage() {
+    var message = document.getElementById('messageInput').value;
+    if (message === '') {
+        return;
+    }
+    socket.send(JSON.stringify({
+        'sender': localStorage.getItem('username'),
+        'message': message,
+        'timestamp': new Date().toISOString(),
+    }));
+    document.getElementById('messageInput').value = '';
+}
+
+function updateActiveChat() {
+    chatToken = this.getAttribute('data-chat-token');
     var chatItems = document.querySelectorAll('#userList li');
     for (var i = 0; i < chatItems.length; i++) {
         var itemStatus = chatItems[i].getAttribute('class')
@@ -125,9 +220,24 @@ function updateActiveChat(chatToken) {
     if (unreadDiv) {
         unreadDiv.setAttribute('style', 'display: none;');
     }
-    document.getElementById('messagesList').innerHTML = '';
-    getChatMessages(chatToken);
-    // connectToSocket(chatToken);
+    var imgElement = this.querySelector('img');
+    var companionPicture = imgElement.src
+    console.log(companionPicture);
+    localStorage.setItem('companionPicture', companionPicture);
+    getChatMessages();
+    if (socket) {
+        socket.close();
+    }
+    socket = connectToSocket();
+    document.getElementById('inputDiv').setAttribute('style', '');
+    document.getElementById('messageInput').addEventListener('keypress', function(event) {
+        if (event.keyCode === 13) {
+            if (!event.shiftKey) {
+                event.preventDefault();
+                sendMessage();
+            }
+        }
+    });
 }
 
 function getUserListChats () {
@@ -154,7 +264,18 @@ function getUserListChats () {
         for (var i = 0; i < chatItems.length; i++) {
             chatItems[i].addEventListener('click', updateActiveChat);
         }
-    }).catch(error => {
+    }).then(function() {
+        $(document).ready(function(){
+            $('#searchInput').on('keyup', function(){
+                var value = $(this).val().toLowerCase();
+                $("#userList li").filter(function() {
+                    $(this).toggle($(this).find('.name').text().toLowerCase().indexOf(value) > -1)
+                });
+            });
+        });
+        setAddChatButtonListener();
+    })
+    .catch(error => {
         console.error(error);
     });
 }

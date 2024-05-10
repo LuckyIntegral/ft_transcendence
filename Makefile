@@ -21,6 +21,9 @@ clean:
 	@docker image prune -f
 	@docker container prune -f
 
+rmsocket:
+	@docker volume rm trans_socket_volume
+
 cleandb:
 	@docker volume rm $(shell docker volume ls -q)
 

@@ -5,8 +5,13 @@
     <div class="col-lg-12">
         <div class="card chat-app">
             <div id="plist" class="people-list">
-                <div class="input-group">
-                    <input id="searchInput" type="text" class="form-control" placeholder="Search...">
+                <div class="search-and-button">
+                    <div class="addChatButton">
+                        <button id="addChatButton" class="btn btn-primary">+ Chat</button>
+                    </div>
+                    <div class="input-group">
+                        <input id="searchInput" type="text" class="form-control" placeholder="Search...">
+                    </div>
                 </div>
                 <ul id="userList" class="list-unstyled chat-list mt-2 mb-0 overflow-y-auto">
                     <!-- <li class="clearfix">
@@ -59,7 +64,7 @@
                 </div>
                 <div id="inputDiv" class="chat-message clearfix" style="display: none;">
                     <div class="input-group mb-0">
-                        <input type="text" class="form-control" placeholder="Enter text here...">
+                        <textarea id="messageInput" class="form-control" placeholder="Enter text here..."></textarea>
                     </div>
                 </div>
             </div>
