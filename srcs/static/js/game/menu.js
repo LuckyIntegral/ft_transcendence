@@ -4,14 +4,76 @@ class Menu {
     this.menuItems = [
       {
         text: 'PLAYER VS AI',
-        action: () => this.game.loadGame(GameModes.PLAYER_VS_AI)
+        action: () => this.game.loadGame(GameModes.PLAYER_VS_AI),
+        image: 'static/images/defaultSmall.jpg'
       },
       {
         text: 'PLAYER VS PLAYER',
-        action: () => this.connectPlayers()
+        action: () => this.displayOnlineFriends(),
+        image: 'static/images/defaultSmall.jpg'
       }
     ]
-    this.init()
+    this.images = {}
+    this.init(true)
+  }
+
+  init (fullInit = false) {
+    if (fullInit) {
+      this.preloadImages(this.menuItems.map(item => item.image))
+      this.selectedItemIndex = null
+      this.hoverIntensity = new Array(this.menuItems.length).fill(0)
+      this.clickIntensity = new Array(this.menuItems.length).fill(0)
+    }
+    this.setupCanvasAndListeners()
+  }
+
+  setupCanvasAndListeners () {
+    this.createCanvas()
+    this.setFont()
+    this.setMouseListeners()
+  }
+
+  setMouseListeners () {
+    this.clearListeners()
+    this.boundClick = this.mouseClickHandler.bind(this)
+    this.canvas.addEventListener('click', this.boundClick)
+    this.boundMove = this.mouseMoveHandler.bind(this)
+    this.canvas.addEventListener('mousemove', this.boundMove)
+    console.log('Listeners bound')
+  }
+
+  mouseClickHandler (event) {
+    console.log('Click detected')
+    const rect = this.canvas.getBoundingClientRect()
+    const x = event.clientX - rect.left
+    const y = event.clientY - rect.top
+
+    const startX = this.canvas.width / 2 - 200
+    const startY = this.canvas.height / 2 - 50
+
+    for (let i = 0; i < this.menuItems.length; i++) {
+      if (this.mouseOverButton(x, y, startX, startY, i)) {
+        console.log('Click on item: ', this.menuItems[i].text)
+        this.clickIntensity[i] = 1
+        setTimeout(() => {
+          this.menuItems[i].action()
+        }, 100)
+        break
+      }
+    }
+  }
+
+  preloadImages (imagePaths) {
+    imagePaths.forEach(path => {
+      if (path && !this.images[path]) {
+        const img = new Image()
+        img.onload = () => {
+          this.images[path] = img
+          this.drawMenu()
+        }
+        img.src = path
+      }
+    })
   }
 
   start () {
@@ -20,13 +82,6 @@ class Menu {
     this.drawMenu()
     this.setMouseListeners()
     this.animate()
-  }
-
-  init () {
-    this.title = null
-    this.selectedItemIndex = null
-    this.hoverIntensity = new Array(this.menuItems.length).fill(0)
-    this.clickIntensity = new Array(this.menuItems.length).fill(0)
   }
 
   animate () {
@@ -112,9 +167,17 @@ class Menu {
     this.context.strokeStyle = 'WHITE'
     this.context.strokeRect(x, y, width, height)
     if (this.clickIntensity[index] > 0) {
-      this.context.fillStyle =
-        'rgba(0, 0, 0, ' + this.clickIntensity[index] + ')'
+      this.context.fillStyle = `rgba(0, 0, 0, ${this.clickIntensity[index]})`
       this.context.fillRect(x, y, width, height)
+    }
+    if (this.images[this.menuItems[index].image]) {
+      this.context.drawImage(
+        this.images[this.menuItems[index].image],
+        x + width - 48,
+        y + (height - 44) / 2,
+        45,
+        44
+      )
     }
   }
 
@@ -133,25 +196,6 @@ class Menu {
 
     this.boundMove = this.mouseMoveHandler.bind(this)
     this.canvas.addEventListener('mousemove', this.boundMove)
-  }
-
-  mouseClickHandler (event) {
-    const rect = this.canvas.getBoundingClientRect()
-    const x = event.clientX - rect.left
-    const y = event.clientY - rect.top
-
-    const startX = this.canvas.width / 2 - 200
-    const startY = this.canvas.height / 2 - 50
-
-    for (let i = 0; i < this.menuItems.length; i++) {
-      if (this.mouseOverButton(x, y, startX, startY, i) === true) {
-        this.clickIntensity[i] = 1
-        setTimeout(() => {
-          this.menuItems[i].action()
-        }, 100)
-        break
-      }
-    }
   }
 
   mouseMoveHandler (event) {
@@ -207,26 +251,22 @@ class Menu {
       .then(response => response.json())
       .then(data => {
         if (data.data.length === 0) {
-          alert('lol')
+          alert('No online friends')
         } else {
           this.menuItems = data.data.map(player => {
             return {
               text: player.username,
+              image: player.pictureSmall,
               action: () => {
                 cancelAnimationFrame(this.animationFrameId)
                 this.game.loadGame(GameModes.PLAYER_VS_PLAYER, player.id)
               }
             }
           })
-          this.init()
+          this.preloadImages(this.menuItems.map(item => item.image))
           this.title = 'Online friends'
-          this.drawMenu()
-          this.setMouseListeners()
+          this.init()
         }
       })
-  }
-
-  connectPlayers () {
-    this.displayOnlineFriends()
   }
 }

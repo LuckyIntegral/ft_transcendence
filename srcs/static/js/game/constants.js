@@ -17,3 +17,10 @@ const GameModes = {
   PLAYER_VS_AI: 0,
   PLAYER_VS_PLAYER: 1
 }
+
+const MenuConstants = {
+  BUTTON_WIDTH: 400,
+  BUTTON_HEIGHT: 50,
+  BUTTON_INTENSITY: 100,
+  BUTTON_COLOR: 'WHITE'
+}
