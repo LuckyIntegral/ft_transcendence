@@ -8,7 +8,7 @@ class Menu {
         action: () => this.game.loadGamePage(false)
       }
     ]
-    this.selectedItemIndex = 0
+    this.selectedItemIndex = null
   }
 
   start () {
@@ -47,7 +47,10 @@ class Menu {
     const startY = this.canvas.height / 2 - 50
 
     this.menuItems.forEach((item, index) => {
-      this.context.fillStyle = index === this.selectedItemIndex ? 'RED' : 'WHITE'
+      this.context.fillStyle =
+        index === this.selectedItemIndex ? 'GRAY' : 'BLACK'
+      this.context.fillRect(startX - 200, startY + index * 60 - 25, 400, 50)
+      this.context.fillStyle = 'WHITE'
       this.context.fillText(item.text, startX, startY + index * 60)
       this.context.strokeStyle = 'WHITE'
       this.context.strokeRect(startX - 200, startY + index * 60 - 25, 400, 50)
@@ -56,17 +59,17 @@ class Menu {
 
   setMouseListeners () {
     this.canvas.addEventListener('click', this.handleMouseClick.bind(this))
-    this.canvas.addEventListener('mousemove', this.handleMouseMove.bind(this));
+    this.canvas.addEventListener('mousemove', this.handleMouseMove.bind(this))
   }
 
   handleMouseClick (event) {
     const rect = this.canvas.getBoundingClientRect()
     const x = event.clientX - rect.left
     const y = event.clientY - rect.top
-  
+
     const startX = this.canvas.width / 2 - 200
     const startY = this.canvas.height / 2 - 50
-  
+
     for (let i = 0; i < this.menuItems.length; i++) {
       if (
         x >= startX &&
