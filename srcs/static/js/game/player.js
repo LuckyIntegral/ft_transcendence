@@ -17,11 +17,14 @@ class Player {
   }
 
   move () {
-    if (this.moveUp === true && this.y > 0) {
+    if (this.moveUp === true && this.y > 0 + GameConstants.PADDLE_PADDING) {
       this.y -= GameConstants.PLAYER_SPEED
     } else if (
       this.moveDown === true &&
-      this.y < GameConstants.GAME_HEIGHT - GameConstants.PADDLE_HEIGHT
+      this.y <
+        GameConstants.GAME_HEIGHT -
+          GameConstants.PADDLE_HEIGHT -
+          GameConstants.PADDLE_PADDING
     ) {
       this.y += GameConstants.PLAYER_SPEED
     }

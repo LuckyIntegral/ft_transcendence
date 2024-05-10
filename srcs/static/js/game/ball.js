@@ -17,11 +17,12 @@ class Ball {
   }
 
   bounce () {
-    if (
-      this.y + GameConstants.BALL_RADIUS > GameConstants.GAME_HEIGHT ||
-      this.y - GameConstants.BALL_RADIUS < 0
-    ) {
+    if (this.y + GameConstants.BALL_RADIUS * 2 > GameConstants.GAME_HEIGHT) {
       this.ySpeed = -this.ySpeed
+      this.y = GameConstants.GAME_HEIGHT - GameConstants.BALL_RADIUS * 2
+    } else if (this.y - GameConstants.BALL_RADIUS * 2 < 0) {
+      this.ySpeed = -this.ySpeed
+      this.y = GameConstants.BALL_RADIUS * 2
     }
   }
 

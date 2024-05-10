@@ -40,11 +40,9 @@ class Menu {
     this.canvas.addEventListener('click', this.boundClick)
     this.boundMove = this.mouseMoveHandler.bind(this)
     this.canvas.addEventListener('mousemove', this.boundMove)
-    console.log('Listeners bound')
   }
 
   mouseClickHandler (event) {
-    console.log('Click detected')
     const rect = this.canvas.getBoundingClientRect()
     const x = event.clientX - rect.left
     const y = event.clientY - rect.top
@@ -54,7 +52,6 @@ class Menu {
 
     for (let i = 0; i < this.menuItems.length; i++) {
       if (this.mouseOverButton(x, y, startX, startY, i)) {
-        console.log('Click on item: ', this.menuItems[i].text)
         this.clickIntensity[i] = 1
         setTimeout(() => {
           this.menuItems[i].action()
@@ -261,7 +258,6 @@ class Menu {
           action: () => {
             cancelAnimationFrame(this.animationFrameId)
             this.sendGameRequest(player.username).then(() => {
-              console.log('Game request sent to: ', player.username)
               this.game.loadGame(GameModes.PLAYER_VS_PLAYER, player.username)
             })
           }
