@@ -2,11 +2,10 @@ class Lobby {
   constructor () {
     this.id = this.getNewGameId()
     this.createLobby()
-    this.socket = new WebSocket(`ws://${window.location.host}/ws/lobby/${this.id}/`)
   }
 
   createLobby (username) {
-    var url = new URL('http://localhost:8080/api/game/lobby/')
+    var url = new URL(`http://${window.location.host}/api/game/lobby/`)
     return fetchWithToken(url, {
       method: 'POST',
       headers: {
@@ -18,14 +17,14 @@ class Lobby {
   }
 
   sendGameRequest (friendUsername) {
-    var url = new URL(`http://${window.location.host}/api/game/request/`)
+    let url = `http://${window.location.host}/api/game/request/`
     return fetchWithToken(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: 'Bearer' + localStorage.getItem('access')
+        Authorization: 'Bearer ' + localStorage.getItem('access')
       },
-      body: JSON.stringify({username: friendUsername})
+      body: JSON.stringify({ username: friendUsername })
     })
   }
 

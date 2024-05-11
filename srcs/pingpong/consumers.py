@@ -124,24 +124,37 @@ class GameLobbyConsumer(AsyncWebsocketConsumer):
             'message': message
         }))
 
-class GameRequestConsumer(AsyncWebsocketConsumer):
+class UserConsumer(AsyncWebsocketConsumer):
     async def connect(self):
-        self.user = self.scope['url_route']['kwargs']['username']
+        self.user_id = self.scope['url_route']['kwargs']['user_id']
         await self.channel_layer.group_add(
-            self.user,
+            self.user_id,
+            self.channel_name
+        )
+
+        await self.accept()
+    
+    async def disconnect(self, code):
+        await self.channel_layer.group_discard(
+            self.user_id,
             self.channel_name
         )
     
-    async def disconnect(self, close_code):
-        await self.channel_layer.group_discard(
-            self.user,
-            self.channel_name
-        )
-
     async def receive(self, text_data):
-        pass
+        text_data_json = json.loads(text_data)
+        message = text_data_json['message']
 
-    async def game_invite(self, event):
+        await self.channel_layer.group_send(
+            self.user_id,
+            {
+                'type': 'chat_message',
+                'message': message
+            }
+        )
+    
+    async def chat_message(self, event):
+        message = event['message']
+
         await self.send(text_data=json.dumps({
-            'message': 'You have been invited to a game'
+            'message': message
         }))

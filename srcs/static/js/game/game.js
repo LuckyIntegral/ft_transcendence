@@ -12,6 +12,10 @@ class Game {
       this.player2 = new Player(PlayerPosition.PLAYER2)
     }
     this.gameOver = false
+    this.player1.moveUp = false
+    this.player1.moveDown = false
+    this.player2.moveUp = false
+    this.player2.moveDown = false
   }
 
   loadGame (gameMode) {

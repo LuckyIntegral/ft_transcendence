@@ -9,7 +9,6 @@ function checkAndReload() {
 document.addEventListener('DOMContentLoaded', function() {
     var routes = {
         'profile': function() {
-            checkAndReload();
             loadProfilePage();
             previousRoute = 'profile';
         },
@@ -19,22 +18,18 @@ document.addEventListener('DOMContentLoaded', function() {
             previousRoute = 'pong';
         },
         'friends': function() {
-            checkAndReload();
             loadFriendsPage();
             previousRoute = 'friends';
         },
         'leadrboard': function() {
-            checkAndReload();
             loadLeaderboardPage();
             previousRoute = 'leadrboard';
         },
         'messages': function() {
-            checkAndReload();
             loadMessagesPage();
             previousRoute = 'messages';
         },
         'default': function() {
-            checkAndReload();
             document.getElementById('content').textContent = 'Default page';
             previousRoute = 'default';
         }

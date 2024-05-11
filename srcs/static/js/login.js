@@ -1,52 +1,55 @@
-document.addEventListener('DOMContentLoaded', function() {
-    // Login handling
+document.addEventListener('DOMContentLoaded', function () {
+  // Login handling
+  var username = localStorage.getItem('username')
+  if (username) {
+    refreshSocket(username)
+  }
 
-    function forgotPasswordClick(loginPopup) {
-        var forgotPasswordPopup = createForgotPasswordPopup();
-        document.body.removeChild(loginPopup);
-        document.body.appendChild(forgotPasswordPopup);
-        var closeButton = forgotPasswordPopup.querySelector('#close-button');
-        closeButton.addEventListener('click', function() {
-            document.body.removeChild(forgotPasswordPopup);
-        });
-        var forgotPasswordForm = document.getElementById('forgot-password-form');
-        if (forgotPasswordForm) {
-            forgotPasswordForm.addEventListener('submit', function(e) {
-                e.preventDefault();
-                var email = document.getElementById('id_email').value;
-                fetch('/reset-password/', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        email: email
-                    })
-                }).then(function(response) {
-                    if (response.ok) {
-                        alertSuccess('An email has been sent to you with instructions to reset your password.');
-                        document.body.removeChild(forgotPasswordPopup);
-                    } else {
-                        popupAlertError('Invalid email. Please try again.');
-                    }
-                })
-            });
-        }
+  function forgotPasswordClick (loginPopup) {
+    var forgotPasswordPopup = createForgotPasswordPopup()
+    document.body.removeChild(loginPopup)
+    document.body.appendChild(forgotPasswordPopup)
+    var closeButton = forgotPasswordPopup.querySelector('#close-button')
+    closeButton.addEventListener('click', function () {
+      document.body.removeChild(forgotPasswordPopup)
+    })
+    var forgotPasswordForm = document.getElementById('forgot-password-form')
+    if (forgotPasswordForm) {
+      forgotPasswordForm.addEventListener('submit', function (e) {
+        e.preventDefault()
+        var email = document.getElementById('id_email').value
+        fetch('/reset-password/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            email: email
+          })
+        }).then(function (response) {
+          if (response.ok) {
+            alertSuccess(
+              'An email has been sent to you with instructions to reset your password.'
+            )
+            document.body.removeChild(forgotPasswordPopup)
+          } else {
+            popupAlertError('Invalid email. Please try again.')
+          }
+        })
+      })
     }
+  }
 
+  var loginLink = document.getElementById('loginRef')
 
+  if (!loginLink) {
+    return
+  }
+  loginLink.addEventListener('click', function (e) {
+    e.preventDefault()
 
-
-    var loginLink = document.getElementById('loginRef');
-
-    if (!loginLink) {
-        return;
-    }
-    loginLink.addEventListener('click', function(e) {
-        e.preventDefault();
-
-        var loginPopup = createPopup();
-        loginPopup.innerHTML = `
+    var loginPopup = createPopup()
+    loginPopup.innerHTML = `
             <div class="card mb-3" style="width: 300px;">
                 <div class="card-header bg-primary text-white">
                         Login
@@ -69,12 +72,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div id="popupContent"></div>
                 </div>
             </div>
-        `;
-        document.body.appendChild(loginPopup);
+        `
+    document.body.appendChild(loginPopup)
 
-        var twoStepVerificationPopup = createPopup();
+    var twoStepVerificationPopup = createPopup()
 
-        twoStepVerificationPopup.innerHTML = `
+    twoStepVerificationPopup.innerHTML = `
             <div class="card mb-3" style="width: 300px;">
                 <div class="card-header bg-primary text-white">
                     Two Step Verification
@@ -92,61 +95,85 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div id="popupContent"></div>
                 </div>
             </div>
-        `;
+        `
 
-        var closeButton = loginPopup.querySelector('#close-button');
-        closeButton.addEventListener('click', function() {
-            document.body.removeChild(loginPopup);
-        });
+    var closeButton = loginPopup.querySelector('#close-button')
+    closeButton.addEventListener('click', function () {
+      document.body.removeChild(loginPopup)
+    })
 
-        var forgotPasswordLink = loginPopup.querySelector('#forgot-password');
-        forgotPasswordLink.addEventListener('click', function() {
-            forgotPasswordClick(loginPopup);
-        });
-        var loginForm = document.getElementById('login-form');
-        if (loginForm) {
-            loginForm.addEventListener('submit', function(e) {
-                e.preventDefault();
-                var username = document.getElementById('id_username').value;
-                var password = document.getElementById('id_password').value;
-                fetch('/api/login/', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        username: username,
-                        password: password
-                    })
-                }).then(function(response) {
-                    if (response.status == 200) {
-                        obtainToken(username, password);
-                        return response.json();
-                    } else if (response.status == 202) {
-                        document.body.removeChild(loginPopup);
-                        document.body.appendChild(twoStepVerificationPopup);
-                        sendVerificationCodeEmail(username, password); // TODO: Uncomment this line later
-                        var twoStepVerificationForm = document.getElementById('two-step-verification-form');
-                        closeButton = twoStepVerificationPopup.querySelector('#close-button');
-                        closeButton.addEventListener('click', function() {
-                            document.body.removeChild(twoStepVerificationPopup);
-                        });
-                        if (!twoStepVerificationForm) {
-                            return
-                        }
-                        twoStepVerificationForm.addEventListener('submit', function(e) {
-                            e.preventDefault();
-                            processTwoStepVerification(username, password);
-                        });
-                    } else {
-                        popupAlertError("Incorrect username or password");
-                    }
-                }).finally(function() {
-                    if (localStorage.getItem('access') != null) {
-                        document.body.removeChild(loginPopup);
-                    }
-                });
-            });
-        }
-    });
-});
+    var forgotPasswordLink = loginPopup.querySelector('#forgot-password')
+    forgotPasswordLink.addEventListener('click', function () {
+      forgotPasswordClick(loginPopup)
+    })
+    var loginForm = document.getElementById('login-form')
+    if (loginForm) {
+      loginForm.addEventListener('submit', function (e) {
+        e.preventDefault()
+        var username = document.getElementById('id_username').value
+        var password = document.getElementById('id_password').value
+        fetch('/api/login/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            username: username,
+            password: password
+          })
+        })
+          .then(function (response) {
+            if (response.status == 200) {
+              localStorage.setItem('username', username)
+              refreshSocket(username)
+              obtainToken(username, password)
+              return response.json().then(function (data) {
+                var socket = new WebSocket(
+                  `ws://${window.location.host}/ws/user/${username}/`
+                )
+                socket.onopen = function () {
+                  console.log(`WebSocket open on ${socket.url}`)
+                }
+                socket.onmessage = function (event) {
+                  var data = JSON.parse(event.data)
+                  if (data.message) {
+                    alert(data.message)
+                  }
+                }
+                socket.onerror = function (error) {
+                  console.error('WebSocket error', error)
+                }
+                window.userSocket = socket
+              })
+            } else if (response.status == 202) {
+              document.body.removeChild(loginPopup)
+              document.body.appendChild(twoStepVerificationPopup)
+              sendVerificationCodeEmail(username, password)
+              var twoStepVerificationForm = document.getElementById(
+                'two-step-verification-form'
+              )
+              closeButton =
+                twoStepVerificationPopup.querySelector('#close-button')
+              closeButton.addEventListener('click', function () {
+                document.body.removeChild(twoStepVerificationPopup)
+              })
+              if (!twoStepVerificationForm) {
+                return
+              }
+              twoStepVerificationForm.addEventListener('submit', function (e) {
+                e.preventDefault()
+                processTwoStepVerification(username, password)
+              })
+            } else {
+              popupAlertError('Incorrect username or password')
+            }
+          })
+          .finally(function () {
+            if (localStorage.getItem('access') != null) {
+              document.body.removeChild(loginPopup)
+            }
+          })
+      })
+    }
+  })
+})

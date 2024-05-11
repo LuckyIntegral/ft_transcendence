@@ -22,7 +22,7 @@ clean:
 	@docker container prune -f
 
 rmsocket:
-	@docker volume rm trans_socket_volume
+	@docker volume rm ft_transcendence_socket_volume
 
 cleandb:
 	@docker volume rm $(shell docker volume ls -q)

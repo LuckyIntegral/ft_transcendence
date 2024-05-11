@@ -881,6 +881,7 @@ class GameRequestView(APIView):
             secondUser.username,
             {
                 'type': 'game_invite',
+                'message': 'You have been invited to a game!',
             }
         )
 
@@ -906,5 +907,14 @@ class GameLobbyView(APIView):
         if created:
             lobby.users.add(user)
             lobby.save()
+
+            channel_layer = get_channel_layer()
+            async_to_sync(channel_layer.group_send)(
+                'lobby_' + game_id,
+                {
+                    'type': 'game_invite',
+                    'message': 'You have been invited to a game!'
+                }
+            )
         
         return Response({'message': 'Lobby created'}, status=status.HTTP_201_CREATED)
