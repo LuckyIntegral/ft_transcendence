@@ -133,6 +133,17 @@ function createUserListItemLi(data, type) {
 }
 
 
+function createChatHeader(data) {
+    var div = document.createElement('div');
+    div.setAttribute('class', 'col-lg-6');
+    div.innerHTML = `<img src="${data['picture']}" alt="avatar">
+                    <div class="chat-about>
+                        <h6 class="m-b-0">${data['username']}</h6>
+                        <small>${data['timestamp']}</small>
+                    </div>
+                    `;
+}
+
 function getChatMessages() {
     fetchWithToken('/api/chat/', {
         method: 'PUT',
