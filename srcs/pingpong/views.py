@@ -852,21 +852,3 @@ class MessagesView(APIView):
                     'token': chat.token,
                 })
         return Response(data, status=status.HTTP_200_OK)
-
-
-# class MessagesLongPollView(APIView):
-#     def get(self, request, format=None):
-#         auth_header = request.headers.get('Authorization')
-#         try:
-#             token = JWTTokenValidator().validate(auth_header)
-#         except ValidationError as e:
-#             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-#         try:
-#             user = getUserFromToken(token)
-#         except ValidationError as e:
-#             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-#         while (True):
-#             newMessagesReceived = MessagesRecipient.objects.filter(recipient=user, isRead=False, isNotified=False)
-#             if newMessagesReceived.count() > 0:
-#                 return Response({'status': 'New messages received'}, status=status.HTTP_200_OK)
-#             time.sleep(1)

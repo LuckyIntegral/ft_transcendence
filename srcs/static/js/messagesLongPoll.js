@@ -1,4 +1,7 @@
 document.addEventListener('DOMContentLoaded', function() {
+    if (!localStorage.getItem('access')) {
+        return;
+    }
     var socket = new WebSocket(`ws://${window.location.host}/messages/long-poll/`);
     function sleep(ms) {
         return new Promise(resolve => setTimeout(resolve, ms));
@@ -17,15 +20,31 @@ document.addEventListener('DOMContentLoaded', function() {
             }));
         };
 
-        socket.onmessage = function(event) {
+        socket.onmessage = async function(event) {
             var data = JSON.parse(event.data);
             if (data && data['new_messages'] === 'received') {
                 if (window.location.hash === '#messages') {
                     getUserListChats();
-                } else {
-                    document.getElementById('messagesRef').textContent = 'Messages🔴';
+                }
+                document.getElementById('messagesRef').textContent = 'Messages🔴';
+            }
+            else if (data && data['new_messages'] === 'unread') {
+                document.getElementById('messagesRef').textContent = 'Messages🔴';
+            }
+            else if (data && data['new_messages'] === 'none') {
+                document.getElementById('messagesRef').textContent = 'Messages';
+            }
+            if (window.location.hash !== '#messages') {
+                if (localStorage.getItem('chatSocket') === "active") {
+                    localStorage.setItem('chatSocket', 'inactive');
+                    chatSocket.close();
+                    chatSocket = null;
                 }
             }
+            await sleep(1000);
+            socket.send(JSON.stringify({
+                'token': localStorage.getItem('access')
+            }));
         };
 
         socket.onclose = function(event) {

@@ -42,6 +42,12 @@ class PingPongConsumer(AsyncWebsocketConsumer):
     def getSender(self, sender):
         return User.objects.get(username=sender)
 
+    @database_sync_to_async
+    def getRecipient(self, sender, chat):
+        if chat.userOne.username == sender.username:
+            return chat.userTwo
+        return chat.userOne
+
     async def connect(self):
         self.chatToken = self.scope['url_route']['kwargs']['token']
         await self.channel_layer.group_add(
@@ -60,15 +66,15 @@ class PingPongConsumer(AsyncWebsocketConsumer):
 
 
     async def receive(self, text_data):
-        print("Users connected", PingPongConsumer.userCounter, sep=': ')
         text_data_json = json.loads(text_data)
         messageText = text_data_json['message']
         sender = text_data_json['sender']
         timestamp = text_data_json['timestamp']
-        self.user = await self.getSender(sender)
-        self.messageRecipient = await self.createMessageRecipient(self.user)
-        self.message = await self.createMessage(self.user, messageText, self.messageRecipient)
         self.chat = await self.getChat(self.chatToken)
+        self.user = await self.getSender(sender)
+        self.recipient = await self.getRecipient(self.user, self.chat)
+        self.messageRecipient = await self.createMessageRecipient(self.recipient)
+        self.message = await self.createMessage(self.user, messageText, self.messageRecipient)
         await self.addMessageToChat(self.chat, self.message)
         await self.channel_layer.group_send(
             "chat",
@@ -100,21 +106,20 @@ class MessagesLongPollConsumer(AsyncWebsocketConsumer):
         text_data = json.loads(text_data)
         accessToken = text_data['token']
         if not accessToken:
-            print('error token')
             await self.send(text_data=json.dumps({'error': 'error'}))
             return
         try:
             user = await self.get_user_from_token(accessToken)
-            while True:
-                new_messages = await self.get_new_messages(user)
-                print(new_messages)
-                if (new_messages):
-                    break
-                await asyncio.sleep(1)
-            await self.set_notified(user)
-            await  self.send(text_data=json.dumps({'new_messages': 'received'}))
+            new_messages = await self.get_new_messages(user)
+            unread_messages = await self.get_unread_messages(user)
+            if new_messages:
+                await self.set_notified(user)
+                await self.send(text_data=json.dumps({'new_messages': 'received'}))
+            elif unread_messages:
+                await self.send(text_data=json.dumps({'new_messages': 'unread'}))
+            else:
+                await self.send(text_data=json.dumps({'new_messages': 'none'}))
         except Exception as e:
-            print(str(e))
             await self.send(text_data=json.dumps({'error': 'error'}))
 
     @database_sync_to_async
@@ -142,6 +147,10 @@ class MessagesLongPollConsumer(AsyncWebsocketConsumer):
     @database_sync_to_async
     def get_new_messages(self, user):
         return MessagesRecipient.objects.filter(recipient=user, isRead=False, isNotified=False).exists()
+
+    @database_sync_to_async
+    def get_unread_messages(self, user):
+        return MessagesRecipient.objects.filter(recipient=user, isRead=False).exists()
 
     @database_sync_to_async
     def set_notified(self, user):

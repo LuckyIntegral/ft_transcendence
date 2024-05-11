@@ -21,6 +21,8 @@ clean:
 	@docker image prune -f
 	@docker container prune -f
 
+restart: stop rmsocket debug
+
 rmsocket:
 	@docker volume rm trans_socket_volume
 

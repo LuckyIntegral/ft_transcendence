@@ -17,7 +17,6 @@ document.addEventListener('DOMContentLoaded', function() {
             loadLeaderboardPage();
         },
         'messages': function() {
-            document.getElementById('messagesRef').textContent = 'Messages';
             loadMessagesPage();
         },
         'default': function() {

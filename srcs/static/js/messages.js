@@ -1,5 +1,5 @@
-var socket;
-var chatToken;
+var chatSocket = null;
+var chatToken = null;
 
 function createSearchResultItem(data, popup) {
     var li = document.createElement('li');
@@ -167,8 +167,9 @@ function getChatMessages() {
 }
 
 function connectToSocket() {
-    socket = new WebSocket(`ws://${window.location.host}/ws/chat/${chatToken}/`);
-    socket.onmessage = function(event) {
+    chatSocket = new WebSocket(`ws://${window.location.host}/ws/chat/${chatToken}/`);
+    localStorage.setItem('chatSocket', "active");
+    chatSocket.onmessage = function(event) {
         var data = JSON.parse(event.data);
         if (data['sender'] !== localStorage.getItem('username')) {
             document.getElementById('messagesList').appendChild(createIncomeMessageItemLi(data['message'], formatTimestamp(data['timestamp']), localStorage.getItem('companionPicture')));
@@ -178,17 +179,17 @@ function connectToSocket() {
             scrollDownMessageList();
         }
     };
-    socket.onclose = function(event) {
+    chatSocket.onclose = function(event) {
         if (event.wasClean) {
             console.log('Connection closed cleanly');
         } else {
             console.error('Connection died');
         }
     };
-    socket.onerror = function(error) {
+    chatSocket.onerror = function(error) {
         console.error('Error: ' + error.message);
     };
-    return socket;
+    return chatSocket;
 }
 
 function sendMessage() {
@@ -196,7 +197,7 @@ function sendMessage() {
     if (message === '') {
         return;
     }
-    socket.send(JSON.stringify({
+    chatSocket.send(JSON.stringify({
         'sender': localStorage.getItem('username'),
         'message': message,
         'timestamp': new Date().toISOString(),
@@ -225,10 +226,10 @@ function updateActiveChat() {
     console.log(companionPicture);
     localStorage.setItem('companionPicture', companionPicture);
     getChatMessages();
-    if (socket) {
-        socket.close();
+    if (chatSocket) {
+        chatSocket.close();
     }
-    socket = connectToSocket();
+    chatSocket = connectToSocket();
     document.getElementById('inputDiv').setAttribute('style', '');
     document.getElementById('messageInput').addEventListener('keypress', function(event) {
         if (event.keyCode === 13) {
