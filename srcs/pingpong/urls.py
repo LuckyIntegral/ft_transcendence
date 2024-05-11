@@ -25,6 +25,7 @@ from pingpong.views import (
     MessagesView,
     GameRequestView,
     GameLobbyView,
+    GameView,
 )
 from django.urls import path
 from django.conf import settings
@@ -89,4 +90,5 @@ urlpatterns = [
     path("api/messages/", MessagesView.as_view(), name="messages"),
     path("api/game/request/", GameRequestView.as_view(), name="game_request"),
     path("api/game/lobby/", GameLobbyView.as_view(), name="game_lobby"),
+    path("api/game/lobby/game/", GameView.as_view(), name="game"),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

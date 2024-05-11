@@ -104,5 +104,7 @@ class Chat(models.Model):
 
 
 class Lobby(models.Model):
-    game_id = models.CharField(max_length=255, unique=True)
+    lobby_id = models.CharField(max_length=255, unique=True)
     users = models.ManyToManyField(User)
+    game_ongoing = models.BooleanField(default=False)
+    socket = models.CharField(max_length=255, blank=True)

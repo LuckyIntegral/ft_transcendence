@@ -1303,6 +1303,13 @@ class GameRequestView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+        lobby_id = request.data.get("lobby_id")
+        if not lobby_id:
+            return Response(
+                {"error": "Lobby ID is required"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         try:
             secondUser = User.objects.get(username=username)
         except User.DoesNotExist:
@@ -1312,13 +1319,12 @@ class GameRequestView(APIView):
             )
 
         channel_layer = get_channel_layer()
-        print(secondUser.username)
-        print(channel_layer.group_send)
         async_to_sync(channel_layer.group_send)(
             secondUser.username,
             {
                 "type": "game_invite",
-                "message": "You have been invited to a game!",
+                "message": f"You have been invited to a game by {user.username}",
+                "lobby_id": lobby_id,
             },
         )
 
@@ -1344,27 +1350,75 @@ class GameLobbyView(APIView):
                 {"error": str(e)}, status=status.HTTP_400_BAD_REQUEST
             )
 
-        game_id = request.data.get("game_id")
-        if not game_id:
+        lobby_id = request.data.get("lobby_id")
+        if not lobby_id:
             return Response(
-                {"error": "Game ID is required"},
+                {"error": "Lobby ID is required"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        lobby, created = Lobby.objects.get_or_create(game_id=game_id)
+        lobby, created = Lobby.objects.get_or_create(lobby_id=lobby_id)
         if created:
             lobby.users.add(user)
             lobby.save()
 
             channel_layer = get_channel_layer()
             async_to_sync(channel_layer.group_send)(
-                "lobby_" + game_id,
-                {
-                    "type": "game_invite",
-                    "message": "You have been invited to a game!",
-                },
+                "lobby_" + str(lobby_id),
+                {},
             )
 
         return Response(
             {"message": "Lobby created"}, status=status.HTTP_201_CREATED
+        )
+
+
+class GameView(APIView):
+    def post(self, request, format=None):
+        auth_header = request.headers.get("Authorization")
+        try:
+            token = JWTTokenValidator().validate(auth_header)
+        except ValidationError as e:
+            return Response(
+                {"error": str(e)}, status=status.HTTP_400_BAD_REQUEST
+            )
+        try:
+            user = getUserFromToken(token)
+        except ValidationError as e:
+            return Response(
+                {"error": str(e)}, status=status.HTTP_400_BAD_REQUEST
+            )
+        lobby_id = request.data.get("lobby_id")
+        if not lobby_id:
+            return Response(
+                {"error": "Lobby ID is required"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        try:
+            lobby = Lobby.objects.get(lobby_id=lobby_id)
+        except Lobby.DoesNotExist:
+            return Response(
+                {"error": "Lobby does not exist"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        if lobby.users.count() != 2:
+            return Response(
+                {"error": "Lobby is not full"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if user not in lobby.users.all():
+            return Response(
+                {"error": "User is not in the lobby"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        player_x_pos = request.data.get("x_pos")
+        player_y_pos = request.data.get("y_pos")
+        channel_layer = get_channel_layer()
+        async_to_sync(channel_layer.group_send)(
+            "lobby_" + str(lobby_id),
+            {
+                "type": "update_game",
+                "x_pos": player_x_pos,
+                "y_pos": player_y_pos,
+            },
         )

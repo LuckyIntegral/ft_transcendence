@@ -1,10 +1,7 @@
 class Lobby {
-  constructor () {
-    this.id = this.getNewGameId()
-    this.createLobby()
-  }
+  constructor () {}
 
-  createLobby (username) {
+  joinOrCreate (lobbyId) {
     var url = new URL(`http://${window.location.host}/api/game/lobby/`)
     return fetchWithToken(url, {
       method: 'POST',
@@ -12,11 +9,11 @@ class Lobby {
         'Content-Type': 'application/json',
         Authorization: 'Bearer ' + localStorage.getItem('access')
       },
-      body: JSON.stringify({ username: username, game_id: this.id })
+      body: JSON.stringify({ lobby_id: lobbyId })
     })
   }
 
-  sendGameRequest (friendUsername) {
+  sendGameRequest (friendUsername, lobbyId) {
     let url = `http://${window.location.host}/api/game/request/`
     return fetchWithToken(url, {
       method: 'POST',
@@ -24,7 +21,7 @@ class Lobby {
         'Content-Type': 'application/json',
         Authorization: 'Bearer ' + localStorage.getItem('access')
       },
-      body: JSON.stringify({ username: friendUsername })
+      body: JSON.stringify({ username: friendUsername, lobby_id: lobbyId })
     })
   }
 

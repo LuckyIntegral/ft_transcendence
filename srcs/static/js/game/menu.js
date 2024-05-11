@@ -257,8 +257,11 @@ class Menu {
           image: player.pictureSmall,
           action: () => {
             cancelAnimationFrame(this.animationFrameId)
-              this.lobby = new Lobby()
-              this.lobby.sendGameRequest(player.username)
+            this.lobby = new Lobby()
+            this.lobby.joinOrCreate(this.lobby.getNewGameId()).then(() => {
+              this.lobby.sendGameRequest(player.username, this.lobby.getNewGameId()).then(() => {
+              })
+            })
           }
         }
       })

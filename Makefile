@@ -4,6 +4,8 @@ CACHE_FOLDER = ./srcs/pingpong/__pycache__ ./srcs/transcedence/__pycache__
 MIGRATION_FOLDER = ./srcs/pingpong/migrations
 PICTURES_FOLDER = ./srcs/media/pictures
 
+re: stop rmsocket debug
+
 run:
 	@docker-compose up -d --build
 
