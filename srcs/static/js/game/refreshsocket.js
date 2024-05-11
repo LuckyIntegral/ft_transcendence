@@ -9,6 +9,45 @@ refreshSocket = function (username) {
     var data = JSON.parse(event.data)
     if (data.message) {
       alert(data.message)
+      var popup = createPopup(data.message)
+      popup.innerHTML = `
+      <div class="card" style="width: 300px;">
+          <div class="card-header bg-primary text-white">
+              ${data.message}
+              <button id="close-button" style="float: right; border: none; background: none; color: white;">&times;</button>
+          </div>
+          <div class="card-body">
+              <p>${data.message}</p>
+              <button id="accept-button" class="btn btn-success">Accept</button>
+              <button id="decline-button" class="btn btn-danger">Decline</button>
+          </div>
+      </div>
+  `
+      document.body.appendChild(popup)
+      var closeButton = popup.querySelector('#close-button')
+      closeButton.addEventListener('click', function () {
+        document.body.removeChild(popup)
+      })
+      var acceptButton = popup.querySelector('#accept-button')
+      acceptButton.addEventListener('click', function () {
+        socket.send(
+          JSON.stringify({
+            action: 'accept',
+            message: data.message,
+          })
+        )
+        document.body.removeChild(popup)
+      })
+      var declineButton = popup.querySelector('#decline-button')
+      declineButton.addEventListener('click', function () {
+        socket.send(
+          JSON.stringify({
+            action: 'decline',
+            message: data.message,
+          })
+        )
+        document.body.removeChild(popup)
+      })
     }
   }
   socket.onerror = function (error) {
