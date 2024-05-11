@@ -1325,6 +1325,7 @@ class GameRequestView(APIView):
                 "type": "game_invite",
                 "message": f"You have been invited to a game by {user.username}",
                 "lobby_id": lobby_id,
+                "sender": user.username,
             },
         )
 

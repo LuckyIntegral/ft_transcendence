@@ -143,9 +143,13 @@ class UserConsumer(AsyncWebsocketConsumer):
         )
 
     async def game_invite(self, event):
-        message = event["message"]
-
-        await self.send(text_data=json.dumps({"message": message}))
+        await self.send(
+            text_data=json.dumps(
+                {"message": event["message"],
+                "sender": event["sender"],
+                "lobby_id": event["lobby_id"]},
+            )
+        )
 
     async def chat_message(self, event):
         message = event["message"]

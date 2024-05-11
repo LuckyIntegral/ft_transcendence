@@ -8,7 +8,7 @@ refreshSocket = function (username) {
   socket.onmessage = function (event) {
     var data = JSON.parse(event.data)
     if (data.message) {
-      alert(data.message)
+      var sender = data.sender
       var popup = createPopup(data.message)
       popup.innerHTML = `
       <div class="card" style="width: 300px;">
@@ -30,20 +30,22 @@ refreshSocket = function (username) {
       })
       var acceptButton = popup.querySelector('#accept-button')
       acceptButton.addEventListener('click', function () {
+        console.log(`Accepted game request from ${sender}`)
         socket.send(
           JSON.stringify({
             action: 'accept',
-            message: data.message,
+            message: data.message
           })
         )
         document.body.removeChild(popup)
       })
       var declineButton = popup.querySelector('#decline-button')
       declineButton.addEventListener('click', function () {
+        console.log('Decline button clicked')
         socket.send(
           JSON.stringify({
             action: 'decline',
-            message: data.message,
+            message: data.message
           })
         )
         document.body.removeChild(popup)
