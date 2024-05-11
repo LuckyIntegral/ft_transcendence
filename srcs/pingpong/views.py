@@ -24,6 +24,9 @@ from .utils import sendVerificationEmail, sendTwoStepVerificationEmail, getUserF
         sendPasswordResetEmail, getCompressedPicture, blockChainCreateGame, generateToken
 from PIL import Image
 from django.core.files.uploadedfile import InMemoryUploadedFile
+from django.db import models
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
 
 
 # Create your views here.
@@ -866,11 +869,42 @@ class GameRequestView(APIView):
 
         username = request.data.get('username')
         if not username:
-            return Response({'error': 'Please provide a username'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'Username is required'}, status=status.HTTP_400_BAD_REQUEST)
+
         try:
             secondUser = User.objects.get(username=username)
         except User.DoesNotExist:
-            return Response({'error': 'User does not exist'}, status=status.HTTP_404_NOT_FOUND)
-        if secondUser == user:
-            return Response({'error': 'You cannot play with yourself'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'User does not exist'}, status=status.HTTP_400_BAD_REQUEST)
+
+        channel_layer = get_channel_layer()
+        async_to_sync(channel_layer.group_send)(
+            secondUser.username,
+            {
+                'type': 'game_invite',
+            }
+        )
+
         return Response({'status': 'Game request sent successfully'}, status=status.HTTP_200_OK)
+
+class GameLobbyView(APIView):
+    def post(self, request, format=None):
+        auth_header = request.headers.get('Authorization')
+        try:
+            token = JWTTokenValidator().validate(auth_header)
+        except ValidationError as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            user = getUserFromToken(token)
+        except ValidationError as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+        game_id = request.data.get('game_id')
+        if not game_id:
+            return Response({'error': 'Game ID is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        lobby, created = Lobby.objects.get_or_create(game_id=game_id)
+        if created:
+            lobby.users.add(user)
+            lobby.save()
+        
+        return Response({'message': 'Lobby created'}, status=status.HTTP_201_CREATED)

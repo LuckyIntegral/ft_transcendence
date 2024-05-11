@@ -257,10 +257,8 @@ class Menu {
           image: player.pictureSmall,
           action: () => {
             cancelAnimationFrame(this.animationFrameId)
-            this.sendGameRequest(player.username).then(() => {
               this.lobby = new Lobby()
-              this.game.loadGame(GameModes.PLAYER_VS_PLAYER, player.username)
-            })
+              this.lobby.sendGameRequest(player.username)
           }
         }
       })
@@ -268,18 +266,6 @@ class Menu {
       this.title = 'Online friends'
     }
     this.init()
-  }
-
-  sendGameRequest (username) {
-    var url = new URL('http://localhost:8080/api/game/request/')
-    return fetchWithToken(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: 'Bearer ' + localStorage.getItem('access')
-      },
-      body: JSON.stringify({ username: username })
-    })
   }
 
   displayOnlineFriends () {

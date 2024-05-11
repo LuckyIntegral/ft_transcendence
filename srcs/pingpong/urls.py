@@ -3,7 +3,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from pingpong.views import SignupView, ProfileView, PasswordView, VerifyEmailView, VerifyTokenView,\
     TwoStepVerificationCodeView, LoginView, TwoStepVerification, FriendsView, FriendsRequestsView,\
     VerificationEmailView, UploadPictureView, ForgetPasswordView, FriendsSearchView,\
-    LeaderboardView, UserDetailsView, ChatView, MessagesView, GameRequestView
+    LeaderboardView, UserDetailsView, ChatView, MessagesView, GameRequestView, GameLobbyView
 from django.urls import path
 from django.conf import settings
 from django.conf.urls.static import static
@@ -32,4 +32,5 @@ urlpatterns = [
     path('api/chat/', ChatView.as_view(), name='chat'),
     path('api/messages/', MessagesView.as_view(), name='messages'),
     path('api/game/request/', GameRequestView.as_view(), name='game_request'),
+    path('api/game/lobby/', GameLobbyView.as_view(), name='game_lobby'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

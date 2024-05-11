@@ -123,3 +123,25 @@ class GameLobbyConsumer(AsyncWebsocketConsumer):
         await self.send(text_data=json.dumps({
             'message': message
         }))
+
+class GameRequestConsumer(AsyncWebsocketConsumer):
+    async def connect(self):
+        self.user = self.scope['url_route']['kwargs']['username']
+        await self.channel_layer.group_add(
+            self.user,
+            self.channel_name
+        )
+    
+    async def disconnect(self, close_code):
+        await self.channel_layer.group_discard(
+            self.user,
+            self.channel_name
+        )
+
+    async def receive(self, text_data):
+        pass
+
+    async def game_invite(self, event):
+        await self.send(text_data=json.dumps({
+            'message': 'You have been invited to a game'
+        }))
