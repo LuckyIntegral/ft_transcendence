@@ -258,6 +258,7 @@ class Menu {
           action: () => {
             cancelAnimationFrame(this.animationFrameId)
             this.sendGameRequest(player.username).then(() => {
+              this.lobby = new Lobby()
               this.game.loadGame(GameModes.PLAYER_VS_PLAYER, player.username)
             })
           }
