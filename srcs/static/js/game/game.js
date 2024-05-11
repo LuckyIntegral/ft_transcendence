@@ -1,5 +1,6 @@
 class Game {
-  constructor () {
+  constructor (lobbyId) {
+    this.lobbyId = lobbyId
     this.setListeners()
   }
 
@@ -146,6 +147,11 @@ class Game {
 
   draw () {
     this.clearCanvas()
+    if (this.lobbyId !== undefined) {
+      this.context.fillStyle = 'WHITE'
+      this.context.font = '20px Arial'
+      this.context.fillText(`Lobby ID: ${this.lobbyId}`, 10, 20)
+    }
     this.drawScores()
     this.drawPlayer()
     this.drawAI()

@@ -36,6 +36,8 @@ refreshSocket = function (username) {
         lobby.joinOrCreate(lobbyId)
         console.log(`${username} joined lobby ${lobbyId}`)
         document.body.removeChild(popup)
+        var game = new Game(lobbyId)
+        game.loadGame(GameModes.PLAYER_VS_PLAYER)
       })
       var declineButton = popup.querySelector('#decline-button')
       declineButton.addEventListener('click', function () {
