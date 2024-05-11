@@ -9,6 +9,7 @@ refreshSocket = function (username) {
     var data = JSON.parse(event.data)
     if (data.message) {
       var sender = data.sender
+      var lobbyId = data.lobby_id
       var popup = createPopup(data.message)
       popup.innerHTML = `
       <div class="card" style="width: 300px;">
@@ -31,12 +32,9 @@ refreshSocket = function (username) {
       var acceptButton = popup.querySelector('#accept-button')
       acceptButton.addEventListener('click', function () {
         console.log(`Accepted game request from ${sender}`)
-        socket.send(
-          JSON.stringify({
-            action: 'accept',
-            message: data.message
-          })
-        )
+        var lobby = new Lobby()
+        lobby.joinOrCreate(lobbyId)
+        console.log(`${username} joined lobby ${lobbyId}`)
         document.body.removeChild(popup)
       })
       var declineButton = popup.querySelector('#decline-button')
