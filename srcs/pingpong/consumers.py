@@ -55,6 +55,12 @@ class PingPongConsumer(AsyncWebsocketConsumer):
             self.channel_name
         )
 
+    async def game_invite(self, event):
+        message = event['message']
+
+        await self.send(text_data=json.dumps({
+            'message': message
+        }))
 
     async def receive(self, text_data):
         text_data_json = json.loads(text_data)
@@ -105,14 +111,22 @@ class GameLobbyConsumer(AsyncWebsocketConsumer):
             self.channel_name
         )
     
+    async def game_invite(self, event):
+        message = event['message']
+
+        await self.send(text_data=json.dumps({
+            'message': message
+        }))
+
     async def receive(self, text_data):
         text_data_json = json.loads(text_data)
         message = text_data_json['message']
+        message_type = text_data_json['type']
 
         await self.channel_layer.group_send(
             self.game_id,
             {
-                'type': 'chat_message',
+                'type': message_type,
                 'message': message
             }
         )
@@ -151,7 +165,14 @@ class UserConsumer(AsyncWebsocketConsumer):
                 'message': message
             }
         )
-    
+
+    async def game_invite(self, event):
+        message = event['message']
+
+        await self.send(text_data=json.dumps({
+            'message': message
+        }))
+
     async def chat_message(self, event):
         message = event['message']
 

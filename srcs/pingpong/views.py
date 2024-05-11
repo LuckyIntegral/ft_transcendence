@@ -877,6 +877,8 @@ class GameRequestView(APIView):
             return Response({'error': 'User does not exist'}, status=status.HTTP_400_BAD_REQUEST)
 
         channel_layer = get_channel_layer()
+        print(secondUser.username)
+        print(channel_layer.group_send)
         async_to_sync(channel_layer.group_send)(
             secondUser.username,
             {
@@ -885,7 +887,7 @@ class GameRequestView(APIView):
             }
         )
 
-        return Response({'status': 'Game request sent successfully'}, status=status.HTTP_200_OK)
+        return Response({'message': 'Game request sent successfully'}, status=status.HTTP_200_OK)
 
 class GameLobbyView(APIView):
     def post(self, request, format=None):
