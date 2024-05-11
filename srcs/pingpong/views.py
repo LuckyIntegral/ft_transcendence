@@ -1372,7 +1372,30 @@ class GameLobbyView(APIView):
         return Response(
             {"message": "Lobby created"}, status=status.HTTP_201_CREATED
         )
+    
+    def get(self, request, format=None):
+        auth_header = request.headers.get("Authorization")
+        try:
+            token = JWTTokenValidator().validate(auth_header)
+        except ValidationError as e:
+            return Response(
+                {"error": str(e)}, status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            user = getUserFromToken(token)
+        except ValidationError as e:
+            return Response(
+                {"error": str(e)}, status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        lobby, created = Lobby.objects.get_or_create()
+        lobby.users.add(user)
 
+        return Response({
+            "lobby_id": lobby.pk,
+            "users": list(lobby.users.all().values('username', 'id'))
+        }, status=status.HTTP_200_OK)
 
 class GameView(APIView):
     def post(self, request, format=None):
