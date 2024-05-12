@@ -34,7 +34,6 @@ class UserProfile(models.Model):
     pictureSmall = models.ImageField(upload_to=userDirectoryPath, default='images/defaultSmall.jpg')
     isOnline = models.BooleanField(default=False)
     lastOnline = models.DateTimeField(auto_now=True)
-    blockedChatUsers = models.ManyToManyField("self", related_name='blockedChatUsers', blank=True)
 
 class FriendRequest(models.Model):
     """ This model represents the friend request.
@@ -65,5 +64,7 @@ class Chat(models.Model):
     userTwo = models.ForeignKey(User, on_delete=models.CASCADE, related_name='userTwo')
     messages = models.ManyToManyField(Message, related_name='messages', blank=True)
     token = models.CharField(max_length=100)
-    isUserOneBlocked = models.BooleanField(default=False)
-    isUserTwoBlocked = models.BooleanField(default=False)
+
+class Block(models.Model):
+    blocker = models.ForeignKey(User, on_delete=models.CASCADE, related_name='blocker')
+    blocked = models.ForeignKey(User, on_delete=models.CASCADE, related_name='blocked')

@@ -3,23 +3,34 @@
 
 // Define your routes
 document.addEventListener('DOMContentLoaded', function() {
+    function closeChatSocket() {
+        if (chatSocket) {
+            chatSocket.close();
+        }
+    }
     var routes = {
         'profile': function() {
+            closeChatSocket();
             loadProfilePage();
         },
         'pong': function() {
+            closeChatSocket();
             loadGamePage();
         },
         'friends': function() {
+            closeChatSocket();
             loadFriendsPage();
         },
         'leadrboard': function() {
+            closeChatSocket();
             loadLeaderboardPage();
         },
         'messages': function() {
+            closeChatSocket();
             loadMessagesPage();
         },
         'default': function() {
+            closeChatSocket();
             document.getElementById('content').textContent = 'Default page';
         }
     };

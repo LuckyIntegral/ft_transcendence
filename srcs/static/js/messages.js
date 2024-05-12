@@ -76,7 +76,7 @@ function createIncomeMessageItemLi(message, time, avatarUrl) {
     li.setAttribute('class', 'clearfix');
     li.setAttribute('style', 'text-align: left;');
     li.innerHTML = `<div class="message-data">
-                        <span class="message-data-time">${time}</span>
+                        <span class="message-data-time" data-timestamp="${time}">${formatTimestamp(time)}</span>
                         <img src=${avatarUrl} alt="avatar">
                     </div>
                     <div class="message my-message message-content" >${message}</div>
@@ -89,7 +89,7 @@ function createOutcomeMessageItemLi(message, time, avatarUrl) {
     li.setAttribute('class', 'clearfix');
     li.setAttribute('style', 'text-align: right;');
     li.innerHTML = `<div class="message-data">
-                        <span class="message-data-time">${time}</span>
+                        <span class="message-data-time" data-timestamp="${time}">${formatTimestamp(time)}</span>
                         <img src=${avatarUrl} alt="avatar">
                     </div>
                     <div class="message other-message float-right message-content">${message}</div>
@@ -117,9 +117,9 @@ function createUserListItemLi(data, type) {
                     `;
     }
     if (data['isOnline']) {
-        statusLine = `<div class="status"> <i class="fa fa-circle online"></i> online </div>`
+        statusLine = `<div class="status"> <i class="fa fa-circle online"></i> <span>Online</span> </div>`
     } else {
-        statusLine = `<div class="status"> <i class="fa fa-circle offline"></i> ${formatTimestamp(data['lastOnline'])} </div>`
+        statusLine = `<div class="status"> <i class="fa fa-circle offline"></i> <span class="chat-timestamp" data-timestamp="${data['lastOnline']}">${formatTimestamp(data['lastOnline'])}</span> </div>`
     }
     li.setAttribute('data-chat-token', data['token']);
     li.innerHTML = `<img src="${data['picture']}" alt="avatar">
@@ -135,13 +135,45 @@ function createUserListItemLi(data, type) {
 
 function createChatHeader(data) {
     var div = document.createElement('div');
+    if (data['blocked']) {
+        var blockButton = `<button class="block-button" id="blockButton">Unblock</button>`;
+    } else {
+        var blockButton = `<button class="block-button" id="blockButton">Block</button>`;
+    }
     div.setAttribute('class', 'col-lg-6');
-    div.innerHTML = `<img src="${data['picture']}" alt="avatar">
-                    <div class="chat-about>
+    div.innerHTML = `<img src="${localStorage.getItem('companionPicture')}" alt="avatar">
+                    <div class="chat-about">
                         <h6 class="m-b-0">${data['username']}</h6>
-                        <small>${data['timestamp']}</small>
                     </div>
+                    ${blockButton}
                     `;
+    blockButton = div.querySelector('.block-button');
+    blockButton.addEventListener('click', function() {
+        fetchWithToken('/api/users/block/', {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + localStorage.getItem('token'),
+            },
+            body: JSON.stringify({
+                'username': data['username'],
+            })
+        })
+        .then(response => {
+            if (response.ok) {
+                return response.json();
+            }
+            throw new Error('Failed to block user');
+        })
+        .then(data => {
+            alertSuccess(data['status']);
+            blockButton.textContent = data['button'];
+        })
+        .catch(error => {
+            alertError("Something went wrong. Please try again later.");
+        });
+    });
+    return div;
 }
 
 function getChatMessages() {
@@ -162,12 +194,15 @@ function getChatMessages() {
         throw new Error('Failed to load messages');
     })
     .then(data => {
+        var chatHeader = document.getElementById('chat-header');
+        chatHeader.innerHTML = '';
+        chatHeader.appendChild(createChatHeader(data));
         document.getElementById('messagesList').innerHTML = '';
-        data.forEach(message => {
+        data['messages'].forEach(message => {
             if (message['sender'] !== localStorage.getItem('username')) {
-                document.getElementById('messagesList').appendChild(createIncomeMessageItemLi(message['message'], formatTimestamp(message['timestamp']), message['picture']));
+                document.getElementById('messagesList').appendChild(createIncomeMessageItemLi(message['message'], message['timestamp'], message['picture']));
             } else {
-                document.getElementById('messagesList').appendChild(createOutcomeMessageItemLi(message['message'], formatTimestamp(message['timestamp']), message['picture']));
+                document.getElementById('messagesList').appendChild(createOutcomeMessageItemLi(message['message'], message['timestamp'], message['picture']));
             }
         })
         scrollDownMessageList();
@@ -179,14 +214,16 @@ function getChatMessages() {
 
 function connectToSocket() {
     chatSocket = new WebSocket(`ws://${window.location.host}/ws/chat/${chatToken}/`);
-    localStorage.setItem('chatSocket', "active");
     chatSocket.onmessage = function(event) {
         var data = JSON.parse(event.data);
-        if (data['sender'] !== localStorage.getItem('username')) {
-            document.getElementById('messagesList').appendChild(createIncomeMessageItemLi(data['message'], formatTimestamp(data['timestamp']), localStorage.getItem('companionPicture')));
+        if (data['blocked']) {
+            alertError(data['blocked']);
+        }
+        else if (data['sender'] !== localStorage.getItem('username')) {
+            document.getElementById('messagesList').appendChild(createIncomeMessageItemLi(data['message'], data['timestamp'], localStorage.getItem('companionPicture')));
             scrollDownMessageList();
         } else {
-            document.getElementById('messagesList').appendChild(createOutcomeMessageItemLi(data['message'], formatTimestamp(data['timestamp']), localStorage.getItem('companionPicture')));
+            document.getElementById('messagesList').appendChild(createOutcomeMessageItemLi(data['message'], data['timestamp'], localStorage.getItem('companionPicture')));
             scrollDownMessageList();
         }
     };
@@ -234,7 +271,6 @@ function updateActiveChat() {
     }
     var imgElement = this.querySelector('img');
     var companionPicture = imgElement.src
-    console.log(companionPicture);
     localStorage.setItem('companionPicture', companionPicture);
     getChatMessages();
     if (chatSocket) {

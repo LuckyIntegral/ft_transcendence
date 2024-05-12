@@ -4,7 +4,7 @@ from channels.layers import get_channel_layer
 from channels.db import database_sync_to_async
 from asgiref.sync import async_to_sync
 from pingpong.validators import JWTTokenValidator
-from pingpong.models import UserProfile, Message, Chat, MessagesRecipient
+from pingpong.models import UserProfile, Message, Chat, MessagesRecipient, Block
 from django.contrib.auth.models import User
 from django.db.models import Q
 from rest_framework_simplejwt.tokens import UntypedToken
@@ -12,10 +12,10 @@ from rest_framework_simplejwt.state import token_backend
 from rest_framework_simplejwt.authentication import InvalidToken, TokenError
 import json
 import asyncio
+from django.utils import timezone
 
 class PingPongConsumer(AsyncWebsocketConsumer):
-    userCounter = 0
-
+    chatUsers = {}
     @database_sync_to_async
     def getChatExists(self, chatToken):
         return Chat.objects.filter(token=chatToken).exists()
@@ -26,7 +26,8 @@ class PingPongConsumer(AsyncWebsocketConsumer):
 
     @database_sync_to_async
     def createMessageRecipient(self, recipient):
-        if PingPongConsumer.userCounter == 2:
+        print(PingPongConsumer.chatUsers[self.chatToken])
+        if PingPongConsumer.chatUsers[self.chatToken] == 2:
             return MessagesRecipient.objects.create(recipient=recipient, isRead=True, isNotified=True)
         return MessagesRecipient.objects.create(recipient=recipient)
 
@@ -48,19 +49,26 @@ class PingPongConsumer(AsyncWebsocketConsumer):
             return chat.userTwo
         return chat.userOne
 
+    @database_sync_to_async
+    def isBlocked(self, sender, recipient):
+        return Block.objects.filter(blocker=recipient, blocked=sender).exists()
+
     async def connect(self):
         self.chatToken = self.scope['url_route']['kwargs']['token']
+        if self.chatToken not in PingPongConsumer.chatUsers:
+            PingPongConsumer.chatUsers[self.chatToken] = 1
+        else:
+            PingPongConsumer.chatUsers[self.chatToken] += 1
         await self.channel_layer.group_add(
-            "chat",
+            self.chatToken,
             self.channel_name
         )
-        PingPongConsumer.userCounter += 1
         await self.accept()
 
     async def disconnect(self, close_code):
-        PingPongConsumer.userCounter -= 1
+        PingPongConsumer.chatUsers[self.chatToken] -= 1
         await self.channel_layer.group_discard(
-            "chat",
+            self.chatToken,
             self.channel_name
         )
 
@@ -71,13 +79,16 @@ class PingPongConsumer(AsyncWebsocketConsumer):
         sender = text_data_json['sender']
         timestamp = text_data_json['timestamp']
         self.chat = await self.getChat(self.chatToken)
-        self.user = await self.getSender(sender)
-        self.recipient = await self.getRecipient(self.user, self.chat)
+        self.sender = await self.getSender(sender)
+        self.recipient = await self.getRecipient(self.sender, self.chat)
+        if await self.isBlocked(self.sender, self.recipient):
+            await self.send(text_data=json.dumps({'blocked': 'You are blocked by this user!'}))
+            return
         self.messageRecipient = await self.createMessageRecipient(self.recipient)
-        self.message = await self.createMessage(self.user, messageText, self.messageRecipient)
+        self.message = await self.createMessage(self.sender, messageText, self.messageRecipient)
         await self.addMessageToChat(self.chat, self.message)
         await self.channel_layer.group_send(
-            "chat",
+            self.chatToken,
             {
                 'type': 'chat_message',
                 'message': messageText,
@@ -112,6 +123,7 @@ class MessagesLongPollConsumer(AsyncWebsocketConsumer):
             user = await self.get_user_from_token(accessToken)
             new_messages = await self.get_new_messages(user)
             unread_messages = await self.get_unread_messages(user)
+            await self.update_last_online(user)
             if new_messages:
                 await self.set_notified(user)
                 await self.send(text_data=json.dumps({'new_messages': 'received'}))
@@ -120,7 +132,7 @@ class MessagesLongPollConsumer(AsyncWebsocketConsumer):
             else:
                 await self.send(text_data=json.dumps({'new_messages': 'none'}))
         except Exception as e:
-            await self.send(text_data=json.dumps({'error': 'error'}))
+            await self.send(text_data=json.dumps({'error': str(e)}))
 
     @database_sync_to_async
     def get_token_from_key(self, key):
@@ -158,3 +170,9 @@ class MessagesLongPollConsumer(AsyncWebsocketConsumer):
         for message in messages:
             message.isNotified = True
             message.save()
+
+    @database_sync_to_async
+    def update_last_online(self, user):
+        profile = UserProfile.objects.get(user=user)
+        profile.lastOnline = timezone.now()
+        profile.save()

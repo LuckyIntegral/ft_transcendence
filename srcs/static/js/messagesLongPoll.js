@@ -6,6 +6,20 @@ document.addEventListener('DOMContentLoaded', function() {
     function sleep(ms) {
         return new Promise(resolve => setTimeout(resolve, ms));
     }
+
+    function updateTimestamps() {
+        var timestampElements = document.querySelectorAll('.message-data-time');
+        timestampElements.forEach(function(element) {
+            var time = element.getAttribute('data-timestamp');
+            element.textContent = formatTimestamp(time);
+        });
+        var chatTimestampElements = document.querySelectorAll('.chat-timestamp');
+        chatTimestampElements.forEach(function(element) {
+            var time = element.getAttribute('data-timestamp');
+            element.textContent = formatTimestamp(time);
+        });
+    }
+
     async function startWebSocketConnection() {
         if (!localStorage.getItem('access')) {
             await sleep(1000);
@@ -34,12 +48,8 @@ document.addEventListener('DOMContentLoaded', function() {
             else if (data && data['new_messages'] === 'none') {
                 document.getElementById('messagesRef').textContent = 'Messages';
             }
-            if (window.location.hash !== '#messages') {
-                if (localStorage.getItem('chatSocket') === "active") {
-                    localStorage.setItem('chatSocket', 'inactive');
-                    chatSocket.close();
-                    chatSocket = null;
-                }
+            if (window.location.hash === '#messages') {
+                updateTimestamps();
             }
             await sleep(1000);
             socket.send(JSON.stringify({

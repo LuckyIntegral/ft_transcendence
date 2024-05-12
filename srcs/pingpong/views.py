@@ -767,18 +767,23 @@ class ChatView(APIView):
         except Chat.DoesNotExist:
             return Response({'error': 'Chat does not exist'}, status=status.HTTP_404_NOT_FOUND)
         secondUser = chat.userOne if chat.userOne != user else chat.userTwo
-        data = []
+        data = {
+                    'picture': secondUser.userprofile.pictureSmall.url,
+                    'username': secondUser.username,
+                    'token': chat.token,
+                    'blocked': Block.objects.filter(blocker=user, blocked=secondUser).exists(),
+                    'messages': [],
+                }
         for message in chat.messages.order_by('timestamp'):
             if message.sender != user and message.messageRecipient.isRead == False:
                 message.messageRecipient.isRead = True
                 message.messageRecipient.save()
-            data.append({
+            data['messages'].append({
                 'message': message.message,
                 'type': 'income' if message.sender != user else 'outcome',
                 'timestamp': message.timestamp,
                 'sender': message.sender.username,
                 'picture': message.sender.userprofile.pictureSmall.url,
-                'token': chat.token,
             })
         return Response(data, status=status.HTTP_200_OK)
 
@@ -841,6 +846,7 @@ class MessagesView(APIView):
                     'picture': secondUserPicture,
                     'isRead': lastMessage.messageRecipient.isRead if lastMessage.sender != user else True,
                     'token': chat.token,
+                    'lastTimestamp': lastMessage.timestamp,
                 })
             else:
                 data.append({
@@ -851,4 +857,36 @@ class MessagesView(APIView):
                     'isRead': True,
                     'token': chat.token,
                 })
+        data.sort(key=lambda x: x['lastTimestamp'], reverse=True)
         return Response(data, status=status.HTTP_200_OK)
+
+
+class BlockUserView(APIView):
+    """ This view is used to block a user.
+        It has following methods:
+        1. put: This method is used to unblock/block a user."""
+    def put(self, request, format=None):
+        auth_header = request.headers.get('Authorization')
+        try:
+            token = JWTTokenValidator().validate(auth_header)
+        except ValidationError as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            user = getUserFromToken(token)
+        except ValidationError as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        username = request.data.get('username')
+        if not username:
+            return Response({'error': 'Please provide a username'}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            secondUser = User.objects.get(username=username)
+        except User.DoesNotExist:
+            return Response({'error': 'User does not exist'}, status=status.HTTP_404_NOT_FOUND)
+        if secondUser == user:
+            return Response({'error': 'You cannot block yourself'}, status=status.HTTP_400_BAD_REQUEST)
+        blockRel = Block.objects.filter(blocker=user, blocked=secondUser)
+        if blockRel.exists():
+            blockRel.delete()
+            return Response({'status': 'User unblocked successfully', 'button': 'Block'}, status=status.HTTP_200_OK)
+        block = Block.objects.create(blocker=user, blocked=secondUser)
+        return Response({'status': 'User blocked successfully', 'button': 'Unblock'}, status=status.HTTP_200_OK)
