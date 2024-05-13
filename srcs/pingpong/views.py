@@ -25,6 +25,7 @@ from .utils import sendVerificationEmail, sendTwoStepVerificationEmail, getUserF
         sendPasswordResetEmail, getCompressedPicture, blockChainCreateGame, generateToken
 from PIL import Image
 from django.core.files.uploadedfile import InMemoryUploadedFile
+from django.utils import timezone
 
 
 # Create your views here.
@@ -856,8 +857,10 @@ class MessagesView(APIView):
                     'picture': secondUserPicture,
                     'isRead': True,
                     'token': chat.token,
+                    'lastTimestamp': timezone.now(), # fix this
                 })
-        data.sort(key=lambda x: x['lastTimestamp'], reverse=True)
+        if len(data) > 0:
+            data.sort(key=lambda x: x['lastTimestamp'], reverse=True)
         return Response(data, status=status.HTTP_200_OK)
 
 

@@ -214,6 +214,11 @@ function getChatMessages() {
 
 function connectToSocket() {
     chatSocket = new WebSocket(`ws://${window.location.host}/ws/chat/${chatToken}/`);
+    chatSocket.onopen = function(event) {
+        chatSocket.send(JSON.stringify({
+            'token': 'Bearer ' + localStorage.getItem('access'),
+        }));
+    };
     chatSocket.onmessage = function(event) {
         var data = JSON.parse(event.data);
         if (data['blocked']) {
