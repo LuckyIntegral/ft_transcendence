@@ -198,12 +198,13 @@ function getChatMessages() {
         var chatHeader = document.getElementById('chat-header');
         chatHeader.innerHTML = '';
         chatHeader.appendChild(createChatHeader(data));
+        localStorage.setItem('myPicture', data['myPicture']);
         document.getElementById('messagesList').innerHTML = '';
         data['messages'].forEach(message => {
             if (message['sender'] !== localStorage.getItem('username')) {
                 document.getElementById('messagesList').appendChild(createIncomeMessageItemLi(message['message'], message['timestamp'], message['picture']));
             } else {
-                document.getElementById('messagesList').appendChild(createOutcomeMessageItemLi(message['message'], message['timestamp'], message['picture']));
+                document.getElementById('messagesList').appendChild(createOutcomeMessageItemLi(message['message'], message['timestamp'], data['myPicture']));
             }
         })
         scrollDownMessageList();
@@ -229,7 +230,7 @@ function connectToSocket() {
             document.getElementById('messagesList').appendChild(createIncomeMessageItemLi(data['message'], data['timestamp'], localStorage.getItem('companionPicture')));
             scrollDownMessageList();
         } else {
-            document.getElementById('messagesList').appendChild(createOutcomeMessageItemLi(data['message'], data['timestamp'], localStorage.getItem('companionPicture')));
+            document.getElementById('messagesList').appendChild(createOutcomeMessageItemLi(data['message'], data['timestamp'], localStorage.getItem('myPicture')));
             scrollDownMessageList();
         }
 

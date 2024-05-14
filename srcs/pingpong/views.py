@@ -773,6 +773,7 @@ class ChatView(APIView):
                     'username': secondUser.username,
                     'token': chat.token,
                     'blocked': Block.objects.filter(blocker=user, blocked=secondUser).exists(),
+                    'myPicture': user.userprofile.pictureSmall.url,
                     'messages': [],
                 }
         for message in chat.messages.order_by('timestamp'):
