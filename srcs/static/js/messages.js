@@ -4,12 +4,15 @@ var chatToken = null;
 function createSearchResultItem(data, popup) {
     var li = document.createElement('li');
     li.setAttribute('class', 'clearfix');
-    li.innerHTML = `<div class="about">
+    li.innerHTML = `
+                    <div class="d-flex justify-content-between align-items-center">
                         <img src="${data['picture']}" alt="avatar">
                         <div class="name">${data['username']}</div>
-                    </div>
-                    <div class="button-container">
-                        <button class="add-button" data-username="${data['username']}" data-token="${data['token']}">Add chat</button>
+                        <button class="add-button btn btn-secondary" data-username="${data['username']}" data-token="${data['token']}">
+                            <span class="material-symbols-outlined">
+                                add_comment
+                            </span>
+                        </button>
                     </div>
                     `;
     li.querySelector('.add-button').addEventListener('click', function() {
@@ -137,9 +140,9 @@ function createUserListItemLi(data, type) {
 function createChatHeader(data) {
     var div = document.createElement('div');
     if (data['blocked']) {
-        var blockButton = `<button class="block-button" id="blockButton">Unblock</button>`;
+        var blockButton = `<button class="block-button btn btn-success" id="blockButton">Unblock</button>`;
     } else {
-        var blockButton = `<button class="block-button" id="blockButton">Block</button>`;
+        var blockButton = `<button class="block-button btn btn-danger" id="blockButton">Block</button>`;
     }
     div.setAttribute('class', 'col-lg-6');
     div.innerHTML = `<img src="${localStorage.getItem('companionPicture')}" alt="avatar">
@@ -168,6 +171,11 @@ function createChatHeader(data) {
         })
         .then(data => {
             alertSuccess(data['status']);
+            if (data['button'] === 'Block') {
+                blockButton.setAttribute('class', 'block-button btn btn-danger');
+            } else {
+                blockButton.setAttribute('class', 'block-button btn btn-success');
+            }
             blockButton.textContent = data['button'];
         })
         .catch(error => {
@@ -207,7 +215,9 @@ function getChatMessages() {
                 document.getElementById('messagesList').appendChild(createOutcomeMessageItemLi(message['message'], message['timestamp'], data['myPicture']));
             }
         })
-        scrollDownMessageList();
+        if (data['messages'].length > 0) {
+            scrollDownMessageList();
+        }
     })
     .catch(error => {
         console.error(error);
@@ -309,6 +319,8 @@ function updateActiveChat() {
             }
         }
     });
+    document.getElementById('userList').setAttribute('style', 'height: 550px;');
+
 }
 
 function getUserListChats () {

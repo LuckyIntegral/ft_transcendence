@@ -206,7 +206,7 @@ function changePassword() {
 
     popup.innerHTML = `
         <div class="card mb-3" style="width: 300px;">
-            <div class="card-header bg-primary text-white">
+            <div class="card-header bg-dark text-white">
                 Change Password
                 <button id="close-button" style="float: right; border: none; background: none; color: white;">&times;</button>
             </div>
@@ -226,7 +226,7 @@ function changePassword() {
                     </div>
                     <p class="fw-lighter
                     " style="font-size:12px;" >TODO: Password policy will be implemented later</p>
-                    <button type="submit" class="btn btn-primary">Change Password</button>
+                    <button type="submit" class="btn btn-dark">Change Password</button>
                 </form>
                 <div id="popupContent"></div>
             </div>
@@ -368,7 +368,7 @@ function editTwoStepVerification() {
         if (twoStepStatus === 202) {
             popup.innerHTML = `
                 <div class="card mb-3" style="width: 300px;">
-                    <div class="card-header bg-primary text-white">
+                    <div class="card-header bg-dark text-white">
                         Enable Two-Step Verification
                         <button id="close-button" style="float: right; border: none; background: none; color: white;">&times;</button>
                     </div>
@@ -390,7 +390,7 @@ function editTwoStepVerification() {
         } else if (twoStepStatus === 200) {
             popup.innerHTML = `
                 <div class="card mb-3" style="width: 300px;">
-                    <div class="card-header bg-primary text-white">
+                    <div class="card-header bg-dark text-white">
                         Disable Two-Step Verification
                         <button id="close-button" style="float: right; border: none; background: none; color: white;">&times;</button>
                     </div>

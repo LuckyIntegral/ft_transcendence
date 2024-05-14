@@ -18,18 +18,18 @@ function createPopup() {
 function createUserSearchPopup() {
     var searchPopup = createPopup();
     searchPopup.innerHTML = `
-        <div class="card" style="width: 300px;">
-            <div class="card-header bg-primary text-white">
+        <div class="card" style="width: 300px">
+            <div class="card-header bg-dark text-white">
                 <button id="close-button" style="float: right; border: none; background: none; color: white;">&times;</button>
             </div>
             <div class="card-body">
-                <form id="search-form">
+                <form id="search-form" class="input-group mb-3">
                     <input type="text" id="search-input" class="form-control" placeholder="Search for users" required>
-                    <button type="submit" class="btn btn-primary" style="margin-top: 10px;">Search</button>
+                    <button type="submit" class="btn btn-dark">Search</button>
                 </form>
             </div>
             <div class="people-list">
-                <ul id="popupContent" class="list-unstyled chat-list mt-2 mb-0 overflow-y-auto"></ul>
+                <ul id="popupContent" class="list-unstyled chat-list mt-2 overflow-y-auto"></ul>
             </div>
         </div>
     `;
@@ -50,6 +50,7 @@ function createUserSearchPopup() {
         }
         console.log('searching for: ' + document.getElementById('search-input').value);
         var url = new URL('/api/friends-search/', window.location.origin);
+        url.searchParams.append('pageSize', 20);
         url.searchParams.append('search_query', document.getElementById('search-input').value);
         fetchWithToken(url, {
             method: 'GET',
@@ -59,12 +60,21 @@ function createUserSearchPopup() {
             },
         })
         .then(response => {
-            searchPopupContent = document.getElementById('popupContent');
-            searchPopupContent.innerHTML = '';
             if (response.status !== 200) {
                 response.json().then(data => alertError(data.error));
             } else {
                 response.json().then(data => {
+                    searchPopupContent = document.getElementById('popupContent');
+                    searchPopupContent.innerHTML = '';
+                    height = 60;
+                    if (data.length === 0) {
+                        searchPopupContent.innerHTML = '<p style="text-align: center;">No users found</p>';
+                    } else if (data.length < 5) {
+                        height = data.length * 90;
+                    } else {
+                        height = 450;
+                    }
+                    searchPopupContent.setAttribute('style', `height: ${height}px;`);
                     for (var i = 0; i < data.length; i++) {
                         if (data[i].username === localStorage.getItem('username')) {
                             continue;
@@ -87,7 +97,7 @@ function createForgotPasswordPopup() {
     var forgotPasswordPopup = createPopup();
     forgotPasswordPopup.innerHTML = `
         <div class="card mb-3" style="width: 300px;">
-            <div class="card-header bg-primary text-white">
+            <div class="card-header bg-dark text-white">
                 Forgot Password
                 <button id="close-button" style="float: right; border: none; background: none; color: white;">&times;</button>
             </div>
@@ -98,7 +108,7 @@ function createForgotPasswordPopup() {
                         <input type="email" id="id_email" name="email" class="form-control" required>
                     </div>
                     <p class="fw-lighter" style="font-size:12px;" ></p>
-                    <button type="submit" class="btn btn-primary">Reset Password</button>
+                    <button type="submit" class="btn btn-dark">Reset Password</button>
                 </form>
                 <div id="popupContent"></div>
             </div>
@@ -155,7 +165,7 @@ function createVerificationSpan(is_verified) {
         span.style.color = 'green';
         span.textContent = 'check_circle';
     } else {
-        span.setAttribute('class', 'btn btn-outline-success');
+        span.setAttribute('class', 'btn btn-outline-success d-flex justify-content-center align-items-center');
         span.textContent = 'Verify';
         span.title = 'Click to send verification email';
         span.style.cursor = 'pointer';

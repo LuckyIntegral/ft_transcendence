@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', function() {
         var popup = createPopup();
         popup.innerHTML = `
             <div class="card" style="width: 300px;">
-                <div class="card-header bg-primary text-white">
+                <div class="card-header bg-dark text-white">
                     Signup
                     <button id="close-button" style="float: right; border: none; background: none; color: white;">&times;</button>
                 </div>
@@ -34,7 +34,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             <input type="password" id="id_password_confirm" name="password_confirm" class="form-control" autocomplete="new-password" required>
                         </div>
                         <p class="fw-lighter" style="font-size:12px;" >TODO: Password policy will be implemented later</p>
-                        <button type="submit" class="btn btn-primary">Sign Up</button>
+                        <button type="submit" class="btn btn-dark">Sign Up</button>
                     </form>
                     <div id="popupContent"></div>
                 </div>
