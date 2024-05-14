@@ -64,6 +64,7 @@ class Chat(models.Model):
     userTwo = models.ForeignKey(User, on_delete=models.CASCADE, related_name='userTwo')
     messages = models.ManyToManyField(Message, related_name='messages', blank=True)
     token = models.CharField(max_length=100)
+    timestamp = models.DateTimeField(auto_now=True)
 
 class Block(models.Model):
     blocker = models.ForeignKey(User, on_delete=models.CASCADE, related_name='blocker')

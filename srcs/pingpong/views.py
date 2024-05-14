@@ -26,7 +26,7 @@ from .utils import sendVerificationEmail, sendTwoStepVerificationEmail, getUserF
 from PIL import Image
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.utils import timezone
-
+from datetime import timedelta
 
 # Create your views here.
 
@@ -835,14 +835,13 @@ class MessagesView(APIView):
         for chat in chats:
             secondUserUsername = chat.userOne.username if chat.userOne != user else chat.userTwo.username
             secondUser = User.objects.get(username=secondUserUsername)
-            secondUserIsOnline = secondUser.userprofile.isOnline
             secondUserLastOnline = secondUser.userprofile.lastOnline
             secondUserPicture = secondUser.userprofile.pictureSmall.url
             lastMessage = chat.messages.order_by('-timestamp').first()
             if lastMessage is not None:
                 data.append({
                     'username': chat.userOne.username if chat.userOne != user else chat.userTwo.username,
-                    'isOnline': secondUserIsOnline,
+                    'isOnline': True if secondUserLastOnline > timezone.now() - timedelta(minutes=1) else False,
                     'lastOnline': secondUserLastOnline,
                     'picture': secondUserPicture,
                     'isRead': lastMessage.messageRecipient.isRead if lastMessage.sender != user else True,
@@ -852,12 +851,12 @@ class MessagesView(APIView):
             else:
                 data.append({
                     'username': chat.userOne.username if chat.userOne != user else chat.userTwo.username,
-                    'isOnline': secondUserIsOnline,
+                    'isOnline': True if secondUserLastOnline > timezone.now() - timedelta(minutes=1) else False,
                     'lastOnline': secondUserLastOnline,
                     'picture': secondUserPicture,
                     'isRead': True,
                     'token': chat.token,
-                    'lastTimestamp': timezone.now(), # fix this
+                    'lastTimestamp': chat.timestamp,
                 })
         if len(data) > 0:
             data.sort(key=lambda x: x['lastTimestamp'], reverse=True)

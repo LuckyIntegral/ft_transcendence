@@ -20,6 +20,24 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    function updateLastOnline(chatsInfo) {
+        for (var chat of chatsInfo) {
+            var chatToken = chat['chatToken'];
+            var lastOnline = new Date(chat['lastOnline']);
+            var li = document.querySelector(`li[data-chat-token="${chatToken}"]`);
+            if (!li)
+            {
+                return ;
+            }
+            var divStatus = li.querySelector('.status');
+            if (Date.now() - lastOnline.getTime() < 60000) {
+                divStatus.innerHTML = `<i class="fa fa-circle online"></i> <span>Online</span>`;
+            } else {
+                divStatus.innerHTML = `<i class="fa fa-circle offline"></i> <span>last seen ${formatTimestamp(chat['lastOnline'])}</span>`;
+            }
+        }
+    }
+
     async function startWebSocketConnection() {
         if (!localStorage.getItem('access')) {
             await sleep(1000);
@@ -49,6 +67,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.getElementById('messagesRef').textContent = 'Messages';
             }
             if (window.location.hash === '#messages') {
+                updateLastOnline(data['chatsInfo']);
                 updateTimestamps();
             }
             await sleep(1000);

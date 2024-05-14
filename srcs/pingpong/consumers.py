@@ -154,14 +154,15 @@ class MessagesLongPollConsumer(AsyncWebsocketConsumer):
             user = await self.get_user_from_token(accessToken)
             new_messages = await self.get_new_messages(user)
             unread_messages = await self.get_unread_messages(user)
+            chatsInfo = await self.get_chats_info(user)
             await self.update_last_online(user)
             if new_messages:
                 await self.set_notified(user)
-                await self.send(text_data=json.dumps({'new_messages': 'received'}))
+                await self.send(text_data=json.dumps({'new_messages': 'received', 'chatsInfo': chatsInfo}))
             elif unread_messages:
-                await self.send(text_data=json.dumps({'new_messages': 'unread'}))
+                await self.send(text_data=json.dumps({'new_messages': 'unread', 'chatsInfo': chatsInfo}))
             else:
-                await self.send(text_data=json.dumps({'new_messages': 'none'}))
+                await self.send(text_data=json.dumps({'new_messages': 'none', 'chatsInfo': chatsInfo}))
         except Exception as e:
             await self.send(text_data=json.dumps({'error': str(e)}))
 
@@ -207,3 +208,17 @@ class MessagesLongPollConsumer(AsyncWebsocketConsumer):
         profile = UserProfile.objects.get(user=user)
         profile.lastOnline = timezone.now()
         profile.save()
+
+    @database_sync_to_async
+    def get_chats_info(self, user):
+        chats = Chat.objects.filter(Q(userOne=user) | Q(userTwo=user))
+        chatsInfo = []
+        for chat in chats:
+            otherUser = chat.userOne if chat.userOne != user else chat.userTwo
+            lastOnline = otherUser.userprofile.lastOnline
+            chatToken = chat.token
+            chatsInfo.append({
+                'chatToken': chatToken,
+                'lastOnline': lastOnline.isoformat(),
+            })
+        return chatsInfo

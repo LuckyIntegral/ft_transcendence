@@ -68,7 +68,7 @@ function loadMessagesPage() {
         .then(() => {
             document.getElementById('messagesList').innerHTML = '';
             getUserListChats();
-        });
+        })
 }
 
 function createIncomeMessageItemLi(message, time, avatarUrl) {
@@ -119,8 +119,9 @@ function createUserListItemLi(data, type) {
     if (data['isOnline']) {
         statusLine = `<div class="status"> <i class="fa fa-circle online"></i> <span>Online</span> </div>`
     } else {
-        statusLine = `<div class="status"> <i class="fa fa-circle offline"></i> <span class="chat-timestamp" data-timestamp="${data['lastOnline']}">${formatTimestamp(data['lastOnline'])}</span> </div>`
+        statusLine = `<div class="status"> <i class="fa fa-circle offline"></i> <span class="chat-timestamp" data-timestamp="${data['lastOnline']}">last seen ${formatTimestamp(data['lastOnline'])}</span> </div>`
     }
+    li.setAttribute('data-timestamp', data['lastTimestamp']);
     li.setAttribute('data-chat-token', data['token']);
     li.innerHTML = `<img src="${data['picture']}" alt="avatar">
                     <div class="about">
@@ -231,6 +232,7 @@ function connectToSocket() {
             document.getElementById('messagesList').appendChild(createOutcomeMessageItemLi(data['message'], data['timestamp'], localStorage.getItem('companionPicture')));
             scrollDownMessageList();
         }
+
     };
     chatSocket.onclose = function(event) {
         if (event.wasClean) {
@@ -256,6 +258,21 @@ function sendMessage() {
         'timestamp': new Date().toISOString(),
     }));
     document.getElementById('messageInput').value = '';
+    var now = new Date().toISOString();
+    var li = document.querySelector('li.active');
+    li.setAttribute('data-timestamp', now);
+    console.log('updateTimestamps');
+    var list = $('#userList');
+    var listItems = list.children('li');
+    if (listItems.length === 0) {
+        return;
+    }
+    listItems.sort(function(a, b) {
+        var dateA = new Date($(a).data('timestamp'));
+        var dateB = new Date($(b).data('timestamp'));
+        return dateB - dateA;
+    });
+    list.empty().append(listItems);
 }
 
 function updateActiveChat() {
@@ -318,7 +335,7 @@ function getUserListChats () {
             chatItems[i].addEventListener('click', updateActiveChat);
         }
     }).then(function() {
-        $(document).ready(function(){
+        $(document).ready(function() {
             $('#searchInput').on('keyup', function(){
                 var value = $(this).val().toLowerCase();
                 $("#userList li").filter(function() {

@@ -53,7 +53,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Listen for hash changes
     window.addEventListener('hashchange', handleHashChange);
-
     // Handle the initial hash
     handleHashChange();
 });
