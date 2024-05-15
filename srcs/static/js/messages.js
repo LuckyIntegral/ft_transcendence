@@ -79,8 +79,8 @@ function createIncomeMessageItemLi(message, time, avatarUrl) {
     li.setAttribute('class', 'clearfix');
     li.setAttribute('style', 'text-align: left;');
     li.innerHTML = `<div class="message-data">
-                        <span class="message-data-time" data-timestamp="${time}">${formatTimestamp(time)}</span>
                         <img src=${avatarUrl} alt="avatar">
+                        <span class="message-data-time" data-timestamp="${time}">${formatTimestamp(time)}</span>
                     </div>
                     <div class="message my-message message-content" >${message}</div>
                     `;
