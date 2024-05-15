@@ -13,11 +13,11 @@ document.addEventListener('DOMContentLoaded', function() {
             var time = element.getAttribute('data-timestamp');
             element.textContent = formatTimestamp(time);
         });
-        var chatTimestampElements = document.querySelectorAll('.chat-timestamp');
-        chatTimestampElements.forEach(function(element) {
-            var time = element.getAttribute('data-timestamp');
-            element.textContent = formatTimestamp(time);
-        });
+        // var chatTimestampElements = document.querySelectorAll('.chat-timestamp');
+        // chatTimestampElements.forEach(function(element) {
+        //     var time = element.getAttribute('data-timestamp');
+        //     element.textContent = formatTimestamp(time);
+        // });
     }
 
     function updateLastOnline(chatsInfo) {
@@ -33,7 +33,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (Date.now() - lastOnline.getTime() < 60000) {
                 divStatus.innerHTML = `<i class="fa fa-circle online"></i> <span>Online</span>`;
             } else {
-                divStatus.innerHTML = `<i class="fa fa-circle offline"></i> <span>last seen ${formatTimestamp(chat['lastOnline'])}</span>`;
+                divStatus.innerHTML = `<i class="fa fa-circle offline"></i> <span class="chat-timestamp" data-timestamp="${chat['lastOnline']}">last seen ${formatTimestamp(chat['lastOnline'])}</span>`;
             }
         }
     }
@@ -77,19 +77,16 @@ document.addEventListener('DOMContentLoaded', function() {
         };
 
         socket.onclose = function(event) {
-            if (event.wasClean) {
-                console.log(`[close] Connection closed cleanly, code=${event.code} reason=${event.reason}`);
-            } else {
-                // e.g. server process killed or network down
-                // event.code is usually 1006 in this case
-                console.log('[close] Connection died');
-            }
+            // if (event.wasClean) {
+            // } else {
+            //     // e.g. server process killed or network down
+            //     // event.code is usually 1006 in this case
+            // }
             // Try to reconnect after a second
             setTimeout(startWebSocketConnection, 1000);
         };
 
         socket.onerror = function(error) {
-            console.log(`[error] ${error.message}`);
         };
     }
     startWebSocketConnection();

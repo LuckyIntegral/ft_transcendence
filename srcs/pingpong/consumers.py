@@ -14,14 +14,14 @@ import json
 import asyncio
 from django.utils import timezone
 
-class PingPongConsumer(AsyncWebsocketConsumer):
+class ChatConsumer(AsyncWebsocketConsumer):
     chatUsers = {}
 
     def isBothUsersConnected(self):
         count = 0
-        if self.chatToken in PingPongConsumer.chatUsers:
-            if len(PingPongConsumer.chatUsers[self.chatToken]) == 2:
-                for user, value in PingPongConsumer.chatUsers[self.chatToken].items():
+        if self.chatToken in ChatConsumer.chatUsers:
+            if len(ChatConsumer.chatUsers[self.chatToken]) == 2:
+                for user, value in ChatConsumer.chatUsers[self.chatToken].items():
                     if value > 0:
                         count += 1
         return count == 2
@@ -81,9 +81,9 @@ class PingPongConsumer(AsyncWebsocketConsumer):
         await self.accept()
 
     async def disconnect(self, close_code):
-        if (self.chatToken in PingPongConsumer.chatUsers):
-            if (self.user.username in PingPongConsumer.chatUsers[self.chatToken]):
-                PingPongConsumer.chatUsers[self.chatToken][self.user.username] -= 1
+        if (self.chatToken in ChatConsumer.chatUsers):
+            if (self.user.username in ChatConsumer.chatUsers[self.chatToken]):
+                ChatConsumer.chatUsers[self.chatToken][self.user.username] -= 1
         await self.channel_layer.group_discard(
             self.chatToken,
             self.channel_name
@@ -96,11 +96,11 @@ class PingPongConsumer(AsyncWebsocketConsumer):
             try:
                 token = JWTTokenValidator().validate(text_data_json['token'])
                 self.user = await self.get_user_from_token(token)
-                if not self.chatToken in PingPongConsumer.chatUsers:
-                    PingPongConsumer.chatUsers[self.chatToken] = {self.user.username: 0}
-                if not self.user.username in PingPongConsumer.chatUsers[self.chatToken]:
-                    PingPongConsumer.chatUsers[self.chatToken][self.user.username] = 0
-                PingPongConsumer.chatUsers[self.chatToken][self.user.username] += 1
+                if not self.chatToken in ChatConsumer.chatUsers:
+                    ChatConsumer.chatUsers[self.chatToken] = {self.user.username: 0}
+                if not self.user.username in ChatConsumer.chatUsers[self.chatToken]:
+                    ChatConsumer.chatUsers[self.chatToken][self.user.username] = 0
+                ChatConsumer.chatUsers[self.chatToken][self.user.username] += 1
                 return
             except Exception as e:
                 await self.close()
@@ -138,7 +138,7 @@ class PingPongConsumer(AsyncWebsocketConsumer):
             'timestamp': timestamp,
         }))
 
-class MessagesLongPollConsumer(AsyncWebsocketConsumer):
+class LongPollConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         await self.accept()
     async def disconnect(self, close_code):

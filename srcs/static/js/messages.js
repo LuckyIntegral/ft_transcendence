@@ -245,13 +245,9 @@ function connectToSocket() {
         }
 
     };
-    chatSocket.onclose = function(event) {
-        if (event.wasClean) {
-            console.log('Connection closed cleanly');
-        } else {
-            console.error('Connection died');
-        }
-    };
+    // chatSocket.onclose = function(event) {
+
+    // };
     chatSocket.onerror = function(error) {
         console.error('Error: ' + error.message);
     };
@@ -272,7 +268,6 @@ function sendMessage() {
     var now = new Date().toISOString();
     var li = document.querySelector('li.active');
     li.setAttribute('data-timestamp', now);
-    console.log('updateTimestamps');
     var list = $('#userList');
     var listItems = list.children('li');
     if (listItems.length === 0) {

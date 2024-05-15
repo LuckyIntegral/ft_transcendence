@@ -90,6 +90,8 @@ class SignupView(APIView):
 
         if not username or not email or not password or not password_confirm:
             return Response({'error': 'Please provide all required fields'}, status=status.HTTP_400_BAD_REQUEST)
+        username = username.lower()
+        email = email.lower()
         if User.objects.filter(username=username).exists():
             return Response({'error': 'Username is already taken'}, status=status.HTTP_400_BAD_REQUEST)
         if User.objects.filter(email=email).exists():
@@ -214,7 +216,10 @@ class ProfileView(APIView):
         except ValidationError as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-        user.userprofile.displayName = request.data.get('displayName')
+        try:
+            user.userprofile.displayName = request.data.get('displayName')
+        except:
+            return Response({'error': 'Invalid display name'}, status=status.HTTP_400_BAD_REQUEST)
         email = request.data.get('email')
         email_validator = EmailValidator()
         if (email is not None and len(email)):
@@ -233,7 +238,10 @@ class ProfileView(APIView):
             token = str(RefreshToken.for_user(user))
             user.userprofile.isTwoStepEmailAuthEnabled = False
             sendVerificationEmail(email, token)
-        user.email = email
+        try:
+            user.email = email
+        except:
+            return Response({'error': 'Invalid email'}, status=status.HTTP_400_BAD_REQUEST)
         user.save()
         user.userprofile.save()
         return Response({'status': 'Profile updated successfully'}, status=status.HTTP_200_OK)

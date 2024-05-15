@@ -40,15 +40,11 @@ function createUserSearchPopup() {
         searchPopup.remove();
     });
     var searchForm = document.getElementById('search-form');
-    console.log(searchForm);
     searchForm.addEventListener('submit', function(event) {
-        console.log("Before default")
         event.preventDefault();
-        console.log(document.getElementById('search-input').value.length);
         if (document.getElementById('search-input').value.length < 1) {
             return;
         }
-        console.log('searching for: ' + document.getElementById('search-input').value);
         var url = new URL('/api/friends-search/', window.location.origin);
         url.searchParams.append('pageSize', 20);
         url.searchParams.append('search_query', document.getElementById('search-input').value);
@@ -89,7 +85,6 @@ function createUserSearchPopup() {
             console.error(error);
         });
     });
-    console.log(searchPopup);
     return searchPopup;
 }
 
@@ -333,7 +328,6 @@ function sendVerificationEmail() {
             throw new Error('Error: ' + response.statusText);
         }
     }).catch(function(error) {
-        //console.log("")
     });
 }
 

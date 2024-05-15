@@ -1,8 +1,8 @@
 from django.urls import re_path
 
-from .consumers import PingPongConsumer, MessagesLongPollConsumer
+from .consumers import ChatConsumer, LongPollConsumer
 
 websocket_urlpatterns = [
-    re_path(r'ws/chat/(?P<token>[\w-]+)/$', PingPongConsumer.as_asgi()),
-    re_path(r'messages/long-poll/', MessagesLongPollConsumer.as_asgi()),
+    re_path(r'ws/chat/(?P<token>[\w-]+)/$', ChatConsumer.as_asgi()),
+    re_path(r'messages/long-poll/', LongPollConsumer.as_asgi()),
 ]
