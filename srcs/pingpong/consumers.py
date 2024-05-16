@@ -4,7 +4,7 @@ from channels.layers import get_channel_layer
 from channels.db import database_sync_to_async
 from asgiref.sync import async_to_sync
 from pingpong.validators import JWTTokenValidator
-from pingpong.models import UserProfile, Message, Chat, MessagesRecipient, Block
+from pingpong.models import UserProfile, Message, Chat, MessagesRecipient, Block, FriendRequest
 from django.contrib.auth.models import User
 from django.db.models import Q
 from rest_framework_simplejwt.tokens import UntypedToken
@@ -155,16 +155,30 @@ class LongPollConsumer(AsyncWebsocketConsumer):
             new_messages = await self.get_new_messages(user)
             unread_messages = await self.get_unread_messages(user)
             chatsInfo = await self.get_chats_info(user)
+            new_friend_requests = await self.get_new_friend_requests(user)
             await self.update_last_online(user)
             if new_messages:
                 await self.set_notified(user)
-                await self.send(text_data=json.dumps({'new_messages': 'received', 'chatsInfo': chatsInfo}))
+                await self.send(text_data=json.dumps({  'new_messages': 'received',
+                                                        'chatsInfo': chatsInfo,
+                                                        'new_friend_requests': new_friend_requests,
+                                                    }))
             elif unread_messages:
-                await self.send(text_data=json.dumps({'new_messages': 'unread', 'chatsInfo': chatsInfo}))
+                await self.send(text_data=json.dumps({  'new_messages': 'unread',
+                                                        'chatsInfo': chatsInfo,
+                                                        'new_friend_requests': new_friend_requests,
+                                                    }))
             else:
-                await self.send(text_data=json.dumps({'new_messages': 'none', 'chatsInfo': chatsInfo}))
+                await self.send(text_data=json.dumps({  'new_messages': 'none',
+                                                        'chatsInfo': chatsInfo,
+                                                        'new_friend_requests': new_friend_requests,
+                                                    }))
         except Exception as e:
             await self.send(text_data=json.dumps({'error': str(e)}))
+
+    @database_sync_to_async
+    def get_new_friend_requests(self, user):
+        return FriendRequest.objects.filter(toUser=user, accepted=False).exists()
 
     @database_sync_to_async
     def get_token_from_key(self, key):

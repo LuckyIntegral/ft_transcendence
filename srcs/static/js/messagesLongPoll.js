@@ -54,6 +54,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         socket.onmessage = async function(event) {
             var data = JSON.parse(event.data);
+            // messages notifications
             if (data && data['new_messages'] === 'received') {
                 if (window.location.hash === '#messages') {
                     getUserListChats();
@@ -66,6 +67,15 @@ document.addEventListener('DOMContentLoaded', function() {
             else if (data && data['new_messages'] === 'none') {
                 document.getElementById('messagesRef').textContent = 'Messages';
             }
+            // friend requests notifications
+            if (data && data['new_friend_requests'] === true) {
+                document.getElementById('dropdownUser1').textContent = 'Community🔴';
+                document.getElementById('friends').textContent = 'Friends🔴';
+            } else {
+                document.getElementById('dropdownUser1').textContent = 'Community';
+                document.getElementById('friends').textContent = 'Friends';
+            }
+            // updating timestamps on messages page
             if (window.location.hash === '#messages') {
                 updateLastOnline(data['chatsInfo']);
                 updateTimestamps();
