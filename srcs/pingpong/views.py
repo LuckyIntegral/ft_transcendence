@@ -661,7 +661,11 @@ class FriendsSearchView(APIView):
         """ This method is used to search for friends. """
         auth_header = request.headers.get('Authorization')
         try:
-            JWTTokenValidator().validate(auth_header)
+            token = JWTTokenValidator().validate(auth_header)
+        except ValidationError as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            user = getUserFromToken(token)
         except ValidationError as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         page_size = request.query_params.get('pageSize')
@@ -675,6 +679,8 @@ class FriendsSearchView(APIView):
             except UserProfile.DoesNotExist:
                 return Response(data, status=status.HTTP_200_OK)
             for friend in friend_list[:min(page_size, friend_list.count())]:
+                if (friend.user.username == user.username):
+                    continue
                 data.append({
                     'email': friend.user.email,
                     'username': friend.user.username,
