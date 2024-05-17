@@ -6,12 +6,14 @@ class Menu {
     this.menuItems = [
       {
         text: 'PLAYER VS AI',
-        action: () => this.game.loadGame(GameModes.PLAYER_VS_AI),
+        action: () => this.game.loadGame(GameModes.PLAYER_VS_AI, 'player1'),
         image: 'static/images/ai.png'
       },
       {
         text: 'PLAYER VS PLAYER',
-        action: () => this.displayOnlineFriends(),
+        action: () => {
+          this.game.loadGame(GameModes.PLAYER_VS_PLAYER, 'player1')
+        },
         image: 'static/images/pvp.png'
       }
     ]

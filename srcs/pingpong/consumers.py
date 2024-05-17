@@ -361,8 +361,19 @@ class GameConsumer(AsyncWebsocketConsumer):
         await self.accept()
 
         if self.game_token not in GameConsumer.game_users:
-            GameConsumer.game_users[self.game_token] = []
-        GameConsumer.game_users[self.game_token].append(self.user.username)
+            GameConsumer.game_users[self.game_token] = {}
+
+        if len(GameConsumer.game_users[self.game_token]) == 0:
+            GameConsumer.game_users[self.game_token][self.user.username] = 'player1'
+        else:
+            GameConsumer.game_users[self.game_token][self.user.username] = 'player2'
+
+        role = GameConsumer.game_users[self.game_token][self.user.username]
+
+        await self.send(text_data=json.dumps({
+            "event": "assign_role",
+            "role": role
+        }))
 
         await self.channel_layer.group_send(
             self.game_token,
@@ -370,23 +381,26 @@ class GameConsumer(AsyncWebsocketConsumer):
                 "type": "game_update",
                 "event": "player_connected",
                 "user": self.user.username,
-                "players": GameConsumer.game_users[self.game_token],
+                "role": role,
+                "players": list(GameConsumer.game_users[self.game_token].items()),
             }
         )
 
     async def disconnect(self, close_code):
-        GameConsumer.game_users[self.game_token].remove(self.user.username)
-        await self.channel_layer.group_discard(self.game_token, self.channel_name)
+        if self.game_token in GameConsumer.game_users:
+            if self.user.username in GameConsumer.game_users[self.game_token]:
+                del GameConsumer.game_users[self.game_token][self.user.username]
+                await self.channel_layer.group_send(
+                    self.game_token,
+                    {
+                        "type": "game_update",
+                        "event": "player_disconnected",
+                        "user": self.user.username,
+                        "players": list(GameConsumer.game_users[self.game_token].items()),
+                    }
+                )
 
-        await self.channel_layer.group_send(
-            self.game_token,
-            {
-                "type": "game_update",
-                "event": "player_disconnected",
-                "user": self.user.username,
-                "players": GameConsumer.game_users[self.game_token],
-            }
-        )
+        await self.channel_layer.group_discard(self.game_token, self.channel_name)
 
     async def receive(self, text_data):
         data = json.loads(text_data)
