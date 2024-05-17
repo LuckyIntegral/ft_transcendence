@@ -43,9 +43,6 @@ class UserProfile(models.Model):
     )
     isOnline = models.BooleanField(default=False)
     lastOnline = models.DateTimeField(auto_now=True)
-    blockedChatUsers = models.ManyToManyField(
-        "self", related_name="blockedChatUsers", blank=True
-    )
 
 
 class FriendRequest(models.Model):
@@ -72,6 +69,8 @@ class MessagesRecipient(models.Model):
     )
     message = models.ForeignKey("Message", on_delete=models.CASCADE, null=True)
     isRead = models.BooleanField(default=False)
+    isNotified = models.BooleanField(default=False)
+
 
 
 class Message(models.Model):
@@ -99,12 +98,13 @@ class Chat(models.Model):
         Message, related_name="messages", blank=True
     )
     token = models.CharField(max_length=100)
-    isUserOneBlocked = models.BooleanField(default=False)
-    isUserTwoBlocked = models.BooleanField(default=False)
+    timestamp = models.DateTimeField(auto_now=True)
 
 
-class Lobby(models.Model):
-    lobby_id = models.CharField(max_length=255, unique=True)
-    users = models.ManyToManyField(User)
-    game_ongoing = models.BooleanField(default=False)
-    socket = models.CharField(max_length=255, blank=True)
+class Block(models.Model):
+    blocker = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="blocker"
+    )
+    blocked = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="blocked"
+    )

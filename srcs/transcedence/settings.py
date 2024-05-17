@@ -28,6 +28,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = (
     "django-insecure-h*ke$v)8x(u94_$l@--&e_s&+(gh47lg=g+n1b+lhwc2&+!$f&"
 )
+SECRET_KEY = (
+    "django-insecure-h*ke$v)8x(u94_$l@--&e_s&+(gh47lg=g+n1b+lhwc2&+!$f&"
+)
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -167,7 +170,7 @@ REST_FRAMEWORK = {
 }
 
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=10),
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=120),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
 }
 

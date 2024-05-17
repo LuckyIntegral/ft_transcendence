@@ -1,9 +1,9 @@
 document.addEventListener('DOMContentLoaded', function () {
   // Login handling
-  var username = localStorage.getItem('username')
-  if (username) {
-    refreshSocket(username)
-  }
+  // var username = localStorage.getItem('username')
+  // // if (username) {
+  // //   refreshSocket(username)
+  // // }
 
   function forgotPasswordClick (loginPopup) {
     var forgotPasswordPopup = createForgotPasswordPopup()
@@ -51,7 +51,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var loginPopup = createPopup()
     loginPopup.innerHTML = `
             <div class="card mb-3" style="width: 300px;">
-                <div class="card-header bg-primary text-white">
+                <div class="card-header bg-dark text-white">
                         Login
                         <button id="close-button" style="float: right; border: none; background: none; color: white;">&times;</button>
                 </div>
@@ -65,9 +65,8 @@ document.addEventListener('DOMContentLoaded', function () {
                             <label for="id_password" class="form-label fs-6">Password</label>
                             <input type="password" id="id_password" name="password" class="form-control" autocomplete="current-password" required>
                         </div>
-                        <p class="fw-lighter" style="font-size:12px;" ></p>
-                        <button type="submit" class="btn btn-primary">Log In</button>
-                        <a id="forgot-password" style="color: blue; text-decoration: underline; cursor: pointer;" class="d-block text-right mt-2">Forgot your password?</a>
+                        <a id="forgot-password" style="cursor: pointer;" class="link-dark d-block text-right mt-1 mb-2">Forgot your password?</a>
+                        <button type="submit" class="btn btn-dark">Log In</button>
                     </form>
                     <div id="popupContent"></div>
                 </div>
@@ -79,7 +78,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     twoStepVerificationPopup.innerHTML = `
             <div class="card mb-3" style="width: 300px;">
-                <div class="card-header bg-primary text-white">
+                <div class="card-header bg-dark text-white">
                     Two Step Verification
                     <button id="close-button" style="float: right; border: none; background: none; color: white;">&times;</button>
                 </div>
@@ -90,7 +89,7 @@ document.addEventListener('DOMContentLoaded', function () {
                             <input type="text" id="id_verification_code" name="verification_code" class="form-control" required>
                         </div>
                         <p class="fw-lighter" style="font-size:12px;" ></p>
-                        <button type="submit" class="btn btn-primary">Verify</button>
+                        <button type="submit" class="btn btn-dark">Verify</button>
                     </form>
                     <div id="popupContent"></div>
                 </div>
@@ -124,31 +123,12 @@ document.addEventListener('DOMContentLoaded', function () {
         })
           .then(function (response) {
             if (response.status == 200) {
-              localStorage.setItem('username', username)
-              refreshSocket(username)
               obtainToken(username, password)
-              return response.json().then(function (data) {
-                var socket = new WebSocket(
-                  `ws://${window.location.host}/ws/user/${username}/`
-                )
-                socket.onopen = function () {
-                  console.log(`WebSocket open on ${socket.url}`)
-                }
-                socket.onmessage = function (event) {
-                  var data = JSON.parse(event.data)
-                  if (data.message) {
-                    alert(data.message)
-                  }
-                }
-                socket.onerror = function (error) {
-                  console.error('WebSocket error', error)
-                }
-                window.userSocket = socket
-              })
+              return response.json()
             } else if (response.status == 202) {
               document.body.removeChild(loginPopup)
               document.body.appendChild(twoStepVerificationPopup)
-              sendVerificationCodeEmail(username, password)
+              // sendVerificationCodeEmail(username, password); // TODO: Uncomment this line later
               var twoStepVerificationForm = document.getElementById(
                 'two-step-verification-form'
               )

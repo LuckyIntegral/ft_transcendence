@@ -2,8 +2,10 @@
     Views are used to handle http requests and return responses.
 """
 
+
 import random
 import math
+import time
 from PIL import Image
 from django.shortcuts import render
 from django.contrib.auth.password_validation import validate_password
@@ -30,14 +32,26 @@ from .utils import (
     blockChainCreateGame,
     generateToken,
 )
+from .utils import (
+    sendVerificationEmail,
+    sendTwoStepVerificationEmail,
+    getUserFromToken,
+    sendPasswordResetEmail,
+    getCompressedPicture,
+    blockChainCreateGame,
+    generateToken,
+)
 from PIL import Image
 from django.core.files.uploadedfile import InMemoryUploadedFile
+from django.utils import timezone
+from datetime import timedelta
 from django.db import models
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 
 
 # Create your views here.
+
 
 
 def home(request):
@@ -128,6 +142,8 @@ class SignupView(APIView):
                 {"error": "Please provide all required fields"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+        username = username.lower()
+        email = email.lower()
         if User.objects.filter(username=username).exists():
             return Response(
                 {"error": "Username is already taken"},
@@ -299,7 +315,13 @@ class ProfileView(APIView):
                 {"error": str(e)}, status=status.HTTP_400_BAD_REQUEST
             )
 
-        user.userprofile.displayName = request.data.get("displayName")
+        try:
+            user.userprofile.displayName = request.data.get("displayName")
+        except:
+            return Response(
+                {"error": "Invalid display name"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         email = request.data.get("email")
         email_validator = EmailValidator()
         if email is not None and len(email):
@@ -324,7 +346,12 @@ class ProfileView(APIView):
             token = str(RefreshToken.for_user(user))
             user.userprofile.isTwoStepEmailAuthEnabled = False
             sendVerificationEmail(email, token)
-        user.email = email
+        try:
+            user.email = email
+        except:
+            return Response(
+                {"error": "Invalid email"}, status=status.HTTP_400_BAD_REQUEST
+            )
         user.save()
         user.userprofile.save()
         return Response(
@@ -988,21 +1015,32 @@ class FriendsSearchView(APIView):
         """This method is used to search for friends."""
         auth_header = request.headers.get("Authorization")
         try:
-            JWTTokenValidator().validate(auth_header)
+            token = JWTTokenValidator().validate(auth_header)
         except ValidationError as e:
             return Response(
                 {"error": str(e)}, status=status.HTTP_400_BAD_REQUEST
             )
+        try:
+            user = getUserFromToken(token)
+        except ValidationError as e:
+            return Response(
+                {"error": str(e)}, status=status.HTTP_400_BAD_REQUEST
+            )
+        page_size = request.query_params.get("pageSize")
+        page_size = 10 if not page_size else int(page_size)
         search_query = request.query_params.get("search_query")
+
         data = []
         if search_query:
             try:
                 friend_list = UserProfile.objects.filter(
                     user__username__icontains=search_query
-                )
+                ).order_by("user__username")
             except UserProfile.DoesNotExist:
                 return Response(data, status=status.HTTP_200_OK)
-            for friend in friend_list[: min(10, friend_list.count())]:
+            for friend in friend_list[: min(page_size, friend_list.count())]:
+                if friend.user.username == user.username:
+                    continue
                 data.append(
                     {
                         "email": friend.user.email,
@@ -1148,19 +1186,30 @@ class ChatView(APIView):
                 status=status.HTTP_404_NOT_FOUND,
             )
         secondUser = chat.userOne if chat.userOne != user else chat.userTwo
-        data = []
+        data = {
+            "picture": secondUser.userprofile.pictureSmall.url,
+            "username": secondUser.username,
+            "token": chat.token,
+            "blocked": Block.objects.filter(
+                blocker=user, blocked=secondUser
+            ).exists(),
+            "myPicture": user.userprofile.pictureSmall.url,
+            "messages": [],
+        }
         for message in chat.messages.order_by("timestamp"):
-            if message.sender != user:
+            if (
+                message.sender != user
+                and message.messageRecipient.isRead == False
+            ):
                 message.messageRecipient.isRead = True
                 message.messageRecipient.save()
-            data.append(
+            data["messages"].append(
                 {
                     "message": message.message,
                     "type": "income" if message.sender != user else "outcome",
                     "timestamp": message.timestamp,
                     "sender": message.sender.username,
                     "picture": message.sender.userprofile.pictureSmall.url,
-                    "token": chat.token,
                 }
             )
         return Response(data, status=status.HTTP_200_OK)
@@ -1239,7 +1288,6 @@ class MessagesView(APIView):
                 else chat.userTwo.username
             )
             secondUser = User.objects.get(username=secondUserUsername)
-            secondUserIsOnline = secondUser.userprofile.isOnline
             secondUserLastOnline = secondUser.userprofile.lastOnline
             secondUserPicture = secondUser.userprofile.pictureSmall.url
             lastMessage = chat.messages.order_by("-timestamp").first()
@@ -1251,7 +1299,12 @@ class MessagesView(APIView):
                             if chat.userOne != user
                             else chat.userTwo.username
                         ),
-                        "isOnline": secondUserIsOnline,
+                        "isOnline": (
+                            True
+                            if secondUserLastOnline
+                            > timezone.now() - timedelta(minutes=1)
+                            else False
+                        ),
                         "lastOnline": secondUserLastOnline,
                         "picture": secondUserPicture,
                         "isRead": (
@@ -1260,6 +1313,7 @@ class MessagesView(APIView):
                             else True
                         ),
                         "token": chat.token,
+                        "lastTimestamp": lastMessage.timestamp,
                     }
                 )
             else:
@@ -1270,18 +1324,30 @@ class MessagesView(APIView):
                             if chat.userOne != user
                             else chat.userTwo.username
                         ),
-                        "isOnline": secondUserIsOnline,
+                        "isOnline": (
+                            True
+                            if secondUserLastOnline
+                            > timezone.now() - timedelta(minutes=1)
+                            else False
+                        ),
                         "lastOnline": secondUserLastOnline,
                         "picture": secondUserPicture,
                         "isRead": True,
                         "token": chat.token,
+                        "lastTimestamp": chat.timestamp,
                     }
                 )
+        if len(data) > 0:
+            data.sort(key=lambda x: x["lastTimestamp"], reverse=True)
         return Response(data, status=status.HTTP_200_OK)
 
 
-class GameRequestView(APIView):
-    def post(self, request, format=None):
+class BlockUserView(APIView):
+    """This view is used to block a user.
+    It has following methods:
+    1. put: This method is used to unblock/block a user."""
+
+    def put(self, request, format=None):
         auth_header = request.headers.get("Authorization")
         try:
             token = JWTTokenValidator().validate(auth_header)
@@ -1295,154 +1361,33 @@ class GameRequestView(APIView):
             return Response(
                 {"error": str(e)}, status=status.HTTP_400_BAD_REQUEST
             )
-
         username = request.data.get("username")
         if not username:
             return Response(
-                {"error": "Username is required"},
+                {"error": "Please provide a username"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-
-        lobby_id = request.data.get("lobby_id")
-        if not lobby_id:
-            return Response(
-                {"error": "Lobby ID is required"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
         try:
             secondUser = User.objects.get(username=username)
         except User.DoesNotExist:
             return Response(
                 {"error": "User does not exist"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        channel_layer = get_channel_layer()
-        async_to_sync(channel_layer.group_send)(
-            secondUser.username,
-            {
-                "type": "game_invite",
-                "message": f"You have been invited to a game by {user.username}",
-                "lobby_id": lobby_id,
-                "sender": user.username,
-            },
-        )
-
-        return Response(
-            {"message": "Game request sent successfully"},
-            status=status.HTTP_200_OK,
-        )
-
-
-class GameLobbyView(APIView):
-    def post(self, request, format=None):
-        auth_header = request.headers.get("Authorization")
-        try:
-            token = JWTTokenValidator().validate(auth_header)
-        except ValidationError as e:
-            return Response(
-                {"error": str(e)}, status=status.HTTP_400_BAD_REQUEST
-            )
-        try:
-            user = getUserFromToken(token)
-        except ValidationError as e:
-            return Response(
-                {"error": str(e)}, status=status.HTTP_400_BAD_REQUEST
-            )
-
-        lobby_id = request.data.get("lobby_id")
-        if not lobby_id:
-            return Response(
-                {"error": "Lobby ID is required"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        lobby, created = Lobby.objects.get_or_create(lobby_id=lobby_id)
-        if created:
-            lobby.users.add(user)
-            lobby.save()
-
-            channel_layer = get_channel_layer()
-            async_to_sync(channel_layer.group_send)(
-                "lobby_" + str(lobby_id),
-                {},
-            )
-
-        return Response(
-            {"message": "Lobby created"}, status=status.HTTP_201_CREATED
-        )
-    
-    def get(self, request, format=None):
-        auth_header = request.headers.get("Authorization")
-        try:
-            token = JWTTokenValidator().validate(auth_header)
-        except ValidationError as e:
-            return Response(
-                {"error": str(e)}, status=status.HTTP_400_BAD_REQUEST
-            )
-        
-        try:
-            user = getUserFromToken(token)
-        except ValidationError as e:
-            return Response(
-                {"error": str(e)}, status=status.HTTP_400_BAD_REQUEST
-            )
-        
-        lobby, created = Lobby.objects.get_or_create()
-        lobby.users.add(user)
-
-        return Response({
-            "lobby_id": lobby.pk,
-            "users": list(lobby.users.all().values('username', 'id'))
-        }, status=status.HTTP_200_OK)
-
-class GameView(APIView):
-    def post(self, request, format=None):
-        auth_header = request.headers.get("Authorization")
-        try:
-            token = JWTTokenValidator().validate(auth_header)
-        except ValidationError as e:
-            return Response(
-                {"error": str(e)}, status=status.HTTP_400_BAD_REQUEST
-            )
-        try:
-            user = getUserFromToken(token)
-        except ValidationError as e:
-            return Response(
-                {"error": str(e)}, status=status.HTTP_400_BAD_REQUEST
-            )
-        lobby_id = request.data.get("lobby_id")
-        if not lobby_id:
-            return Response(
-                {"error": "Lobby ID is required"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-        try:
-            lobby = Lobby.objects.get(lobby_id=lobby_id)
-        except Lobby.DoesNotExist:
-            return Response(
-                {"error": "Lobby does not exist"},
                 status=status.HTTP_404_NOT_FOUND,
             )
-        if lobby.users.count() != 2:
+        if secondUser == user:
             return Response(
-                {"error": "Lobby is not full"},
+                {"error": "You cannot block yourself"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        if user not in lobby.users.all():
+        blockRel = Block.objects.filter(blocker=user, blocked=secondUser)
+        if blockRel.exists():
+            blockRel.delete()
             return Response(
-                {"error": "User is not in the lobby"},
-                status=status.HTTP_400_BAD_REQUEST,
+                {"status": "User unblocked successfully", "button": "Block"},
+                status=status.HTTP_200_OK,
             )
-        player_x_pos = request.data.get("x_pos")
-        player_y_pos = request.data.get("y_pos")
-        channel_layer = get_channel_layer()
-        async_to_sync(channel_layer.group_send)(
-            "lobby_" + str(lobby_id),
-            {
-                "type": "update_game",
-                "x_pos": player_x_pos,
-                "y_pos": player_y_pos,
-            },
+        block = Block.objects.create(blocker=user, blocked=secondUser)
+        return Response(
+            {"status": "User blocked successfully", "button": "Unblock"},
+            status=status.HTTP_200_OK,
         )

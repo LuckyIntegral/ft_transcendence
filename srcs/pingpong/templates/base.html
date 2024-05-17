@@ -38,6 +38,7 @@
   <script src="{% static 'js/alerts.js' %}"></script>
   <script src="{% static 'js/leadrboard.js' %}"></script>
   <script src="{% static 'js/messages.js' %}"></script>
+  <script src="{% static 'js/messagesLongPoll.js' %}"></script>
 </head>
 <body>
   <header class="p-3 bg-dark mb-3 border-bottom">
@@ -51,7 +52,7 @@
               <a class="nav-link px-2 text-white" id="dropdownUser1" data-bs-toggle="dropdown" aria-expanded="false">Community
               </a>
               <ul class="dropdown-menu text-small" aria-labelledby="dropdownUser1">
-                <li><a class="dropdown-item" href="#friends">Friends</a></li>
+                <li><a class="dropdown-item" id="friends" href="#friends">Friends</a></li>
                 <li><hr class="dropdown-divider"></li>
                 <li><a class="dropdown-item" href="#leadrboard">Global leaderboard</a></li>
               </ul>
@@ -61,14 +62,14 @@
           <li><a class="nav-link px-2 text-white" href="#pong" id="pongRef">Ping Pong</a></li>
         </ul>
 
-        <form class="col-12 col-lg-auto mb-3 mb-lg-0 me-lg-3">
-            <div class="d-flex dropdown">
-            <input type="search" class="form-control" placeholder="Search..." aria-label="Search" id="searchForLater"></input>
+        <!-- <form class="col-12 col-lg-auto mb-3 mb-lg-0 me-lg-3"> -->
+            <!-- <div class="d-flex dropdown"> -->
+            <!-- <input type="search" class="form-control" placeholder="Search..." aria-label="Search" id="searchForLater"></input> -->
             <!-- TODO: think about implementation of the search -->
-          </div>
-        </form>
+          <!-- </div> -->
+        <!-- </form> -->
 
-        <button class="btn btn-outline-light m-2" id="searchRef">Search</buttom>
+        <!-- <button class="btn btn-outline-light m-2" id="searchRef">Search</buttom> -->
         <button class="btn btn-outline-light m-2" href="#signup" id="signUpRef">Sign up</buttom>
         <button class="btn btn-outline-light m-2" href="#login" id="loginRef">Login</buttom>
         <button class="btn btn-outline-light" href="#logOut" id="logOutRef">Log out</buttom>
