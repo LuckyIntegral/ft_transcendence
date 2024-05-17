@@ -1,6 +1,6 @@
 class Menu {
   constructor () {
-    this.game = new Game()
+    this.game = new Game(69)
     this.game.initGameElements()
     this.title = 'PONG'
     this.menuItems = [
@@ -258,7 +258,9 @@ class Menu {
           image: player.pictureSmall,
           action: () => {
             cancelAnimationFrame(this.animationFrameId)
-            this.lobby.join()
+            this.lobby.join(69, this.game)
+            this.lobby.game.initGameElements(GameModes.PLAYER_VS_PLAYER)
+            this.lobby.game.loadGame()
           }
         }
       })

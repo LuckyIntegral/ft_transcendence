@@ -1,31 +1,42 @@
 class Lobby {
-  constructor () {}
+  constructor () {
+    this.gameSocket = null
+  }
 
-  join () {
-    const gameToken = 'token'
-    const gameSocket = new WebSocket(
+  join (gameToken, game) {
+    this.gameSocket = new WebSocket(
       `ws://${window.location.host}/ws/game/${gameToken}/`
     )
+    this.game = game
 
-    gameSocket.onopen = function (e) {
+    this.gameSocket.onopen = () => {
       console.log('Game WebSocket connection established.')
     }
 
-    gameSocket.onmessage = function (e) {
+    this.gameSocket.onmessage = e => {
       const data = JSON.parse(e.data)
       console.log('Received game data:', data)
+      if (data.event === 'move') {
+        this.game.updatePositions(
+          data.player1_pos,
+          data.player2_pos,
+          data.ball_pos
+        )
+      }
     }
 
-    gameSocket.onclose = function (e) {
+    this.gameSocket.onclose = () => {
       console.log('Game WebSocket connection closed.')
     }
 
-    gameSocket.onerror = function(e) {
-      console.error("Game WebSocket error:", e)
+    this.gameSocket.onerror = e => {
+      console.error('Game WebSocket error:', e)
     }
+  }
 
-    function sendGameData(data) {
-      gameSocket.send(JSON.stringify(data))
+  sendGameData (data) {
+    if (this.gameSocket.readyState === WebSocket.OPEN) {
+      this.gameSocket.send(JSON.stringify(data))
     }
   }
 }

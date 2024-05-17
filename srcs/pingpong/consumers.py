@@ -355,66 +355,55 @@ class GameConsumer(AsyncWebsocketConsumer):
 
     async def connect(self):
         self.game_token = self.scope["url_route"]["kwargs"]["token"]
+        self.user = self.scope["user"]
+
         await self.channel_layer.group_add(self.game_token, self.channel_name)
         await self.accept()
 
-    async def disconnect(self, close_code):
-        if self.game_token in GameConsumer.game_users:
-            if self.user.username in GameConsumer.game_users[self.game_token]:
-                GameConsumer.game_users[self.game_token][
-                    self.user.username
-                ] -= 1
-        await self.channel_layer.group_discard(
-            self.game_token, self.channel_name
-        )
+        if self.game_token not in GameConsumer.game_users:
+            GameConsumer.game_users[self.game_token] = []
+        GameConsumer.game_users[self.game_token].append(self.user.username)
 
-    async def receive(self, text_data):
-        text_data_json = json.loads(text_data)
-        if "token" in text_data_json:
-            try:
-                token = JWTTokenValidator().validate(text_data_json["token"])
-                self.user = await self.get_user_from_token(token)
-                if not self.game_token in GameConsumer.game_users:
-                    GameConsumer.game_users[self.game_token] = {
-                        self.user.username: 0
-                    }
-                if (
-                    not self.user.username
-                    in GameConsumer.game_users[self.game_token]
-                ):
-                    GameConsumer.game_users[self.game_token][
-                        self.user.username
-                    ] = 0
-                GameConsumer.game_users[self.game_token][
-                    self.user.username
-                ] += 1
-                return
-            except Exception:
-                await self.close()
-                return
-        game_data_text = text_data_json["data"]
-        sender = text_data_json["sender"]
-        timestamp = text_data_json["timestamp"]
-        self.game = await self.get_game(self.game_token)
-        self.sender = await self.get_sender(sender)
-        self.recipient = await self.get_recipient(self.sender, self.game)
-        if await self.is_blocked(self.sender, self.recipient):
-            await self.send(
-                text_data=json.dumps(
-                    {"blocked": "You are blocked by this user."}
-                )
-            )
-            return
-        self.game_data = await self.create_game_data(
-            self.sender, game_data_text, self.recipient
-        )
-        await self.add_data(self.game, self.game_data)
         await self.channel_layer.group_send(
             self.game_token,
             {
-                "type": "game_data",
-                "data": game_data_text,
-                "sender": sender,
-                "timestamp": timestamp,
-            },
+                "type": "game_update",
+                "event": "player_connected",
+                "user": self.user.username,
+                "players": GameConsumer.game_users[self.game_token],
+            }
         )
+
+    async def disconnect(self, close_code):
+        GameConsumer.game_users[self.game_token].remove(self.user.username)
+        await self.channel_layer.group_discard(self.game_token, self.channel_name)
+
+        await self.channel_layer.group_send(
+            self.game_token,
+            {
+                "type": "game_update",
+                "event": "player_disconnected",
+                "user": self.user.username,
+                "players": GameConsumer.game_users[self.game_token],
+            }
+        )
+
+    async def receive(self, text_data):
+        data = json.loads(text_data)
+        event_type = data.get("event")
+
+        if event_type == "move":
+            await self.channel_layer.group_send(
+                self.game_token,
+                {
+                    "type": "game_update",
+                    "event": "move",
+                    "user": self.user.username,
+                    "player1_pos": data.get("player1_pos"),
+                    "player2_pos": data.get("player2_pos"),
+                    "ball_pos": data.get("ball_pos"),
+                }
+            )
+
+    async def game_update(self, event):
+        await self.send(text_data=json.dumps(event))

@@ -2,6 +2,8 @@ class Game {
   constructor (lobbyId) {
     this.lobbyId = lobbyId
     this.setListeners()
+    this.lobby = new Lobby()
+    this.lobby.join(this.lobbyId, this)
   }
 
   initGameElements (gameMode) {
@@ -65,12 +67,6 @@ class Game {
     this.loop()
   }
 
-  setKeyPressListeners () {
-    this.boundKeyPress = this.keyPressHandler.bind(this)
-    window.addEventListener('keydown', this.boundKeyPress)
-    window.addEventListener('keyup', this.boundKeyPress)
-  }
-
   loop () {
     this.update()
     if (this.gameOver === false) {
@@ -84,6 +80,22 @@ class Game {
     this.checkCollisions()
     this.checkGoals()
     this.player2.move(this.ball, this.player1)
+
+    this.lobby.sendGameData({
+      event: 'move',
+      player1_pos: { x: this.player1.x, y: this.player1.y },
+      player2_pos: { x: this.player2.x, y: this.player2.y },
+      ball_pos: { x: this.ball.x, y: this.ball.y }
+    })
+  }
+
+  updatePositions (player1Pos, player2Pos, ballPos) {
+    this.player1.x = player1Pos.x
+    this.player1.y = player1Pos.y
+    this.player2.x = player2Pos.x
+    this.player2.y = player2Pos.y
+    this.ball.x = ballPos.x
+    this.ball.y = ballPos.y
   }
 
   moveElements () {
