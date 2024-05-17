@@ -11,6 +11,8 @@ from pingpong.models import (
     MessagesRecipient,
     Block,
     FriendRequest,
+    Game,
+    GameData,
 )
 from django.contrib.auth.models import User
 from django.db.models import Q
@@ -292,3 +294,127 @@ class LongPollConsumer(AsyncWebsocketConsumer):
                 }
             )
         return chatsInfo
+
+
+class GameConsumer(AsyncWebsocketConsumer):
+    game_users = {}
+
+    def is_both_users_connected(self):
+        count = 0
+        if self.game_token in GameConsumer.game_users:
+            if len(GameConsumer.game_users[self.game_token] == 2):
+                for user, value in GameConsumer.game_users[
+                    self.game_token
+                ].items():
+                    if value > 0:
+                        count += 1
+        return count == 2
+
+    @database_sync_to_async
+    def get_user_from_token(self, token):
+        decoded_token = token_backend.decode(token)
+        user_id = decoded_token["user_id"]
+        try:
+            user = User.objects.get(id=user_id)
+        except User.DoesNotExist:
+            raise ValidationError("User does not exist")
+        return user
+
+    @database_sync_to_async
+    def game_exists(self, game_token):
+        return Game.objects.filter(token=game_token).exists()
+
+    @database_sync_to_async
+    def get_game(self, game_token):
+        return Game.objects.filter(token=game_token).first()
+
+    @database_sync_to_async
+    def create_game_data(self, sender, data, recipient):
+        return GameData.objects.create(
+            sender=sender, data=data, recipient=recipient
+        )
+
+    @database_sync_to_async
+    def add_data(self, game, game_data):
+        game.data.add(game_data)
+
+    @database_sync_to_async
+    def get_sender(self, sender):
+        return User.objects.get(username=sender)
+
+    @database_sync_to_async
+    def get_recipient(self, sender, game):
+        if game.player_one.username == sender.username:
+            return game.player_two
+        else:
+            return game.player_one
+
+    @database_sync_to_async
+    def is_blocked(self, sender, recipient):
+        return Block.objects.filter(blocker=recipient, blocked=sender).exists()
+
+    async def connect(self):
+        self.game_token = self.scope["url_route"]["kwargs"]["token"]
+        await self.channel_layer.group_add(self.game_token, self.channel_name)
+        await self.accept()
+
+    async def disconnect(self, close_code):
+        if self.game_token in GameConsumer.game_users:
+            if self.user.username in GameConsumer.game_users[self.game_token]:
+                GameConsumer.game_users[self.game_token][
+                    self.user.username
+                ] -= 1
+        await self.channel_layer.group_discard(
+            self.game_token, self.channel_name
+        )
+
+    async def receive(self, text_data):
+        text_data_json = json.loads(text_data)
+        if "token" in text_data_json:
+            try:
+                token = JWTTokenValidator().validate(text_data_json["token"])
+                self.user = await self.get_user_from_token(token)
+                if not self.game_token in GameConsumer.game_users:
+                    GameConsumer.game_users[self.game_token] = {
+                        self.user.username: 0
+                    }
+                if (
+                    not self.user.username
+                    in GameConsumer.game_users[self.game_token]
+                ):
+                    GameConsumer.game_users[self.game_token][
+                        self.user.username
+                    ] = 0
+                GameConsumer.game_users[self.game_token][
+                    self.user.username
+                ] += 1
+                return
+            except Exception:
+                await self.close()
+                return
+        game_data_text = text_data_json["data"]
+        sender = text_data_json["sender"]
+        timestamp = text_data_json["timestamp"]
+        self.game = await self.get_game(self.game_token)
+        self.sender = await self.get_sender(sender)
+        self.recipient = await self.get_recipient(self.sender, self.game)
+        if await self.is_blocked(self.sender, self.recipient):
+            await self.send(
+                text_data=json.dumps(
+                    {"blocked": "You are blocked by this user."}
+                )
+            )
+            return
+        self.game_data = await self.create_game_data(
+            self.sender, game_data_text, self.recipient
+        )
+        await self.add_data(self.game, self.game_data)
+        await self.channel_layer.group_send(
+            self.game_token,
+            {
+                "type": "game_data",
+                "data": game_data_text,
+                "sender": sender,
+                "timestamp": timestamp,
+            },
+        )
