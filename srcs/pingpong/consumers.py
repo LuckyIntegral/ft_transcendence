@@ -296,128 +296,62 @@ class LongPollConsumer(AsyncWebsocketConsumer):
         return chatsInfo
 
 
+# consumers.py
+import json
+from channels.generic.websocket import AsyncWebsocketConsumer
+from .models import Game, GameData
+from django.contrib.auth.models import User
+
 class GameConsumer(AsyncWebsocketConsumer):
-    game_users = {}
+    async def connect(self):
+        self.token = self.scope['url_route']['kwargs']['token']
+        self.game_group_name = f'game_{self.token}'
 
-    def is_both_users_connected(self):
-        count = 0
-        if self.game_token in GameConsumer.game_users:
-            if len(GameConsumer.game_users[self.game_token] == 2):
-                for user, value in GameConsumer.game_users[
-                    self.game_token
-                ].items():
-                    if value > 0:
-                        count += 1
-        return count == 2
-
-    @database_sync_to_async
-    def get_user_from_token(self, token):
-        decoded_token = token_backend.decode(token)
-        user_id = decoded_token["user_id"]
-        try:
-            user = User.objects.get(id=user_id)
-        except User.DoesNotExist:
-            raise ValidationError("User does not exist")
-        return user
-
-    @database_sync_to_async
-    def game_exists(self, game_token):
-        return Game.objects.filter(token=game_token).exists()
-
-    @database_sync_to_async
-    def get_game(self, game_token):
-        return Game.objects.filter(token=game_token).first()
-
-    @database_sync_to_async
-    def create_game_data(self, sender, data, recipient):
-        return GameData.objects.create(
-            sender=sender, data=data, recipient=recipient
+        await self.channel_layer.group_add(
+            self.game_group_name,
+            self.channel_name
         )
 
-    @database_sync_to_async
-    def add_data(self, game, game_data):
-        game.data.add(game_data)
-
-    @database_sync_to_async
-    def get_sender(self, sender):
-        return User.objects.get(username=sender)
-
-    @database_sync_to_async
-    def get_recipient(self, sender, game):
-        if game.player_one.username == sender.username:
-            return game.player_two
-        else:
-            return game.player_one
-
-    @database_sync_to_async
-    def is_blocked(self, sender, recipient):
-        return Block.objects.filter(blocker=recipient, blocked=sender).exists()
-
-    async def connect(self):
-        self.game_token = self.scope["url_route"]["kwargs"]["token"]
-        self.user = self.scope["user"]
-
-        await self.channel_layer.group_add(self.game_token, self.channel_name)
         await self.accept()
 
-        if self.game_token not in GameConsumer.game_users:
-            GameConsumer.game_users[self.game_token] = {}
-
-        if len(GameConsumer.game_users[self.game_token]) == 0:
-            GameConsumer.game_users[self.game_token][self.user.username] = 'player1'
-        else:
-            GameConsumer.game_users[self.game_token][self.user.username] = 'player2'
-
-        role = GameConsumer.game_users[self.game_token][self.user.username]
-
         await self.send(text_data=json.dumps({
-            "event": "assign_role",
-            "role": role
+            'event': 'assign_role',
+            'role': 'player1' if self.channel_name.endswith('1') else 'player2'
         }))
 
-        await self.channel_layer.group_send(
-            self.game_token,
-            {
-                "type": "game_update",
-                "event": "player_connected",
-                "user": self.user.username,
-                "role": role,
-                "players": list(GameConsumer.game_users[self.game_token].items()),
-            }
-        )
-
     async def disconnect(self, close_code):
-        if self.game_token in GameConsumer.game_users:
-            if self.user.username in GameConsumer.game_users[self.game_token]:
-                del GameConsumer.game_users[self.game_token][self.user.username]
-                await self.channel_layer.group_send(
-                    self.game_token,
-                    {
-                        "type": "game_update",
-                        "event": "player_disconnected",
-                        "user": self.user.username,
-                        "players": list(GameConsumer.game_users[self.game_token].items()),
-                    }
-                )
-
-        await self.channel_layer.group_discard(self.game_token, self.channel_name)
+        await self.channel_layer.group_discard(
+            self.game_group_name,
+            self.channel_name
+        )
 
     async def receive(self, text_data):
         data = json.loads(text_data)
-        event_type = data.get("event")
+        event = data.get('event')
 
-        if event_type == "move":
+        if event == 'move':
+            player1_pos = data['player1_pos']
+            player2_pos = data['player2_pos']
+            ball_pos = data['ball_pos']
+
             await self.channel_layer.group_send(
-                self.game_token,
+                self.game_group_name,
                 {
-                    "type": "game_update",
-                    "event": "move",
-                    "user": self.user.username,
-                    "player1_pos": data.get("player1_pos"),
-                    "player2_pos": data.get("player2_pos"),
-                    "ball_pos": data.get("ball_pos"),
+                    'type': 'game_move',
+                    'player1_pos': player1_pos,
+                    'player2_pos': player2_pos,
+                    'ball_pos': ball_pos,
                 }
             )
 
-    async def game_update(self, event):
-        await self.send(text_data=json.dumps(event))
+    async def game_move(self, event):
+        player1_pos = event['player1_pos']
+        player2_pos = event['player2_pos']
+        ball_pos = event['ball_pos']
+
+        await self.send(text_data=json.dumps({
+            'event': 'move',
+            'player1_pos': player1_pos,
+            'player2_pos': player2_pos,
+            'ball_pos': ball_pos,
+        }))

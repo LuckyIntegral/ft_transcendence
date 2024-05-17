@@ -314,6 +314,7 @@ class Game {
   }
 
   keyPressHandler = event => {
+    console.log(`Key pressed: ${event.type} - ${event.key}`)
     const isKeyDown = event.type === 'keydown'
     const isKeyUp = event.type === 'keyup'
     const isWKey = event.key === 'w' || event.key === 'W'
