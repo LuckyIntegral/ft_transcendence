@@ -33,7 +33,6 @@ from pingpong.views import (
 )
 
 
-
 urlpatterns = [
     path("", views.home, name="home"),
     path("verify-email/", VerifyEmailView.as_view(), name="verify_email"),

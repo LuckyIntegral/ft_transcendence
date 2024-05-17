@@ -2,7 +2,6 @@
     Views are used to handle http requests and return responses.
 """
 
-
 import random
 import math
 import time
@@ -51,7 +50,6 @@ from asgiref.sync import async_to_sync
 
 
 # Create your views here.
-
 
 
 def home(request):

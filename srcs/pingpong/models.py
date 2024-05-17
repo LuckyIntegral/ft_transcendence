@@ -72,7 +72,6 @@ class MessagesRecipient(models.Model):
     isNotified = models.BooleanField(default=False)
 
 
-
 class Message(models.Model):
     sender = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name="sender"

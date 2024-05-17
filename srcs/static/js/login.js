@@ -1,9 +1,4 @@
 document.addEventListener('DOMContentLoaded', function () {
-  // Login handling
-  // var username = localStorage.getItem('username')
-  // // if (username) {
-  // //   refreshSocket(username)
-  // // }
 
   function forgotPasswordClick (loginPopup) {
     var forgotPasswordPopup = createForgotPasswordPopup()
