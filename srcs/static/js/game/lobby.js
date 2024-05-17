@@ -1,31 +1,31 @@
 class Lobby {
   constructor () {}
 
-  joinOrCreate (lobbyId) {
-    var url = new URL(`http://${window.location.host}/api/game/lobby/`)
-    return fetchWithToken(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: 'Bearer ' + localStorage.getItem('access')
-      },
-      body: JSON.stringify({ lobby_id: lobbyId })
-    })
-  }
+  join () {
+    const gameToken = 'token'
+    const gameSocket = new WebSocket(
+      `ws://${window.location.host}/ws/game/${gameToken}/`
+    )
 
-  sendGameRequest (friendUsername, lobbyId) {
-    let url = `http://${window.location.host}/api/game/request/`
-    return fetchWithToken(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: 'Bearer ' + localStorage.getItem('access')
-      },
-      body: JSON.stringify({ username: friendUsername, lobby_id: lobbyId })
-    })
-  }
+    gameSocket.onopen = function (e) {
+      console.log('Game WebSocket connection established.')
+    }
 
-  getNewGameId () {
-    return 69
+    gameSocket.onmessage = function (e) {
+      const data = JSON.parse(e.data)
+      console.log('Received game data:', data)
+    }
+
+    gameSocket.onclose = function (e) {
+      console.log('Game WebSocket connection closed.')
+    }
+
+    gameSocket.onerror = function(e) {
+      console.error("Game WebSocket error:", e)
+    }
+
+    function sendGameData(data) {
+      gameSocket.send(JSON.stringify(data))
+    }
   }
 }

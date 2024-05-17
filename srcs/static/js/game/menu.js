@@ -258,11 +258,7 @@ class Menu {
           image: player.pictureSmall,
           action: () => {
             cancelAnimationFrame(this.animationFrameId)
-            this.lobby.joinOrCreate(this.lobby.getNewGameId()).then(() => {
-              this.lobby
-                .sendGameRequest(player.username, this.lobby.getNewGameId())
-                .then(() => {})
-            })
+            this.lobby.join()
           }
         }
       })
@@ -275,7 +271,6 @@ class Menu {
   displayOnlineFriends () {
     this.clear()
     this.lobby = new Lobby()
-    this.lobbyId = this.lobby.getNewGameId()
     this.title = `Connected to lobby ${this.lobby.lobbyId}.\nUsers: ${this.lobby.lobbyUsers}`
     this.fetchOnlineFriends().then(data => this.updateMenuWithFriends(data))
   }
