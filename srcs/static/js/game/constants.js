@@ -10,8 +10,9 @@ const GameConstants = {
   PADDLE_WIDTH: 10,
   PADDLE_HEIGHT: 100,
   PADDLE_PADDING: 10,
-  PLAYER_SPEED: 10,
-  AI_SPEED: 1.1
+  PLAYER_SPEED: 7,
+  AI_SPEED: 1.1,
+  FPS: 90,
 }
 
 const GameModes = {

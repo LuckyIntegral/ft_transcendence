@@ -14,7 +14,6 @@ class Lobby {
 
     this.gameSocket.onmessage = (e) => {
       const data = JSON.parse(e.data);
-      console.log('Received game data:', data);
 
       if (data.event === 'assign_role') {
         this.playerId = data.role;
