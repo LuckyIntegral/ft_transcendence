@@ -363,7 +363,7 @@ class GameConsumer(AsyncWebsocketConsumer):
         await self.send(
             text_data=json.dumps(
                 {
-                    "event": "move",
+                    "event": "game_move",
                     "player1_pos": player1_pos,
                     "player2_pos": player2_pos,
                     "ball_pos": ball_pos,

@@ -33,7 +33,7 @@ class Lobby {
         }
       }
 
-      if (data.event === 'move') {
+      if (data.event === 'game_move') {
         this.game.updatePositions(
           data.player1_pos,
           data.player2_pos,
@@ -53,6 +53,7 @@ class Lobby {
 
   sendGameData (data) {
     if (this.gameSocket.readyState === WebSocket.OPEN) {
+      data.event = 'move'
       this.gameSocket.send(JSON.stringify(data))
     }
   }

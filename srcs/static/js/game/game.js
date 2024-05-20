@@ -61,7 +61,7 @@ class Game {
     this.context.fillText(
       'Waiting for opponent...',
       GameConstants.GAME_WIDTH / 2,
-      GameConstants.GAME_HEIGHT / 2
+      GameConstants.GAME_HEIGHT / 2,
     )
   }
 
@@ -122,34 +122,19 @@ class Game {
       }
 
       this.lobby.sendGameData({
-        event: 'move',
+        event: 'game_move',
         player1_pos: { x: this.player1.x, y: this.player1.y },
         player2_pos: { x: this.player2.x, y: this.player2.y },
         ball_pos: { x: this.ball.x, y: this.ball.y }
       })
-
-      this.interpolatePositions()
     }
   }
 
-  interpolatePositions () {
-    this.player1.x +=
-      (this.player1.targetX - this.player1.x) * this.interpolationFactor
-    this.player1.y +=
-      (this.player1.targetY - this.player1.y) * this.interpolationFactor
-    this.player2.x +=
-      (this.player2.targetX - this.player2.x) * this.interpolationFactor
-    this.player2.y +=
-      (this.player2.targetY - this.player2.y) * this.interpolationFactor
-    this.ball.x += (this.ball.targetX - this.ball.x) * this.interpolationFactor
-    this.ball.y += (this.ball.targetY - this.ball.y) * this.interpolationFactor
-  }
-
   updatePositions(player1Pos, player2Pos, ballPos) {
-    this.player1.targetX = player1Pos.x;
-    this.player1.targetY = player1Pos.y;
-    this.player2.targetX = player2Pos.x;
-    this.player2.targetY = player2Pos.y;
+    this.player1.x = player1Pos.x;
+    this.player1.y = player1Pos.y;
+    this.player2.x = player2Pos.x;
+    this.player2.y = player2Pos.y;
     this.ball.targetX = ballPos.x;
     this.ball.targetY = ballPos.y;
   }
