@@ -12,7 +12,7 @@ const GameConstants = {
   PADDLE_PADDING: 10,
   PLAYER_SPEED: 7,
   AI_SPEED: 1.1,
-  FPS: 60,
+  FPS: 120,
   INTERPOLATION_FACTOR: 0.1,
 }
 
