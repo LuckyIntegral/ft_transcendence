@@ -16,7 +16,6 @@ function alertError (message) {
   var toast = document.getElementById('toastContent')
   toast.appendChild(alert)
 
-  // here we add timeout to remove the alert
   setTimeout(() => {
     alert.remove()
   }, 3000)

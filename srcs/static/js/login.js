@@ -1,5 +1,4 @@
 document.addEventListener('DOMContentLoaded', function () {
-
   function forgotPasswordClick (loginPopup) {
     var forgotPasswordPopup = createForgotPasswordPopup()
     document.body.removeChild(loginPopup)

@@ -1,39 +1,39 @@
-var previousRoute = null;
+var previousRoute = null
 
-function checkAndReload() {
-    if (previousRoute === 'pong') {
-        location.reload();
-    }
+function checkAndReload () {
+  if (previousRoute === 'pong') {
+    location.reload()
+  }
 }
 
-document.addEventListener('DOMContentLoaded', function() {
-    var routes = {
-        'profile': function() {
-            loadProfilePage();
-            previousRoute = 'profile';
-        },
-        'pong': function() {
-            let menu = new Menu()
-            menu.start()
-            previousRoute = 'pong';
-        },
-        'friends': function() {
-            loadFriendsPage();
-            previousRoute = 'friends';
-        },
-        'leadrboard': function() {
-            loadLeaderboardPage();
-            previousRoute = 'leadrboard';
-        },
-        'messages': function() {
-            loadMessagesPage();
-            previousRoute = 'messages';
-        },
-        'default': function() {
-            document.getElementById('content').textContent = 'Default page';
-            previousRoute = 'default';
-        }
-    };
+document.addEventListener('DOMContentLoaded', function () {
+  var routes = {
+    profile: function () {
+      loadProfilePage()
+      previousRoute = 'profile'
+    },
+    pong: function () {
+      let menu = new Menu()
+      menu.start()
+      previousRoute = 'pong'
+    },
+    friends: function () {
+      loadFriendsPage()
+      previousRoute = 'friends'
+    },
+    leadrboard: function () {
+      loadLeaderboardPage()
+      previousRoute = 'leadrboard'
+    },
+    messages: function () {
+      loadMessagesPage()
+      previousRoute = 'messages'
+    },
+    default: function () {
+      document.getElementById('content').textContent = 'Default page'
+      previousRoute = 'default'
+    }
+  }
 
   // Function to handle hash changes
   function handleHashChange () {
