@@ -25,12 +25,11 @@ class Game {
     this.player2.moveDown = false
   }
 
-  loadGame (gameMode, playerId) {
+  loadGame (gameMode) {
     this.stop()
-    this.initGameElements(gameMode, playerId)
+    this.initGameElements(gameMode)
     this.createCanvas()
-    this.playerId = playerId
-    this.lobby.join(this.lobbyId, this, playerId)
+    this.lobby.join(this.lobbyId, this)
     this.setUpCanvas()
     if (gameMode === GameModes.PLAYER_VS_AI) {
       this.start()
@@ -79,16 +78,16 @@ class Game {
     this.gameOver = true
   }
 
-  setUpCanvas() {
-    this.canvas = document.getElementById('game');
+  setUpCanvas () {
+    this.canvas = document.getElementById('game')
     if (!this.canvas) {
-      console.error('Canvas element not found');
-      return;
+      console.error('Canvas element not found')
+      return
     }
-    this.context = this.canvas.getContext('2d');
-    this.canvas.width = GameConstants.GAME_WIDTH;
-    this.canvas.height = GameConstants.GAME_HEIGHT;
-    console.log('Canvas set up');
+    this.context = this.canvas.getContext('2d')
+    this.canvas.width = GameConstants.GAME_WIDTH
+    this.canvas.height = GameConstants.GAME_HEIGHT
+    console.log('Canvas set up')
   }
 
   startNewGame () {
@@ -128,16 +127,31 @@ class Game {
         player2_pos: { x: this.player2.x, y: this.player2.y },
         ball_pos: { x: this.ball.x, y: this.ball.y }
       })
+
+      this.interpolatePositions()
     }
   }
 
-  updatePositions (player1Pos, player2Pos, ballPos) {
-    this.player1.x = player1Pos.x
-    this.player1.y = player1Pos.y
-    this.player2.x = player2Pos.x
-    this.player2.y = player2Pos.y
-    this.ball.targetX = ballPos.x
-    this.ball.targetY = ballPos.y
+  interpolatePositions () {
+    this.player1.x +=
+      (this.player1.targetX - this.player1.x) * this.interpolationFactor
+    this.player1.y +=
+      (this.player1.targetY - this.player1.y) * this.interpolationFactor
+    this.player2.x +=
+      (this.player2.targetX - this.player2.x) * this.interpolationFactor
+    this.player2.y +=
+      (this.player2.targetY - this.player2.y) * this.interpolationFactor
+    this.ball.x += (this.ball.targetX - this.ball.x) * this.interpolationFactor
+    this.ball.y += (this.ball.targetY - this.ball.y) * this.interpolationFactor
+  }
+
+  updatePositions(player1Pos, player2Pos, ballPos) {
+    this.player1.targetX = player1Pos.x;
+    this.player1.targetY = player1Pos.y;
+    this.player2.targetX = player2Pos.x;
+    this.player2.targetY = player2Pos.y;
+    this.ball.targetX = ballPos.x;
+    this.ball.targetY = ballPos.y;
   }
 
   moveElements () {
@@ -336,7 +350,6 @@ class Game {
   }
 
   keyPressHandler = event => {
-    console.log(`Key pressed: ${event.type} - ${event.key}`)
     const isKeyDown = event.type === 'keydown'
     const isKeyUp = event.type === 'keyup'
     const isWKey = event.key === 'w' || event.key === 'W'

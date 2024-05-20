@@ -12,7 +12,9 @@ class Lobby {
     this.game = game
 
     this.gameSocket.onopen = () => {
-      console.log(`Game WebSocket connection established on ws://${window.location.host}/ws/game/${gameToken}/.`)
+      console.log(
+        `Game WebSocket connection established on ws://${window.location.host}/ws/game/${gameToken}/.`
+      )
     }
 
     this.gameSocket.onmessage = e => {

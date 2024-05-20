@@ -13,6 +13,7 @@ const GameConstants = {
   PLAYER_SPEED: 7,
   AI_SPEED: 1.1,
   FPS: 90,
+  INTERPOLATION_FACTOR: 0.1,
 }
 
 const GameModes = {

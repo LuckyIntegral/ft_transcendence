@@ -319,7 +319,6 @@ class GameConsumer(AsyncWebsocketConsumer):
             text_data=json.dumps({"event": "assign_role", "role": role})
         )
 
-        # Notify all users when a player connects
         await self.channel_layer.group_send(
             self.game_group_name,
             {"type": "player_connected", "players_connected": len(self.users)},
@@ -331,6 +330,11 @@ class GameConsumer(AsyncWebsocketConsumer):
         )
         if self.channel_name in self.users:
             self.users.remove(self.channel_name)
+        
+        await self.channel_layer.group_send(
+            self.game_group_name,
+            {"type": "player_connected", "players_connected": len(self.users)},
+        )
 
     async def receive(self, text_data):
         data = json.loads(text_data)
