@@ -29,11 +29,12 @@ class Game {
     this.stop()
     this.initGameElements(gameMode)
     this.createCanvas()
-    this.lobby.join(this.lobbyId, this)
     this.setUpCanvas()
     if (gameMode === GameModes.PLAYER_VS_AI) {
+      this.playerId = 'player1'
       this.start()
     } else {
+      this.lobby.join(this.lobbyId, this)
       this.displayWaitingMessage()
     }
   }
@@ -113,15 +114,22 @@ class Game {
       this.checkCollisions()
       this.checkGoals()
 
-      if (this.playerId === 'player1') {
+      if (
+        this.playerId === 'player1' ||
+        this.gameMode === GameModes.PLAYER_VS_AI
+      ) {
         this.player1.move()
         this.ball.move()
         this.ball.bounce()
-        this.lobby.sendGameData({
-          event: 'game_move',
-          player1_pos: { x: this.player1.x, y: this.player1.y },
-          ball_pos: { x: this.ball.x, y: this.ball.y }
-        })
+        if (this.gameMode === GameModes.PLAYER_VS_AI) {
+          this.player2.move(this.ball, this.player1)
+        } else {
+          this.lobby.sendGameData({
+            event: 'game_move',
+            player1_pos: { x: this.player1.x, y: this.player1.y },
+            ball_pos: { x: this.ball.x, y: this.ball.y }
+          })
+        }
       } else if (this.playerId === 'player2') {
         this.player2.move()
         this.lobby.sendGameData({
@@ -145,7 +153,9 @@ class Game {
   }
 
   moveElements () {
-    if (this.gameMode !== GameModes.PLAYER_VS_AI) {
+    if (this.gameMode === GameModes.PLAYER_VS_AI) {
+      this.player2.move(this.ball, this.player1)
+    } else {
       this.player2.move()
     }
   }
@@ -272,15 +282,10 @@ class Game {
 
   reset () {
     this.player1.resetScore()
-    console.log(`Player1 score: ${this.player1.score}`)
     this.player1.resetPosition()
-    console.log(`Player1 position: ${this.player1.x}-${this.player1.y}`)
     this.player2.resetScore()
-    console.log(`Player2 score: ${this.player2.score}`)
     this.player2.resetPosition()
-    console.log(`Player2 position: ${this.player2.x}-${this.player2.y}`)
     this.ball.resetPosition()
-    console.log(`Ball position: ${this.ball.x}-${this.ball.y}`)
     this.canvas.removeEventListener('click', this.boundReset)
     this.gameOver = false
   }
