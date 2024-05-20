@@ -31,7 +31,12 @@ class Game {
     this.createCanvas()
     this.playerId = playerId
     this.lobby.join(this.lobbyId, this, playerId)
-    this.displayWaitingMessage()
+    this.setUpCanvas()
+    if (gameMode === GameModes.PLAYER_VS_AI) {
+      this.start()
+    } else {
+      this.displayWaitingMessage()
+    }
   }
 
   createCanvas () {
@@ -50,7 +55,7 @@ class Game {
   }
 
   displayWaitingMessage () {
-    this.setUpCanvas()
+    this.clearCanvas()
     this.context.fillStyle = 'WHITE'
     this.context.font = '40px Arial'
     this.context.textAlign = 'center'
@@ -65,7 +70,6 @@ class Game {
     if (!this.isGameStarted) {
       this.isGameStarted = true
       this.gameOver = false
-      console.log('Game started')
       this.setUpCanvas()
       this.startNewGame()
     }
@@ -75,12 +79,16 @@ class Game {
     this.gameOver = true
   }
 
-  setUpCanvas () {
-    this.canvas = document.getElementById('game')
-    this.context = this.canvas.getContext('2d')
-    this.canvas.width = GameConstants.GAME_WIDTH
-    this.canvas.height = GameConstants.GAME_HEIGHT
-    console.log('Canvas set up')
+  setUpCanvas() {
+    this.canvas = document.getElementById('game');
+    if (!this.canvas) {
+      console.error('Canvas element not found');
+      return;
+    }
+    this.context = this.canvas.getContext('2d');
+    this.canvas.width = GameConstants.GAME_WIDTH;
+    this.canvas.height = GameConstants.GAME_HEIGHT;
+    console.log('Canvas set up');
   }
 
   startNewGame () {
@@ -108,8 +116,6 @@ class Game {
       this.checkCollisions()
       this.checkGoals()
 
-      console.log('')
-
       if (this.playerId === 'player1') {
         this.player1.move()
       } else if (this.playerId === 'player2') {
@@ -126,10 +132,10 @@ class Game {
   }
 
   updatePositions (player1Pos, player2Pos, ballPos) {
-    this.player1.targetX = player1Pos.x
-    this.player1.targetY = player1Pos.y
-    this.player2.targetX = player2Pos.x
-    this.player2.targetY = player2Pos.y
+    this.player1.x = player1Pos.x
+    this.player1.y = player1Pos.y
+    this.player2.x = player2Pos.x
+    this.player2.y = player2Pos.y
     this.ball.targetX = ballPos.x
     this.ball.targetY = ballPos.y
   }

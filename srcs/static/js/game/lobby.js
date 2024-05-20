@@ -2,7 +2,7 @@ class Lobby {
   constructor () {
     this.gameSocket = null
     this.playerId = null
-    this.playersConnected = 0 // Track the number of connected players
+    this.playersConnected = 0
   }
 
   join (gameToken, game) {
@@ -12,7 +12,7 @@ class Lobby {
     this.game = game
 
     this.gameSocket.onopen = () => {
-      console.log('Game WebSocket connection established.')
+      console.log(`Game WebSocket connection established on ws://${window.location.host}/ws/game/${gameToken}/.`)
     }
 
     this.gameSocket.onmessage = e => {
@@ -27,7 +27,7 @@ class Lobby {
       if (data.event === 'player_connected') {
         this.playersConnected = data.players_connected
         if (this.playersConnected === 2) {
-          this.game.start() // Start the game when both players are connected
+          this.game.start()
         }
       }
 
