@@ -1,5 +1,4 @@
 document.addEventListener('DOMContentLoaded', function () {
-  // Login handling
 
   function forgotPasswordClick (loginPopup) {
     var forgotPasswordPopup = createForgotPasswordPopup()

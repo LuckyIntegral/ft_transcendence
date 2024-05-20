@@ -1,39 +1,39 @@
-// import loadGamePage from './game.js';
-// import loadProfilePage from './profile.js';
+var previousRoute = null;
 
-// Define your routes
-document.addEventListener('DOMContentLoaded', function () {
-  function closeChatSocket () {
-    if (chatSocket) {
-      chatSocket.close()
+function checkAndReload() {
+    if (previousRoute === 'pong') {
+        location.reload();
     }
-  }
-  var routes = {
-    profile: function () {
-      closeChatSocket()
-      loadProfilePage()
-    },
-    pong: function () {
-      closeChatSocket()
-      loadGamePage()
-    },
-    friends: function () {
-      closeChatSocket()
-      loadFriendsPage()
-    },
-    leadrboard: function () {
-      closeChatSocket()
-      loadLeaderboardPage()
-    },
-    messages: function () {
-      closeChatSocket()
-      loadMessagesPage()
-    },
-    default: function () {
-      closeChatSocket()
-      document.getElementById('content').textContent = 'Default page'
-    }
-  }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    var routes = {
+        'profile': function() {
+            loadProfilePage();
+            previousRoute = 'profile';
+        },
+        'pong': function() {
+            let menu = new Menu()
+            menu.start()
+            previousRoute = 'pong';
+        },
+        'friends': function() {
+            loadFriendsPage();
+            previousRoute = 'friends';
+        },
+        'leadrboard': function() {
+            loadLeaderboardPage();
+            previousRoute = 'leadrboard';
+        },
+        'messages': function() {
+            loadMessagesPage();
+            previousRoute = 'messages';
+        },
+        'default': function() {
+            document.getElementById('content').textContent = 'Default page';
+            previousRoute = 'default';
+        }
+    };
 
   // Function to handle hash changes
   function handleHashChange () {

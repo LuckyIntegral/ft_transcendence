@@ -11,12 +11,16 @@ from pingpong.models import (
     MessagesRecipient,
     Block,
     FriendRequest,
+    Game,
+    GameData,
 )
 from django.contrib.auth.models import User
 from django.db.models import Q
 from rest_framework_simplejwt.tokens import UntypedToken
 from rest_framework_simplejwt.state import token_backend
 from rest_framework_simplejwt.authentication import InvalidToken, TokenError
+from django.core.exceptions import ValidationError
+from .utils import getUserFromToken
 import json
 import asyncio
 from django.utils import timezone
@@ -230,7 +234,7 @@ class LongPollConsumer(AsyncWebsocketConsumer):
     @database_sync_to_async
     def get_token_from_key(self, key):
         try:
-            token_type, token_key = token.split(" ")
+            token_type, token_key = key.split(" ")
             if token_type.lower() != "bearer":
                 raise ValidationError("Token is invalid.")
             UntypedToken(token_key)
@@ -290,3 +294,100 @@ class LongPollConsumer(AsyncWebsocketConsumer):
                 }
             )
         return chatsInfo
+
+
+class GameConsumer(AsyncWebsocketConsumer):
+    users = []
+
+    async def connect(self):
+        self.token = self.scope["url_route"]["kwargs"]["token"]
+        self.game_group_name = f"game_{self.token}"
+
+        await self.channel_layer.group_add(
+            self.game_group_name, self.channel_name
+        )
+
+        await self.channel_layer.group_add(
+            self.game_group_name, self.channel_name
+        )
+        await self.accept()
+
+        if len(self.users) < 2 and self.channel_name not in self.users:
+            self.users.append(self.channel_name)
+            role = f"player{len(self.users)}"
+        else:
+            role = "spectator"
+
+        await self.send(
+            text_data=json.dumps({"event": "assign_role", "role": role})
+        )
+
+        await self.channel_layer.group_send(
+            self.game_group_name,
+            {"type": "player_connected", "players_connected": len(self.users)},
+        )
+
+    async def disconnect(self, close_code):
+        await self.channel_layer.group_discard(
+            self.game_group_name, self.channel_name
+        )
+        if self.channel_name in self.users:
+            self.users.remove(self.channel_name)
+
+        await self.channel_layer.group_send(
+            self.game_group_name,
+            {"type": "player_connected", "players_connected": len(self.users)},
+        )
+
+    async def receive(self, text_data):
+        data = json.loads(text_data)
+        event = data.get("event")
+
+        if event == "move":
+            player1_pos = data.get("player1_pos")
+            player2_pos = data.get("player2_pos")
+            ball_pos = data.get("ball_pos")
+            update_type = (
+                "host" if self.channel_name == self.users[0] else "client"
+            )
+
+            await self.channel_layer.group_send(
+                self.game_group_name,
+                {
+                    "type": "game_move",
+                    "update_type": update_type,
+                    "player1_pos": player1_pos,
+                    "player2_pos": player2_pos,
+                    "ball_pos": ball_pos,
+                },
+            )
+
+    async def game_move(self, event):
+        player1_pos = event.get("player1_pos")
+        player2_pos = event.get("player2_pos")
+        ball_pos = event.get("ball_pos")
+        update_type = event.get("update_type")
+
+        await self.send(
+            text_data=json.dumps(
+                {
+                    "event": "game_move",
+                    "update_type": update_type,
+                    "player1_pos": player1_pos,
+                    "player2_pos": player2_pos,
+                    "ball_pos": ball_pos,
+                }
+            )
+        )
+
+    async def player_connected(self, event):
+        players_connected = event["players_connected"]
+
+        await self.send(
+            text_data=json.dumps(
+                {
+                    "event": "player_connected",
+                    "players_connected": players_connected,
+                }
+            )
+        )

@@ -107,3 +107,32 @@ class Block(models.Model):
     blocked = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name="blocked"
     )
+
+
+class Game(models.Model):
+    token = models.CharField(max_length=255, unique=True)
+    player_one = models.ForeignKey(
+        User, related_name="player_one_games", on_delete=models.CASCADE
+    )
+    player_two = models.ForeignKey(
+        User, related_name="player_two_games", on_delete=models.CASCADE
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Game {self.token} between {self.player_one} and {self.player_two}."
+
+
+class GameData(models.Model):
+    sender = models.ForeignKey(User, on_delete=models.CASCADE)
+    data = models.TextField()
+    recipient = models.ForeignKey(
+        User, related_name="received_game_data", on_delete=models.CASCADE
+    )
+    timestamp = models.DateTimeField(auto_now_add=True)
+    game = models.ForeignKey(
+        Game, related_name="data", on_delete=models.CASCADE
+    )
+
+    def __str__(self):
+        f"GameData from {self.sender} to {self.recipient} at {self.timestamp}."

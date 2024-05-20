@@ -4,6 +4,8 @@ CACHE_FOLDER = ./srcs/pingpong/__pycache__ ./srcs/transcedence/__pycache__
 MIGRATION_FOLDER = ./srcs/pingpong/migrations
 PICTURES_FOLDER = ./srcs/media/pictures
 
+re: stop rmsocket debug
+
 run:
 	@docker-compose up -d --build
 
@@ -24,7 +26,7 @@ clean:
 restart: stop rmsocket debug
 
 rmsocket:
-	@docker volume rm trans_socket_volume
+	@docker volume rm ft_transcendence_socket_volume
 
 cleandb:
 	@docker volume rm $(shell docker volume ls -q)
