@@ -302,12 +302,14 @@ class GameConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         self.token = self.scope["url_route"]["kwargs"]["token"]
         self.game_group_name = f"game_{self.token}"
-        
+
         await self.channel_layer.group_add(
             self.game_group_name, self.channel_name
         )
-        
-        await self.channel_layer.group_add(self.game_group_name, self.channel_name)
+
+        await self.channel_layer.group_add(
+            self.game_group_name, self.channel_name
+        )
         await self.accept()
 
         if len(self.users) < 2 and self.channel_name not in self.users:
@@ -316,7 +318,9 @@ class GameConsumer(AsyncWebsocketConsumer):
         else:
             role = "spectator"
 
-        await self.send(text_data=json.dumps({"event": "assign_role", "role": role}))
+        await self.send(
+            text_data=json.dumps({"event": "assign_role", "role": role})
+        )
 
         await self.channel_layer.group_send(
             self.game_group_name,
@@ -324,7 +328,9 @@ class GameConsumer(AsyncWebsocketConsumer):
         )
 
     async def disconnect(self, close_code):
-        await self.channel_layer.group_discard(self.game_group_name, self.channel_name)
+        await self.channel_layer.group_discard(
+            self.game_group_name, self.channel_name
+        )
         if self.channel_name in self.users:
             self.users.remove(self.channel_name)
 
@@ -341,7 +347,9 @@ class GameConsumer(AsyncWebsocketConsumer):
             player1_pos = data.get("player1_pos")
             player2_pos = data.get("player2_pos")
             ball_pos = data.get("ball_pos")
-            update_type = "host" if self.channel_name == self.users[0] else "client"
+            update_type = (
+                "host" if self.channel_name == self.users[0] else "client"
+            )
 
             await self.channel_layer.group_send(
                 self.game_group_name,
@@ -377,6 +385,9 @@ class GameConsumer(AsyncWebsocketConsumer):
 
         await self.send(
             text_data=json.dumps(
-                {"event": "player_connected", "players_connected": players_connected}
+                {
+                    "event": "player_connected",
+                    "players_connected": players_connected,
+                }
             )
         )
