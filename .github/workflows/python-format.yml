@@ -12,7 +12,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
-          python-version: 3.x  # Specify the Python version you need
+          python-version: 3.11
 
       - name: Install dependencies
         run: |
@@ -21,3 +21,13 @@ jobs:
 
       - name: Run Black formatter
         run: black .
+
+      - name: Commit and Push changes
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: "style: format code using Black"
+          commit_user_name: "github-actions[bot]"
+          commit_user_email: "41898282+github-actions[bot]@users.noreply.github.com"
+          push_options: --force
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
