@@ -339,6 +339,9 @@ class GameConsumer(AsyncWebsocketConsumer):
             {"type": "player_connected", "players_connected": len(self.users)},
         )
 
+
+
+
     async def receive(self, text_data):
         data = json.loads(text_data)
         event = data.get("event")
