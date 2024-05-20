@@ -39,14 +39,12 @@ class Game {
   }
 
   createCanvas () {
-    var content = document.getElementById('content')
-
+    const content = document.getElementById('content')
     if (content === null) {
       console.error('Content is null')
       return
     }
-
-    var canvas = document.createElement('canvas')
+    const canvas = document.createElement('canvas')
     canvas.id = 'game'
     content.textContent = ''
     content.appendChild(canvas)
@@ -61,7 +59,7 @@ class Game {
     this.context.fillText(
       'Waiting for opponent...',
       GameConstants.GAME_WIDTH / 2,
-      GameConstants.GAME_HEIGHT / 2,
+      GameConstants.GAME_HEIGHT / 2
     )
   }
 
@@ -117,41 +115,43 @@ class Game {
 
       if (this.playerId === 'player1') {
         this.player1.move()
+        this.ball.move()
+        this.ball.bounce()
+        this.lobby.sendGameData({
+          event: 'game_move',
+          player1_pos: { x: this.player1.x, y: this.player1.y },
+          ball_pos: { x: this.ball.x, y: this.ball.y }
+        })
       } else if (this.playerId === 'player2') {
         this.player2.move()
+        this.lobby.sendGameData({
+          event: 'game_move',
+          player2_pos: { x: this.player2.x, y: this.player2.y }
+        })
       }
-
-      this.lobby.sendGameData({
-        event: 'game_move',
-        player1_pos: { x: this.player1.x, y: this.player1.y },
-        player2_pos: { x: this.player2.x, y: this.player2.y },
-        ball_pos: { x: this.ball.x, y: this.ball.y }
-      })
     }
   }
 
-  updatePositions(player1Pos, player2Pos, ballPos) {
-    this.player1.x = player1Pos.x;
-    this.player1.y = player1Pos.y;
-    this.player2.x = player2Pos.x;
-    this.player2.y = player2Pos.y;
-    this.ball.targetX = ballPos.x;
-    this.ball.targetY = ballPos.y;
+  updatePositions (player1Pos, player2Pos, ballPos, updateType) {
+    if (updateType === 'host') {
+      this.player1.x = player1Pos.x
+      this.player1.y = player1Pos.y
+      this.ball.x = ballPos.x
+      this.ball.y = ballPos.y
+    } else {
+      this.player2.x = player2Pos.x
+      this.player2.y = player2Pos.y
+    }
   }
 
   moveElements () {
-    this.player1.move()
-    if (this.gameMode === GameModes.PLAYER_VS_AI) {
-      this.player2.move(this.ball, this.player1)
-    } else {
+    if (this.gameMode !== GameModes.PLAYER_VS_AI) {
       this.player2.move()
     }
-    this.ball.move()
-    this.ball.bounce()
   }
 
   checkCollisions () {
-    let player =
+    const player =
       this.ball.x < GameConstants.GAME_WIDTH / 2 ? this.player1 : this.player2
     if (this.collision(this.ball, player)) {
       this.handleCollision(player)
@@ -160,13 +160,11 @@ class Game {
 
   handleCollision (player) {
     this.ball.accelerate()
-
     let collidePoint =
       this.ball.y - (player.y + GameConstants.PADDLE_HEIGHT / 2)
     collidePoint = collidePoint / (GameConstants.PADDLE_HEIGHT / 2)
-    let angleRadius = (Math.PI / 4) * collidePoint
-    let direction = player === this.player1 ? 1 : -1
-
+    const angleRadius = (Math.PI / 4) * collidePoint
+    const direction = player === this.player1 ? 1 : -1
     this.ball.xSpeed = direction * this.ball.speed * Math.cos(angleRadius)
     this.ball.ySpeed = this.ball.speed * Math.sin(angleRadius)
   }
@@ -297,13 +295,11 @@ class Game {
 
   endGame (winner) {
     this.clearCanvas()
-
     if (winner === this.player2) {
       this.drawEndGameMessage('GAME OVER')
     } else {
       this.drawEndGameMessage('YOU WIN')
     }
-
     window.removeEventListener('keydown', this.boundKeyPress)
     window.removeEventListener('keyup', this.boundKeyPress)
     this.canvas.addEventListener('click', this.boundReset)
@@ -356,13 +352,10 @@ class Game {
   setListeners () {
     this.boundContextMenu = this.contextMenuHandler.bind(this)
     window.addEventListener('contextmenu', this.boundContextMenu)
-
     this.boundVisibilityChange = this.visibilityChangeHandler.bind(this)
     document.addEventListener('visibilitychange', this.boundVisibilityChange)
-
     this.boundBlur = this.blurHandler.bind(this)
     window.addEventListener('blur', this.boundBlur)
-
     this.boundReset = this.resetHandler.bind(this)
   }
 

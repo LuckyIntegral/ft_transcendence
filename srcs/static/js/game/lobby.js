@@ -34,11 +34,7 @@ class Lobby {
       }
 
       if (data.event === 'game_move') {
-        this.game.updatePositions(
-          data.player1_pos,
-          data.player2_pos,
-          data.ball_pos
-        )
+        this.game.updatePositions(data.player1_pos, data.player2_pos, data.ball_pos, data.update_type)
       }
     }
 
