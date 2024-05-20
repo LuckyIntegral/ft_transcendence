@@ -6,6 +6,7 @@ class Game {
     this.playerId = null
     this.lastUpdateTime = 0
     this.updateInterval = 1000 / GameConstants.FPS
+    this.isGameStarted = false
   }
 
   initGameElements (gameMode) {
@@ -30,7 +31,7 @@ class Game {
     this.createCanvas()
     this.playerId = playerId
     this.lobby.join(this.lobbyId, this, playerId)
-    this.start()
+    this.displayWaitingMessage()
   }
 
   createCanvas () {
@@ -48,11 +49,26 @@ class Game {
     console.log('Canvas created')
   }
 
-  start () {
-    this.gameOver = false
-    console.log('Game started')
+  displayWaitingMessage () {
     this.setUpCanvas()
-    this.startNewGame()
+    this.context.fillStyle = 'WHITE'
+    this.context.font = '40px Arial'
+    this.context.textAlign = 'center'
+    this.context.fillText(
+      'Waiting for opponent...',
+      GameConstants.GAME_WIDTH / 2,
+      GameConstants.GAME_HEIGHT / 2
+    )
+  }
+
+  start () {
+    if (!this.isGameStarted) {
+      this.isGameStarted = true
+      this.gameOver = false
+      console.log('Game started')
+      this.setUpCanvas()
+      this.startNewGame()
+    }
   }
 
   stop () {

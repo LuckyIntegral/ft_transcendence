@@ -296,62 +296,85 @@ class LongPollConsumer(AsyncWebsocketConsumer):
         return chatsInfo
 
 
-# consumers.py
-import json
-from channels.generic.websocket import AsyncWebsocketConsumer
-from .models import Game, GameData
-from django.contrib.auth.models import User
-
 class GameConsumer(AsyncWebsocketConsumer):
+    users = []
+
     async def connect(self):
-        self.token = self.scope['url_route']['kwargs']['token']
-        self.game_group_name = f'game_{self.token}'
+        self.token = self.scope["url_route"]["kwargs"]["token"]
+        self.game_group_name = f"game_{self.token}"
 
         await self.channel_layer.group_add(
-            self.game_group_name,
-            self.channel_name
+            self.game_group_name, self.channel_name
         )
 
         await self.accept()
 
-        await self.send(text_data=json.dumps({
-            'event': 'assign_role',
-            'role': 'player1' if self.channel_name.endswith('1') else 'player2'
-        }))
+        if len(self.users) < 2 and self.channel_name not in self.users:
+            self.users.append(self.channel_name)
+            role = f"player{len(self.users)}"
+        else:
+            role = "spectator"
+
+        await self.send(
+            text_data=json.dumps({"event": "assign_role", "role": role})
+        )
+
+        # Notify all users when a player connects
+        await self.channel_layer.group_send(
+            self.game_group_name,
+            {"type": "player_connected", "players_connected": len(self.users)},
+        )
 
     async def disconnect(self, close_code):
         await self.channel_layer.group_discard(
-            self.game_group_name,
-            self.channel_name
+            self.game_group_name, self.channel_name
         )
+        if self.channel_name in self.users:
+            self.users.remove(self.channel_name)
 
     async def receive(self, text_data):
         data = json.loads(text_data)
-        event = data.get('event')
+        event = data.get("event")
 
-        if event == 'move':
-            player1_pos = data['player1_pos']
-            player2_pos = data['player2_pos']
-            ball_pos = data['ball_pos']
+        if event == "move":
+            player1_pos = data["player1_pos"]
+            player2_pos = data["player2_pos"]
+            ball_pos = data["ball_pos"]
 
             await self.channel_layer.group_send(
                 self.game_group_name,
                 {
-                    'type': 'game_move',
-                    'player1_pos': player1_pos,
-                    'player2_pos': player2_pos,
-                    'ball_pos': ball_pos,
-                }
+                    "type": "game_move",
+                    "player1_pos": player1_pos,
+                    "player2_pos": player2_pos,
+                    "ball_pos": ball_pos,
+                },
             )
 
     async def game_move(self, event):
-        player1_pos = event['player1_pos']
-        player2_pos = event['player2_pos']
-        ball_pos = event['ball_pos']
+        player1_pos = event["player1_pos"]
+        player2_pos = event["player2_pos"]
+        ball_pos = event["ball_pos"]
 
-        await self.send(text_data=json.dumps({
-            'event': 'move',
-            'player1_pos': player1_pos,
-            'player2_pos': player2_pos,
-            'ball_pos': ball_pos,
-        }))
+        await self.send(
+            text_data=json.dumps(
+                {
+                    "event": "move",
+                    "player1_pos": player1_pos,
+                    "player2_pos": player2_pos,
+                    "ball_pos": ball_pos,
+                }
+            )
+        )
+
+    async def player_connected(self, event):
+        players_connected = event["players_connected"]
+
+        await self.send(
+            text_data=json.dumps(
+                {
+                    "event": "player_connected",
+                    "players_connected": players_connected,
+                }
+            )
+        )

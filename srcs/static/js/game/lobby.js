@@ -2,6 +2,7 @@ class Lobby {
   constructor () {
     this.gameSocket = null
     this.playerId = null
+    this.playersConnected = 0 // Track the number of connected players
   }
 
   join (gameToken, game) {
@@ -23,8 +24,14 @@ class Lobby {
         console.log(`Assigned role: ${this.playerId}`)
       }
 
+      if (data.event === 'player_connected') {
+        this.playersConnected = data.players_connected
+        if (this.playersConnected === 2) {
+          this.game.start() // Start the game when both players are connected
+        }
+      }
+
       if (data.event === 'move') {
-        console.log('Received move event:', data)
         this.game.updatePositions(
           data.player1_pos,
           data.player2_pos,
@@ -43,7 +50,6 @@ class Lobby {
   }
 
   sendGameData (data) {
-    console.log('Sending game data:', data)
     if (this.gameSocket.readyState === WebSocket.OPEN) {
       this.gameSocket.send(JSON.stringify(data))
     }
