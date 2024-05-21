@@ -110,7 +110,6 @@ class Game {
     if (now - this.lastUpdateTime >= this.updateInterval) {
       this.lastUpdateTime = now
 
-      this.moveElements()
       this.checkCollisions()
       this.checkGoals()
 
@@ -149,14 +148,6 @@ class Game {
     } else {
       this.player2.x = player2Pos.x
       this.player2.y = player2Pos.y
-    }
-  }
-
-  moveElements () {
-    if (this.gameMode === GameModes.PLAYER_VS_AI) {
-      this.player2.move(this.ball, this.player1)
-    } else {
-      this.player2.move()
     }
   }
 
