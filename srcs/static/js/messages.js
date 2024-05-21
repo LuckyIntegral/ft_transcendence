@@ -87,7 +87,7 @@ function createIncomeMessageItemLi(message, time, avatarUrl) {
     return li;
 }
 
-function generatePongLobby(username) {
+async function generatePongLobby(username) {
     fetchWithToken("/api/lobby/pong/", {
         method: "POST",
         headers: {
@@ -106,42 +106,75 @@ function generatePongLobby(username) {
         })
         .then((data) => {
             if (data === null) {
-                return;
+                return null;
             }
             return data["token"];
         });
 }
 
-function sendPongInvite(username) {
-    gameToken = generatePongLobby(username);
-    if (gameToken === null) {
-        alertError("Failed to create pong lobby");
-        return;
-    }
-    message = `gameToken=${gameToken}`;
-    console.log(message);
-    chatSocket.send(
-        JSON.stringify({
-            sender: localStorage.getItem("username"),
-            message: message,
-            timestamp: new Date().toISOString(),
+async function sendPongInvite(username) {
+    fetchWithToken("/api/lobby/pong/", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            Authorization: "Bearer " + localStorage.getItem("access"),
+        },
+        body: JSON.stringify({
+            username: username,
+        }),
+    })
+        .then((response) => {
+            if (response.ok) {
+                return response.json();
+            }
+            return null;
         })
-    );
+        .then((data) => {
+            if (data === null) {
+                return null;
+            }
+            var gameToken = data["token"];
+            if (gameToken === null) {
+                console.error("Failed to create pong lobby");
+                return;
+            }
+            let message = `gameToken=${gameToken}`;
+            console.log(message);
 
-    var now = new Date().toISOString();
-    var li = document.querySelector("li.active");
-    li.setAttribute("data-timestamp", now);
-    var list = $("#userList");
-    var listItems = list.children("li");
-    if (listItems.length === 0) {
-        return;
-    }
-    listItems.sort(function (a, b) {
-        var dateA = new Date($(a).data("timestamp"));
-        var dateB = new Date($(b).data("timestamp"));
-        return dateB - dateA;
-    });
-    list.empty().append(listItems);
+            let sender = localStorage.getItem("username");
+            if (!sender) {
+                console.error("No username found in local storage");
+                return;
+            }
+
+            if (!chatSocket) {
+                console.error("chatSocket is not defined");
+                return;
+            }
+
+            chatSocket.send(
+                JSON.stringify({
+                    sender: sender,
+                    message: message,
+                    timestamp: new Date().toISOString(),
+                })
+            );
+
+            let now = new Date().toISOString();
+            let li = document.querySelector("li.active");
+            li.setAttribute("data-timestamp", now);
+            let list = $("#userList");
+            let listItems = list.children("li");
+            if (listItems.length === 0) {
+                return;
+            }
+            listItems.sort(function (a, b) {
+                let dateA = new Date($(a).data("timestamp"));
+                let dateB = new Date($(b).data("timestamp"));
+                return dateB - dateA;
+            });
+            list.empty().append(listItems);
+        });
 }
 
 function createOutcomeMessageItemLi(message, time, avatarUrl) {

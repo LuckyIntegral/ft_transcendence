@@ -1299,19 +1299,20 @@ class PongLobbyView(APIView):
 
     def post(self, request, format=None):
         auth_header = request.headers.get("Authorization")
-        print(auth_header)
+        print(f"Authorization Header: {auth_header}")
         try:
             token = JWTTokenValidator().validate(auth_header)
         except ValidationError as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         try:
             userHost = getUserFromToken(token)
+            print(f"Host Username: {userHost}")
         except ValidationError as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         usernameGuest = request.data.get("username")
         try:
-            print(usernameGuest)
             userGuest = User.objects.get(username=usernameGuest)
+            print(f"Guest Username: {usernameGuest}")
         except User.DoesNotExist as e:
             return Response(
                 {"error": "User not found"},
@@ -1321,5 +1322,6 @@ class PongLobbyView(APIView):
         while PongLobby.objects.filter(token=lobbyId).exists():
             lobbyId = generateToken()
         PongLobby.objects.create(token=lobbyId, host=userHost, guest=userGuest)
+        print(f"Lobby ID: {lobbyId}")
         data = {"token": lobbyId}
         return Response(data, status=status.HTTP_201_CREATED)

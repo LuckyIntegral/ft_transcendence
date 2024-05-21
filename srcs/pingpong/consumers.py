@@ -89,6 +89,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
     def isBlocked(self, sender, recipient):
         return Block.objects.filter(blocker=recipient, blocked=sender).exists()
 
+    @database_sync_to_async
+    def is_token_exists_in_pong_lobby(self, token):
+        return PongLobby.objects.filter(token=token).exists()
+
     async def connect(self):
         self.chatToken = self.scope["url_route"]["kwargs"]["token"]
         await self.channel_layer.group_add(self.chatToken, self.channel_name)
@@ -115,14 +119,15 @@ class ChatConsumer(AsyncWebsocketConsumer):
             except Exception as e:
                 await self.close()
                 return
-        regex = r"/gameToken=([A-Za-z0-9_]*)/"
+        regex = r"gameToken=([A-Za-z0-9\-]*)"
         match = re.match(regex, text_data_json["message"])
+        print(match)
         if not match:
             messageText = html.escape(text_data_json["message"])
         else:
             gameToken = match.group(1)
             print(gameToken)
-            if not PongLobby.objects.filter(token=gameToken).exists():
+            if not await self.is_token_exists_in_pong_lobby(gameToken):
                 await self.send(text_data=json.dumps({"error": "Game does not exist!"}))
                 return
             messageText = f"You have been invited to play a game! Click here <a href='#pong?game-token={gameToken}'>to play</a>."
