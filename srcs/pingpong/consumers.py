@@ -303,27 +303,19 @@ class GameConsumer(AsyncWebsocketConsumer):
 
         await self.accept()
 
-        # if len(self.users) < 2 and self.channel_name not in self.users:
-        #     self.users.append(self.channel_name)
-        #     role = f"player{len(self.users)}"
-        # else:
-        #     role = "spectator"
-
-        # await self.send(text_data=json.dumps({"event": "assign_role", "role": role}))
-
-        # await self.channel_layer.group_send(
-        #     self.game_group_name,
-        #     {"type": "player_connected", "players_connected": len(self.users)},
-        # )
-
     async def disconnect(self, close_code):
         await self.channel_layer.group_discard(self.game_group_name, self.channel_name)
-        if self.channel_name in self.users:
-            self.users.remove(self.channel_name)
+
+        if self.token in GameConsumer.playerAuth:
+            if self.user.username in GameConsumer.playerAuth[self.token]:
+                GameConsumer.playerAuth[self.token][self.user.username] -= 1
 
         await self.channel_layer.group_send(
             self.game_group_name,
-            {"type": "player_connected", "players_connected": len(self.users)},
+            {
+                "type": "player_connected",
+                "players_connected": 2 if self.isBothUsersConnected() else -42,
+            },
         )
 
     async def receive(self, text_data):
@@ -331,6 +323,7 @@ class GameConsumer(AsyncWebsocketConsumer):
         event = data.get("event")
         authHeader = data.get("auth_header")
         if authHeader:
+            print("Lol we are here")
             try:
                 self.jwtToken = JWTTokenValidator().validate(authHeader)
                 self.user = await self.get_user_from_token(self.jwtToken)
@@ -342,6 +335,24 @@ class GameConsumer(AsyncWebsocketConsumer):
                 if self.user.username not in GameConsumer.playerAuth[self.token]:
                     GameConsumer.playerAuth[self.token][self.user.username] = 0
                 GameConsumer.playerAuth[self.token][self.user.username] += 1
+                if await self.isUserHost(self.user, self.token):
+                    await self.send(
+                        text_data=json.dumps(
+                            {
+                                "event": "assign_role",
+                                "role": "player1",
+                            }
+                        )
+                    )
+                else:
+                    await self.send(
+                        text_data=json.dumps(
+                            {
+                                "event": "assign_role",
+                                "role": "player2",
+                            }
+                        )
+                    )
                 await self.channel_layer.group_send(
                     self.game_group_name,
                     {
@@ -358,7 +369,10 @@ class GameConsumer(AsyncWebsocketConsumer):
             player1_pos = data.get("player1_pos")
             player2_pos = data.get("player2_pos")
             ball_pos = data.get("ball_pos")
-            update_type = "host" if self.channel_name == self.users[0] else "client"
+            if player2_pos is None:
+                update_type = "host"
+            else:
+                update_type = "client"
 
             await self.channel_layer.group_send(
                 self.game_group_name,
@@ -417,9 +431,13 @@ class GameConsumer(AsyncWebsocketConsumer):
 
     def isBothUsersConnected(self):
         count = 0
-        if self.chatToken in ChatConsumer.chatUsers:
-            if len(ChatConsumer.chatUsers[self.chatToken]) == 2:
-                for user, value in ChatConsumer.chatUsers[self.chatToken].items():
+        if self.token in GameConsumer.playerAuth:
+            if len(GameConsumer.playerAuth[self.token]) == 2:
+                for user, value in GameConsumer.playerAuth[self.token].items():
                     if value > 0:
                         count += 1
         return count == 2
+
+    @database_sync_to_async
+    def isUserHost(self, user, lobbyId):
+        return PongLobby.objects.filter(host=user, token=lobbyId).exists()

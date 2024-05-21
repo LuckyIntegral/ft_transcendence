@@ -16,7 +16,7 @@ class Lobby {
 
         this.gameSocket.onmessage = (e) => {
             const data = JSON.parse(e.data);
-
+            console.log("Received data", data);
             if (data.event === "assign_role") {
                 this.playerId = data.role;
                 this.game.playerId = data.role;
@@ -26,6 +26,7 @@ class Lobby {
             if (data.event === "player_connected") {
                 this.playersConnected = data.players_connected;
                 if (this.playersConnected === 2) {
+                    console.log("Both players connected. Starting game.");
                     this.game.start();
                 }
             }

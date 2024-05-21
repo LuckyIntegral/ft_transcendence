@@ -29,7 +29,6 @@ document.addEventListener("DOMContentLoaded", function () {
         },
     };
 
-    // Function to handle hash changes
     function handleHashChange() {
         validateToken();
         if (localStorage.getItem("access") === null) {
