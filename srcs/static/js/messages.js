@@ -87,6 +87,63 @@ function createIncomeMessageItemLi(message, time, avatarUrl) {
     return li;
 }
 
+function generatePongLobby(username) {
+    fetchWithToken("/api/lobby/pong/", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            Authorization: "Bearer " + localStorage.getItem("access"),
+        },
+        body: JSON.stringify({
+            username: username,
+        }),
+    })
+        .then((response) => {
+            if (response.ok) {
+                return response.json();
+            }
+            return null;
+        })
+        .then((data) => {
+            if (data === null) {
+                return;
+            }
+            return data["token"];
+        });
+}
+
+function sendPongInvite(username) {
+    gameToken = generatePongLobby(username);
+    if (gameToken === null) {
+        alertError("Failed to create pong lobby");
+        return;
+    }
+    message = `gameToken=${gameToken}`;
+    console.log(message);
+    chatSocket.send(
+        JSON.stringify({
+            sender: localStorage.getItem("username"),
+            message: message,
+            timestamp: new Date().toISOString(),
+        })
+    );
+
+    var now = new Date().toISOString();
+    var li = document.querySelector("li.active");
+    li.setAttribute("data-timestamp", now);
+    var list = $("#userList");
+    var listItems = list.children("li");
+    if (listItems.length === 0) {
+        return;
+    }
+    listItems.sort(function (a, b) {
+        var dateA = new Date($(a).data("timestamp"));
+        var dateB = new Date($(b).data("timestamp"));
+        return dateB - dateA;
+    });
+    list.empty().append(listItems);
+}
+
 function createOutcomeMessageItemLi(message, time, avatarUrl) {
     var li = document.createElement("li");
     li.setAttribute("class", "clearfix");
@@ -145,12 +202,14 @@ function createChatHeader(data) {
     } else {
         var blockButton = `<button class="block-button btn btn-danger" id="blockButton">Block</button>`;
     }
+    var inviteButton = `<button class="invite-button btn btn-success" id="inviteButton">Invite to Pong</button>`;
     div.setAttribute("class", "col-lg-6");
     div.innerHTML = `<img src="${localStorage.getItem("companionPicture")}" alt="avatar">
                     <div class="chat-about">
                         <h6 class="m-b-0">${data["username"]}</h6>
                     </div>
                     ${blockButton}
+                    ${inviteButton}
                     `;
     blockButton = div.querySelector(".block-button");
     blockButton.addEventListener("click", function () {
@@ -183,6 +242,11 @@ function createChatHeader(data) {
                 alertError("Something went wrong. Please try again later.");
             });
     });
+
+    inviteButton = div.querySelector(".invite-button");
+    inviteButton.addEventListener("click", function () {
+        sendPongInvite(data["username"]);
+    });
     return div;
 }
 
@@ -208,6 +272,7 @@ function getChatMessages() {
             chatHeader.innerHTML = "";
             chatHeader.appendChild(createChatHeader(data));
             localStorage.setItem("myPicture", data["myPicture"]);
+            //localStorage.setItem("companionUsername", data["username"]);
             document.getElementById("messagesList").innerHTML = "";
             data["messages"].forEach((message) => {
                 if (message["sender"] !== localStorage.getItem("username")) {
@@ -246,6 +311,8 @@ function connectToSocket() {
         var data = JSON.parse(event.data);
         if (data["blocked"]) {
             alertError(data["blocked"]);
+        } else if (data["error"]) {
+            alertError(data["error"]);
         } else if (data["sender"] !== localStorage.getItem("username")) {
             document
                 .getElementById("messagesList")

@@ -11,8 +11,7 @@ from pingpong.models import (
     MessagesRecipient,
     Block,
     FriendRequest,
-    Game,
-    GameData,
+    PongLobby,
 )
 from django.contrib.auth.models import User
 from django.db.models import Q
@@ -25,6 +24,8 @@ import json
 import asyncio
 from django.utils import timezone
 import html
+import re
+
 
 class ChatConsumer(AsyncWebsocketConsumer):
     chatUsers = {}
@@ -59,12 +60,16 @@ class ChatConsumer(AsyncWebsocketConsumer):
     @database_sync_to_async
     def createMessageRecipient(self, recipient):
         if self.isBothUsersConnected():
-            return MessagesRecipient.objects.create(recipient=recipient, isRead=True, isNotified=True)
+            return MessagesRecipient.objects.create(
+                recipient=recipient, isRead=True, isNotified=True
+            )
         return MessagesRecipient.objects.create(recipient=recipient)
 
     @database_sync_to_async
     def createMessage(self, sender, message, messageRecipient):
-        return Message.objects.create(sender=sender, message=message, messageRecipient=messageRecipient)
+        return Message.objects.create(
+            sender=sender, message=message, messageRecipient=messageRecipient
+        )
 
     @database_sync_to_async
     def addMessageToChat(self, chat, message):
@@ -110,18 +115,31 @@ class ChatConsumer(AsyncWebsocketConsumer):
             except Exception as e:
                 await self.close()
                 return
-
-        messageText = html.escape(text_data_json["message"])
+        regex = r"/gameToken=([A-Za-z0-9_]*)/"
+        match = re.match(regex, text_data_json["message"])
+        if not match:
+            messageText = html.escape(text_data_json["message"])
+        else:
+            gameToken = match.group(1)
+            print(gameToken)
+            if not PongLobby.objects.filter(token=gameToken).exists():
+                await self.send(text_data=json.dumps({"error": "Game does not exist!"}))
+                return
+            messageText = f"You have been invited to play a game! Click here <a href='#pong?game-token={gameToken}'>to play</a>."
         sender = html.escape(text_data_json["sender"])
         timestamp = html.escape(text_data_json["timestamp"])
         self.chat = await self.getChat(self.chatToken)
         self.sender = await self.getSender(sender)
         self.recipient = await self.getRecipient(self.sender, self.chat)
         if await self.isBlocked(self.sender, self.recipient):
-            await self.send(text_data=json.dumps({"blocked": "You are blocked by this user!"}))
+            await self.send(
+                text_data=json.dumps({"blocked": "You are blocked by this user!"})
+            )
             return
         self.messageRecipient = await self.createMessageRecipient(self.recipient)
-        self.message = await self.createMessage(self.sender, messageText, self.messageRecipient)
+        self.message = await self.createMessage(
+            self.sender, messageText, self.messageRecipient
+        )
         await self.addMessageToChat(self.chat, self.message)
         await self.channel_layer.group_send(
             self.chatToken,
@@ -229,7 +247,9 @@ class LongPollConsumer(AsyncWebsocketConsumer):
 
     @database_sync_to_async
     def get_new_messages(self, user):
-        return MessagesRecipient.objects.filter(recipient=user, isRead=False, isNotified=False).exists()
+        return MessagesRecipient.objects.filter(
+            recipient=user, isRead=False, isNotified=False
+        ).exists()
 
     @database_sync_to_async
     def get_unread_messages(self, user):
@@ -237,7 +257,9 @@ class LongPollConsumer(AsyncWebsocketConsumer):
 
     @database_sync_to_async
     def set_notified(self, user):
-        messages = MessagesRecipient.objects.filter(recipient=user, isRead=False, isNotified=False)
+        messages = MessagesRecipient.objects.filter(
+            recipient=user, isRead=False, isNotified=False
+        )
         for message in messages:
             message.isNotified = True
             message.save()

@@ -20,6 +20,8 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.authentication import InvalidToken, TokenError
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
 from .validators import *
 from .models import *
 from .utils import (
@@ -140,7 +142,7 @@ class SignupView(APIView):
         username = username.lower()
         email = email.lower()
         email = html.escape(email)
-        if (len(username) > 150 or len(email) > 150 or len(password) > 128):
+        if len(username) > 150 or len(email) > 150 or len(password) > 128:
             return Response(
                 {"error": "Username, email, or password is too long"},
                 status=status.HTTP_405_METHOD_NOT_ALLOWED,
@@ -166,7 +168,7 @@ class SignupView(APIView):
         except ValidationError as e:
             return Response(
                 {"error": "Username should contain only alphanumeric characters"},
-                status=status.HTTP_403_FORBIDDEN
+                status=status.HTTP_403_FORBIDDEN,
             )
 
         try:
@@ -174,7 +176,9 @@ class SignupView(APIView):
         except ValidationError as e:
             return Response({"error": str(e)}, status=status.HTTP_404_NOT_FOUND)
 
-        user = User.objects.create_user(username=username, email=email, password=password)
+        user = User.objects.create_user(
+            username=username, email=email, password=password
+        )
         userProfile = UserProfile.objects.create(user=user)
 
         return Response(
@@ -252,7 +256,7 @@ class PasswordView(APIView):
                 status=status.HTTP_401_UNAUTHORIZED,
             )
 
-        if (len(new_password) > 128):
+        if len(new_password) > 128:
             return Response(
                 {"error": "Password is too long"},
                 status=status.HTTP_405_METHOD_NOT_ALLOWED,
@@ -311,15 +315,13 @@ class ProfileView(APIView):
         try:
             user = getUserFromToken(token)
         except ValidationError as e:
-            return Response(
-                {"error": str(e)}, status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         displayName = html.escape(request.data.get("displayName"))
-        if (len(displayName) > 50):
+        if len(displayName) > 50:
             return Response(
                 {"error": "Display name is too long"},
                 status=status.HTTP_405_METHOD_NOT_ALLOWED,
-                )
+            )
         email = request.data.get("email")
         email = html.escape(email)
         email_validator = EmailValidator()
@@ -345,7 +347,7 @@ class ProfileView(APIView):
             token = str(RefreshToken.for_user(user))
             user.userprofile.isTwoStepEmailAuthEnabled = False
             sendVerificationEmail(email, token)
-        if (len(email) > 254):
+        if len(email) > 254:
             return Response(
                 {"error": "Invalid email address"},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -386,7 +388,9 @@ class FriendsRequestsView(APIView):
         page_size = request.query_params.get("pageSize")
         page_size = 10 if not page_size else int(page_size)
 
-        friend_request_list = FriendRequest.objects.filter(toUser=user.id).order_by("fromUser__username")
+        friend_request_list = FriendRequest.objects.filter(toUser=user.id).order_by(
+            "fromUser__username"
+        )
         request_list_count = friend_request_list.count()
         response = {
             "data": [],
@@ -403,7 +407,9 @@ class FriendsRequestsView(APIView):
         response["page"] = page
         response["totalPages"] = math.ceil(request_list_count / page_size)
 
-        friend_request_list = friend_request_list[page_size * page : min(page_size * (page + 1), request_list_count)]
+        friend_request_list = friend_request_list[
+            page_size * page : min(page_size * (page + 1), request_list_count)
+        ]
 
         for friend_request in friend_request_list:
             response["data"].append(
@@ -565,7 +571,9 @@ class FriendsView(APIView):
         response["page"] = page
         response["totalPages"] = math.ceil(friend_list_count / page_size)
 
-        friend_list = friend_list[page_size * page : min(page_size * (page + 1), friend_list_count)]
+        friend_list = friend_list[
+            page_size * page : min(page_size * (page + 1), friend_list_count)
+        ]
 
         for friend in friend_list:
             response["data"].append(
@@ -696,7 +704,9 @@ class TwoStepVerificationCodeView(APIView):
             )
         user.userprofile.verificationEmailCode = ""
         user.userprofile.save()
-        return Response({"status": "Verification successful"}, status=status.HTTP_200_OK)
+        return Response(
+            {"status": "Verification successful"}, status=status.HTTP_200_OK
+        )
 
 
 class TwoStepVerification(APIView):
@@ -762,7 +772,9 @@ class TwoStepVerification(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
         if user.userprofile.verificationEmailCode != request.data.get("code"):
-            return Response({"error": "Incorrect code"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": "Incorrect code"}, status=status.HTTP_400_BAD_REQUEST
+            )
 
         if action == "enable":
             if user.userprofile.isTwoStepEmailAuthEnabled:
@@ -849,7 +861,9 @@ class ForgetPasswordView(APIView):
     def get(self, request, format=None):
         token = request.query_params.get("token")
         if not token:
-            return HttpResponse({"Please provide a token"}, status=status.HTTP_400_BAD_REQUEST)
+            return HttpResponse(
+                {"Please provide a token"}, status=status.HTTP_400_BAD_REQUEST
+            )
         try:
             user = User.objects.get(userprofile__passwordResetToken=token)
         except (User.DoesNotExist, Exception):
@@ -894,8 +908,13 @@ class UploadPictureView(APIView):
             image.verify()
             image = Image.open(picture)
         except Exception:
-            return Response({"error": "Invalid image"}, status=status.HTTP_400_BAD_REQUEST)
-        if user.userprofile.picture != None and user.userprofile.picture.url != "/media/images/default.jpg":
+            return Response(
+                {"error": "Invalid image"}, status=status.HTTP_400_BAD_REQUEST
+            )
+        if (
+            user.userprofile.picture != None
+            and user.userprofile.picture.url != "/media/images/default.jpg"
+        ):
             user.userprofile.picture.delete()
             user.userprofile.pictureSmall.delete()
 
@@ -947,9 +966,9 @@ class FriendsSearchView(APIView):
         data = []
         if search_query:
             try:
-                friend_list = UserProfile.objects.filter(user__username__icontains=search_query).order_by(
-                    "user__username"
-                )
+                friend_list = UserProfile.objects.filter(
+                    user__username__icontains=search_query
+                ).order_by("user__username")
             except UserProfile.DoesNotExist:
                 return Response(data, status=status.HTTP_200_OK)
             for friend in friend_list[: min(page_size, friend_list.count())]:
@@ -1001,7 +1020,9 @@ class LeaderboardView(APIView):
         response["page"] = page
         response["totalPages"] = math.ceil(player_list_count / page_size)
 
-        player_list = player_list[page_size * page : min(page_size * (page + 1), player_list_count)]
+        player_list = player_list[
+            page_size * page : min(page_size * (page + 1), player_list_count)
+        ]
 
         for player in player_list:
             response["data"].append(
@@ -1051,7 +1072,9 @@ class UserDetailsView(APIView):
         data = {
             "username": user.username,
             "email": user.email,
-            "displayName": (userProfile.displayName if userProfile.displayName else "no info"),
+            "displayName": (
+                userProfile.displayName if userProfile.displayName else "no info"
+            ),
             "picture": userProfile.picture.url,
             "wins": userProfile.gamesWon,
             "games": userProfile.gamesPlayed,
@@ -1138,12 +1161,17 @@ class ChatView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
         try:
-            chat = Chat.objects.get(Q(userOne=user, userTwo=secondUser) | Q(userOne=secondUser, userTwo=user))
+            chat = Chat.objects.get(
+                Q(userOne=user, userTwo=secondUser)
+                | Q(userOne=secondUser, userTwo=user)
+            )
         except Chat.DoesNotExist:
             chatToken = generateToken()
             while Chat.objects.filter(token=chatToken).exists():
                 chatToken = generateToken()
-            chat = Chat.objects.create(userOne=user, userTwo=secondUser, token=chatToken)
+            chat = Chat.objects.create(
+                userOne=user, userTwo=secondUser, token=chatToken
+            )
             chat.save()
         return Response({"token": chat.token}, status=status.HTTP_200_OK)
 
@@ -1162,7 +1190,9 @@ class MessagesView(APIView):
         chats = Chat.objects.filter(Q(userOne=user) | Q(userTwo=user))
         data = []
         for chat in chats:
-            secondUserUsername = chat.userOne.username if chat.userOne != user else chat.userTwo.username
+            secondUserUsername = (
+                chat.userOne.username if chat.userOne != user else chat.userTwo.username
+            )
             secondUser = User.objects.get(username=secondUserUsername)
             secondUserLastOnline = secondUser.userprofile.lastOnline
             secondUserPicture = secondUser.userprofile.pictureSmall.url
@@ -1170,11 +1200,24 @@ class MessagesView(APIView):
             if lastMessage is not None:
                 data.append(
                     {
-                        "username": (chat.userOne.username if chat.userOne != user else chat.userTwo.username),
-                        "isOnline": (True if secondUserLastOnline > timezone.now() - timedelta(minutes=1) else False),
+                        "username": (
+                            chat.userOne.username
+                            if chat.userOne != user
+                            else chat.userTwo.username
+                        ),
+                        "isOnline": (
+                            True
+                            if secondUserLastOnline
+                            > timezone.now() - timedelta(minutes=1)
+                            else False
+                        ),
                         "lastOnline": secondUserLastOnline,
                         "picture": secondUserPicture,
-                        "isRead": (lastMessage.messageRecipient.isRead if lastMessage.sender != user else True),
+                        "isRead": (
+                            lastMessage.messageRecipient.isRead
+                            if lastMessage.sender != user
+                            else True
+                        ),
                         "token": chat.token,
                         "lastTimestamp": lastMessage.timestamp,
                     }
@@ -1182,8 +1225,17 @@ class MessagesView(APIView):
             else:
                 data.append(
                     {
-                        "username": (chat.userOne.username if chat.userOne != user else chat.userTwo.username),
-                        "isOnline": (True if secondUserLastOnline > timezone.now() - timedelta(minutes=1) else False),
+                        "username": (
+                            chat.userOne.username
+                            if chat.userOne != user
+                            else chat.userTwo.username
+                        ),
+                        "isOnline": (
+                            True
+                            if secondUserLastOnline
+                            > timezone.now() - timedelta(minutes=1)
+                            else False
+                        ),
                         "lastOnline": secondUserLastOnline,
                         "picture": secondUserPicture,
                         "isRead": True,
@@ -1241,3 +1293,33 @@ class BlockUserView(APIView):
             {"status": "User blocked successfully", "button": "Unblock"},
             status=status.HTTP_200_OK,
         )
+
+
+class PongLobbyView(APIView):
+
+    def post(self, request, format=None):
+        auth_header = request.headers.get("Authorization")
+        print(auth_header)
+        try:
+            token = JWTTokenValidator().validate(auth_header)
+        except ValidationError as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            userHost = getUserFromToken(token)
+        except ValidationError as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        usernameGuest = request.data.get("username")
+        try:
+            print(usernameGuest)
+            userGuest = User.objects.get(username=usernameGuest)
+        except User.DoesNotExist as e:
+            return Response(
+                {"error": "User not found"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        lobbyId = generateToken()
+        while PongLobby.objects.filter(token=lobbyId).exists():
+            lobbyId = generateToken()
+        PongLobby.objects.create(token=lobbyId, host=userHost, guest=userGuest)
+        data = {"token": lobbyId}
+        return Response(data, status=status.HTTP_201_CREATED)

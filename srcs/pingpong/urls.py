@@ -30,6 +30,7 @@ from pingpong.views import (
     ChatView,
     MessagesView,
     BlockUserView,
+    PongLobbyView,
 )
 
 
@@ -133,4 +134,5 @@ urlpatterns = [
     ),
     path("api/chat/", ChatView.as_view(), name="chat"),
     path("api/messages/", MessagesView.as_view(), name="messages"),
+    path("api/lobby/pong/", PongLobbyView.as_view(), name="pong-lobby"),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

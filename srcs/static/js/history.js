@@ -7,15 +7,20 @@ function checkAndReload() {
 }
 
 document.addEventListener("DOMContentLoaded", function () {
+    var query_params = null;
     var routes = {
         profile: function () {
             loadProfilePage();
             previousRoute = "profile";
         },
         pong: function () {
-            let menu = new Menu();
-            menu.start();
-            previousRoute = "pong";
+            if (query_params === null) {
+                let menu = new Menu();
+                menu.start();
+                previousRoute = "pong";
+            } else {
+                // to be implemented
+            }
         },
         friends: function () {
             loadFriendsPage();
@@ -43,7 +48,11 @@ document.addEventListener("DOMContentLoaded", function () {
             return;
         }
         var hash = window.location.hash.slice(1); // Remove the '#' from the hash
+        parts = hash.split("?", 2);
+        hash = parts[0];
+        query_params = parts[1];
         var routeFunction = routes[hash];
+        console.log("hash: " + hash);
         if (routeFunction) {
             routeFunction();
         } else {
