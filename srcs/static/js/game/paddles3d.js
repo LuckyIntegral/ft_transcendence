@@ -15,16 +15,16 @@ class Paddle3D {
 		if (player === 'player1'){
 			this.paddlemesh.position.x = 0.0;
 			this.paddlemesh.position.y = 0.2;
-			this.paddlemesh.position.z = GameConstants3D.TABLE_MIN_DEPTH;
+			this.paddlemesh.position.z = GameConstants3D.TABLE_MAX_DEPTH;
 		}
 		else {
 			this.paddlemesh.position.x = 0.0;
 			this.paddlemesh.position.y = 0.2;
-			this.paddlemesh.position.z = GameConstants3D.TABLE_MAX_DEPTH;
+			this.paddlemesh.position.z = GameConstants3D.TABLE_MIN_DEPTH;
 			this.paddlemesh.rotation.y = Math.PI;
 		}
 		this.position = this.paddlemesh.position;
-		console.log('Paddle3D: player, resetPosition: position:', player, this.position);
+		// console.log('Paddle3D: player, resetPosition: position:', player, this.position);
 	}
 
 	outOfBounds(pos, max, min)

@@ -9,20 +9,22 @@ class Ball3D {
 	this.ball_mesh.castShadow = true;
 	this.ball_height = GameConstants3D.BALL_HEIGHT;
 	this.gravity = GameConstants3D.GRAVITY;
-	scene.add(this.ball_mesh)
-    this.resetPosition()
+	this.ballOutsideTable = false;
+	scene.add(this.ball_mesh);
+    this.resetPosition();
   }
 
   resetPosition () {
 	this.ball_mesh.position.x = 0
 	this.ball_mesh.position.y = this.ball_height
-	this.ball_mesh.position.z = 0
+	this.ball_mesh.position.z = 0 
 	this.position = this.ball_mesh.position
     this.speed = GameConstants3D.BALL_SPEED
 	this.velocity = getRandomVectorDirection()
 	this.velocity.x *= this.speed
 	this.velocity.y *= this.speed	
 	this.velocity.z *= this.speed
+	this.ballOutsideTable = false;
   }
 
   update_ball_mesh_position(position) {
@@ -62,17 +64,35 @@ class Ball3D {
 		if (this.position.x < paddle.position.x + (GameConstants3D.PADDLE_WIDTH / 2) &&
 			this.position.x > paddle.position.x - (GameConstants3D.PADDLE_WIDTH / 2))
 		{
-			if ((paddle.position.z < 0.0) && (this.position.z < paddle.position.z) || 
-				(paddle.position.z > 0.0) && (this.position.z > paddle.position.z))
+			if (!this.ballOutsideTable)
 			{
-				let offset_bias = (this.positiont  - paddle.position.x) / 
-									(GameConstants3D.PADDLE_WIDTH / 2);
-				this.velocity.x = Math.sin(0.5 * Math.PI * offset_bias) * this.speed;
-				let dir = paddle.position.z < 0.0 ? 1.0 : -1.0;
-				this.velocity.z = dir * Math.cos(0.5 * Math.PI * offset_bias) * this.speed;
+				if ((this.velocity.z < 0.0) && (paddle.position.z < 0.0) && 
+					(this.position.z - GameConstants3D.BALL_RADIUS < paddle.position.z))
+				{
+					this.velocity.z *= -1.0;
+				} 
+				if ((this.velocity.z > 0.0) && (paddle.position.z > 0.0) && 
+					(this.position.z + GameConstants3D.BALL_RADIUS > paddle.position.z))
+				{
+					this.velocity.z *= -1.0;
+				}
+				// if ((paddle.position.z < 0.0) && (this.position.z < paddle.position.z) || 
+				// 	(paddle.position.z > 0.0) && (this.position.z > paddle.position.z))
+				// {
+				// 	let offset_bias = (this.positiont  - paddle.position.x) / 
+				// 						(GameConstants3D.PADDLE_WIDTH / 2);
+				// 	this.velocity.x = Math.sin(0.5 * Math.PI * offset_bias) * this.speed;
+				// 	let dir = paddle.position.z < 0.0 ? 1.0 : -1.0;
+				// 	this.velocity.z = dir * Math.cos(0.5 * Math.PI * offset_bias) * this.speed;
+				// }
 			}
 		}
-	}
+		else {
+			if (this.position.z < GameConstants3D.TABLE_MIN_DEPTH || 
+				this.position.z > GameConstants3D.TABLE_MAX_DEPTH)
+				this.ballOutsideTable = true;
+		}
+  }
 
   update(dt, paddles) {
 	this.move(dt);

@@ -49,17 +49,17 @@ class AI {
             return 0;
         }
 
-        let playerYWhenBallReachesAI =
-            player.y + GameConstants.PLAYER_SPEED * ((GameConstants.GAME_WIDTH - this.x) / ball.xSpeed);
-        let optimalY =
-            playerYWhenBallReachesAI < GameConstants.GAME_HEIGHT / 2
-                ? GameConstants.GAME_HEIGHT - GameConstants.PADDLE_HEIGHT
-                : 0;
+    //    srcs/static/js/game/ai.js let playerYWhenBallReachesAI =
+    //         player.y + GameConstants.PLAYER_SPEED * ((GameConstants.GAME_WIDTH - this.x) / ball.xSpeed);
+    //     let optimalY =
+    //         playerYWhenBallReachesAI < GameConstants.GAME_HEIGHT / 2
+    //             ? GameConstants.GAME_HEIGHT - GameConstants.PADDLE_HEIGHT
+    //             : 0;
 
-        if (Math.abs(optimalY - ballYWhenReachingAI) <= GameConstants.PADDLE_HEIGHT / 2) {
-            return optimalY;
-        } else {
+    //     if (Math.abs(optimalY - ballYWhenReachingAI) <= GameConstants.PADDLE_HEIGHT / 2) {
+    //         return optimalY;
+    //     } else {
             return ballYWhenReachingAI - GameConstants.PADDLE_HEIGHT / 2;
-        }
+        // 
     }
 }

@@ -20,7 +20,7 @@ const GameConstants3D = {
 	GRAVITY: 9.81,
 	BALL_RADIUS: 0.03,
 	BALL_HEIGHT: 0.2,
-	BALL_SPEED: 0.7,
+	BALL_SPEED: 0.9,
 	BALL_RADIUS: 0.04,
 	TABLE_MAX_DEPTH: 1.8,
 	TABLE_MIN_DEPTH: -1.8,
@@ -30,7 +30,7 @@ const GameConstants3D = {
 	PADDLE_WIDTH: 0.22,
   LOADBAR_WIDTH: 300,
   LOADBAR_HEIGHT: 30,
-  PADDLE_SPEED: 0.6,
+  PADDLE_SPEED: 1.6,
 };
 
 const GameModes = {

@@ -5,13 +5,13 @@ class Menu3D {
     this.menuItems = [
       {
         text: 'PLAYER VS AI',
-        action: () => this.game.loadGame(GameModes.PLAYER_VS_AI, 'player1'),
+        action: () => this.game.loadGame(GameModes.PLAYER_VS_AI),
         image: 'static/images/ai.png'
       },
       {
         text: 'PLAYER VS PLAYER',
         action: () => {
-          this.game.loadGame(GameModes.PLAYER_VS_PLAYER, 'player1')
+          this.game.loadGame(GameModes.PLAYER_VS_PLAYER)
         },
         image: 'static/images/pvp.png'
       }
@@ -52,12 +52,12 @@ class Menu3D {
     const startX = this.canvas.width / 2 - 200
     const startY = this.canvas.height / 2 - 50
 
-    for (let i = 0; i < this.menuItems.length; i++) 
+    for (let i = 0; i < this.menuItems.length; i++)
 	{
-      if (this.mouseOverButton(x, y, startX, startY, i)) 
+      if (this.mouseOverButton(x, y, startX, startY, i))
 	  {
         this.clickIntensity[i] = 1
-        setTimeout(() => 
+        setTimeout(() =>
 		{
           this.menuItems[i].action()
         }, 100)

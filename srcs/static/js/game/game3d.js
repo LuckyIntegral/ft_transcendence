@@ -12,7 +12,7 @@ class Game3D {
 	}
 
 	// Initialize the THREE.js scene
-	initThreeJs () {
+	initThreeJs (gameMode) {
 		this.scene = new THREE.Scene()
 		this.camera = new THREE.PerspectiveCamera(
 			75, GameConstants.GAME_WIDTH / GameConstants.GAME_HEIGHT, 0.1, 1000) 
@@ -52,7 +52,7 @@ class Game3D {
 		this.showLoadingScreen = false;
 		this.loadingProgress = 0;
 
-		this.loadAssets();
+		this.loadAssets(gameMode);
 
 		// this.boundReset = this.startNewGame.bind(this);
 		// this.startNewGame();
@@ -158,7 +158,7 @@ class Game3D {
 	// 	}.bind(this));
 	// }
 
-	loadAssets () {
+	loadAssets (gameMode) {
 		var loadingManager = new THREE.LoadingManager();
 
 		loadingManager.onStart = function(url, itemsLoaded, itemsTotal) {
@@ -168,24 +168,16 @@ class Game3D {
 		}.bind(this);
 		
 		loadingManager.onLoad = function() {
-			// document.getElementById('canvas-ui').style.display = 'none';
 			this.clearCanvas();
-			// this.sound.play();
 			this.assetsLoaded = true;
 			this.showLoadingScreen = false;
-			if (this.paddle_mesh1 === null || this.paddle_mesh2 === null) {
-				console.error('paddle mesh is not loaded')
-				return
-			}
-			this.createGameElements(GameModes.PLAYER_VS_PLAYER);
+			this.createGameElements(gameMode);
 			this.start()
 		}.bind(this);
 		
 		loadingManager.onProgress = function(url, itemsLoaded, itemsTotal) {
 			var progress = itemsLoaded / itemsTotal * 100;
-			// console.log('Loading...', url, progress, '%');
 			this.loadscreen.drawLoadingScreen(progress);	
-			// document.getElementById('progressBar').style.width = progress + '%';
 		}.bind(this);
 		// Create a loader with the loading loadingManager
 		var loader = new GLTFLoader(loadingManager);
@@ -198,43 +190,39 @@ class Game3D {
 	}
 
 	createGameElements (gameMode) {
+		if (this.paddle_mesh1 === null || this.paddle_mesh2 === null) {
+			console.error('paddle mesh is not loaded')
+			return
+		}
 		this.paddle1 = new Paddle3D('player1', this.paddle_mesh1);
 		this.paddle2 = new Paddle3D('player2', this.paddle_mesh2);
-		this.ball = new Ball3D(this.scene, this.loader);
+		this.ball = new Ball3D(this.scene);
 
 		this.player1 = new Player3D('player1', this.paddle1)
 		if (gameMode === GameModes.PLAYER_VS_AI) {
-			this.player2 = new AI3D()
-		} 
+			this.playerId = 'player1';
+			this.player2 = new AI3D(this.paddle2);
+		}
 		else {
-			this.player2 = new Player3D('player2', this.paddle2)
+			this.player2 = new Player3D('player2', this.paddle2);
+			this.lobby.join(this.lobbyId, this);
+			this.displayWaitingMessage();
 		}
 		this.gameOver = false
 		this.gameMode = gameMode
 	}
 
-	initGameEngine () {
-		this.initThreeJs()
+	initGameEngine (gameMode) {
+		this.initThreeJs(gameMode)
 		this.initLights()
 		this.initCamera()
 	}
 
-	loadGame (gameMode, playerId) {
+	loadGame (gameMode) {
 		this.stop()
 		this.createCanvas()
 		this.loadscreen = new Loading()
-		this.initGameEngine() //(gameMode, playerId)
-		// this.createGameElements(gameMode)
-		if (gameMode === GameModes.PLAYER_VS_AI) {
-			this.playerId = "player1"
-			this.start();
-		}
-		else {
-			this.lobby.join(this.lobbyId, this);
-			this.displayWaitingMessage();
-		}
-		// this.playerId = playerId
-		// this.lobby.join(this.lobbyId, this, playerId)
+		this.initGameEngine(gameMode)
 	}
 
 	displayWaitingMessage() {
@@ -247,16 +235,14 @@ class Game3D {
 
 	createCanvas () {
 		var content = document.getElementById('content')
-		content.style.position = 'relative'
-		content.style.width = '800px';
-		content.style.height = '600px';
-		content.style.margin = '0 auto';
-
-
 		if (content === null) {
 			console.error('Content is null')
 			return
     	}
+		content.style.position = 'relative'
+		content.style.width = '800px';
+		content.style.height = '600px';
+		content.style.margin = '0 auto';
 
 		this.canvas_three = document.createElement('canvas')
 		this.canvas_three.id = 'canvas-three'
@@ -301,26 +287,18 @@ class Game3D {
 		this.gameOver = true
 	}
 
-	// setUpCanvas () {
-	// 	this.canvas = document.getElementById('game')
-	// 	this.context = this.canvas.getContext('2d')
-	// 	this.canvas.width = GameConstants.GAME_WIDTH
-	// 	this.canvas.height = GameConstants.GAME_HEIGHT
-	// 	console.log('Canvas set up')
-	// }
-
 	startNewGame () {
 		this.reset()
 		this.boundKeyPress = this.keyPressHandler.bind(this)
 		window.addEventListener('keydown', this.boundKeyPress)
 		window.addEventListener('keyup', this.boundKeyPress)
+		this.lastUpdateTime = performance.now()
 		this.loop()
 	}
 
 	loop () {
 		this.update()
 		if (this.gameOver === false) {
-			// console.log('Game3D.loop(): this.gameOver =' + this.gameOver)
 			this.draw()
 			window.requestAnimationFrame(this.loop.bind(this))
    		}
@@ -338,12 +316,13 @@ class Game3D {
 		// 	this.paddle1.update(dt, this.keystate);
 		// if (this.paddle2)
 		// 	this.paddle2.update(dt, this.keystate);
+		this.checkGoals();
 
 		if (this.playerId === "player1" || this.gameMode === GameModes.PLAYER_VS_AI) {
 			this.player1.update(dt, this.keystate);
 			this.ball.update(dt, [this.paddle1, this.paddle2]);
 			if (this.gameMode === GameModes.PLAYER_VS_AI) {
-				this.player2.move(this.ball, this.player1);
+				this.player2.update(this.ball, dt);
 			} else {
 				this.lobby.sendGameData({
 					event: "game_move",
@@ -362,16 +341,6 @@ class Game3D {
 		this.renderer.render(this.scene, this.camera)
 	}
 
-//   updatePositions (player1Pos, player2Pos, ballPos) {
-//     this.player1.targetX = player1Pos.x
-//     this.player1.targetY = player1Pos.y
-//     this.player2.targetX = player2Pos.x
-//     this.player2.targetY = player2Pos.y
-//     this.ball.targetX = ballPos.x
-//     this.ball.targetY = ballPos.y
-//   }
-
-
   updatePositions(player1Pos, player2Pos, ballPos, updateType) {
 	if (updateType === "host") {
 		this.player1.paddle.position.x = player1Pos.x;
@@ -387,61 +356,21 @@ class Game3D {
   updatePlayers (dt) {
     this.player1.update(dt, this.keystate)
     if (this.gameMode === GameModes.PLAYER_VS_AI) {
-    	this.player2.move(this.ball, this.player1)
+    	this.player2.update(this.ball, dt)
     } else {
       	this.player2.update(dt, this.keystate)
     }
   }
 
-//   checkCollisions () {
-//     let player =
-//       this.ball.x < GameConstants.GAME_WIDTH / 2 ? this.player1 : this.player2
-//     if (this.collision(this.ball, player)) {
-//       this.handleCollision(player)
-//     }
-//   }
-
-//   handleCollision (player) {
-//     this.ball.accelerate()
-
-//     let collidePoint =
-//       this.ball.y - (player.y + GameConstants.PADDLE_HEIGHT / 2)
-//     collidePoint = collidePoint / (GameConstants.PADDLE_HEIGHT / 2)
-//     let angleRadius = (Math.PI / 4) * collidePoint
-//     let direction = player === this.player1 ? 1 : -1
-
-//     this.ball.xSpeed = direction * this.ball.speed * Math.cos(angleRadius)
-//     this.ball.ySpeed = this.ball.speed * Math.sin(angleRadius)
-//   }
-
-//   collision (ball, player) {
-//     player.left = player.x
-//     player.right = player.x + GameConstants.PADDLE_WIDTH
-//     player.top = player.y
-//     player.bottom = player.y + GameConstants.PADDLE_HEIGHT
-
-//     ball.top = ball.y - GameConstants.BALL_RADIUS
-//     ball.bottom = ball.y + GameConstants.BALL_RADIUS
-//     ball.left = ball.x - GameConstants.BALL_RADIUS
-//     ball.right = ball.x + GameConstants.BALL_RADIUS
-
-//     return (
-//       ball.right > player.left &&
-//       ball.top < player.bottom &&
-//       ball.left < player.right &&
-//       ball.bottom > player.top
-//     )
-//   }
-
   checkGoals () {
-    if (this.ball.position.z - GameConstants3D.BALL_RADIUS < 
+    if (this.ball.position.z < 
 	GameConstants3D.TABLE_MIN_DEPTH) {
-    	this.player2.scoreGoal()
+    	this.player1.scoreGoal()
     	this.goal()
     }
-	else if (this.ball.position.z + GameConstants.BALL_RADIUS >
+	else if (this.ball.position.z >
  	GameConstants3D.TABLE_MAX_DEPTH) {
-    	this.player1.scoreGoal()
+    	this.player2.scoreGoal()
     	this.goal()
     }
   }
@@ -458,14 +387,6 @@ class Game3D {
 
   clearCanvas () {
 	this.ctx.clearRect(0, 0, GameConstants.GAME_WIDTH, GameConstants.GAME_HEIGHT)
-
-    // this.context.fillStyle = 'BLACK'
-    // this.context.fillRect(
-    //   0,
-    //   0,
-    //   GameConstants.GAME_WIDTH,
-    //   GameConstants.GAME_HEIGHT
-    // )
   }
 
   drawScores () {
@@ -485,15 +406,10 @@ class Game3D {
 
   reset () {
     this.player1.resetScore()
-    console.log(`Player1 score: ${this.player1.score}`)
     this.player1.resetPaddles()
-    console.log(`Player1 : Paddle resetted`)
     this.player2.resetScore()
-    console.log(`Player2 score: ${this.player2.score}`)
     this.player2.resetPaddles()
-    console.log(`Player2 : Paddle resetted`)
     this.ball.resetPosition()
-    console.log(`Ball position: ${this.ball.position.x}-${this.ball.position.y}`)
     // this.canvas_ui.removeEventListener('click', this.boundReset)
     this.gameOver = false
   }
@@ -552,7 +468,6 @@ class Game3D {
 	else {
 		this.keystate[event.key] = false;
 	}
-    // console.log(`Key pressed: ${event.type} - ${event.key}`)
   }
 
   setListeners () {
