@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 {% load static %}
 <html lang="en">
 
@@ -19,14 +20,45 @@
   <link href="{% static 'css/base.css' %}" rel="stylesheet">
   <link rel="icon" href="{% static 'images/favicon.ico' %}">
 
+  <!--THREE.js API import-->
+  <script
+	async
+	src="https://unpkg.com/es-module-shims@1.6.3/dist/es-module-shims.js"
+
+  ></script>
+  <script type="importmap">
+	{
+	  "imports": {
+		"three": "https://unpkg.com/three@0.150.1/build/three.module.js",
+		"three/addons/": "https://unpkg.com/three@0.150.1/examples/jsm/"
+	  }
+	}
+  </script>
+  <script type="module" src="{% static 'js/game/main.js' %}"></script>
+  <!-- <script src="static/js/game/main.js"></script> -->
+  <!--End of THREE.js API import-->
+
   <script src="{% static 'js/aspect.js' %}"></script>
   <script src="{% static 'js/game/constants.js' %}"></script>
   <script src="{% static 'js/game/player.js' %}"></script>
   <script src="{% static 'js/game/ball.js' %}"></script>
   <script src="{% static 'js/game/ai.js' %}"></script>
   <script src="{% static 'js/game/game.js' %}"></script>
+  <!-- <script src="{% static 'js/game/refreshsocket.js' %}"></script> -->
   <script src="{% static 'js/game/lobby.js' %}"></script>
   <script src="{% static 'js/game/menu.js' %}"></script>
+  <!-- 3D Game imports   -->
+  <!-- <script src="{% static 'js/game/main.js' %}"></script> -->
+  <script src="{% static 'js/game/loading3d.js' %}"></script>
+  <script src="{% static 'js/game/utils3d.js' %}"></script>
+  <script src="{% static 'js/game/paddles3d.js' %}"></script>
+  <script src="{% static 'js/game/game3d.js' %}"></script>
+  <script src="{% static 'js/game/menu3d.js' %}"></script>
+  <script src="{% static 'js/game/ai3d.js' %}"></script>
+  <script src="{% static 'js/game/player3d.js' %}"></script>
+  <script src="{% static 'js/game/ball3d.js' %}"></script>
+
+  <!-- 3D Game imports end -->
   <script src="{% static 'js/login.js' %}"></script>
   <script src="{% static 'js/signup.js' %}"></script>
   <script src="{% static 'js/logout.js' %}"></script>
@@ -43,7 +75,6 @@
   <header class="p-3 bg-dark mb-3 border-bottom">
     <div class="container">
       <div class="d-flex flex-wrap align-items-center justify-content-center">
-
         <ul class="nav col-lg-auto me-lg-auto mb-2 mb-md-0">
           <li><a class="nav-link px-2 text-white" href="#profile" id="profileRef">Profile</a></li>
           <li>
@@ -58,7 +89,8 @@
             </div>
           </li>
           <li><a class="nav-link px-2 text-white" href="#messages" id="messagesRef">Messages</a></li>
-          <li><a class="nav-link px-2 text-white" href="#pong" id="pongRef">Ping Pong</a></li>
+          <li><a class="nav-link px-2 text-white" href="#pong" id="pongRef">2D-Pong</a></li>
+          <li><a class="nav-link px-2 text-white" href="#pong3d" id="pong3dRef">3D-Pong</a></li>
         </ul>
 
         <!-- <form class="col-12 col-lg-auto mb-3 mb-lg-0 me-lg-3"> -->

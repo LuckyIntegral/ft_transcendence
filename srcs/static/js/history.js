@@ -1,7 +1,7 @@
 var previousRoute = null;
 
 function checkAndReload() {
-    if (previousRoute === "pong") {
+    if (previousRoute === "pong" || previousRoute === "pong3d") {
         location.reload();
     }
 }
@@ -16,6 +16,11 @@ document.addEventListener("DOMContentLoaded", function () {
             let menu = new Menu();
             menu.start();
             previousRoute = "pong";
+        },
+        pong3d: function() {
+            let menu3d = new Menu3D()
+            menu3d.start()
+            previousRoute = 'pong3d';
         },
         friends: function () {
             loadFriendsPage();
