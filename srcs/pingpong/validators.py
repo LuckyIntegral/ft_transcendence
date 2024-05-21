@@ -117,3 +117,13 @@ class UsernamePasswordValidator:
         if not user.check_password(password):
             raise ValidationError("Username or password is incorrect.")
         return user
+
+class UsernameValidator:
+    """Validator class that holds a single method validate"""
+
+    def validate(self, username):
+        """Validate whether the username is a valid username.
+        The username must contain only alphanumeric characters.
+        """
+        if not username.isalnum():
+            raise ValidationError("Username must contain only alphanumeric characters.")

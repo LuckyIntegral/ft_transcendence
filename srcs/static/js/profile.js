@@ -119,6 +119,8 @@ function saveProfile () {
         alertError('Invalid email address')
       } else if (response.status === 401) {
         alertError('Email is already taken')
+      } else if (response.status === 405) {
+        alertError('Display name is too long')
       }
     })
     .finally(function () {
@@ -282,6 +284,8 @@ function changePassword () {
           popupAlertError(
             'Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number and one special character'
           )
+        } else if (response.status === 405) {
+          popupAlertError('Password is too long')
         }
       })
     })

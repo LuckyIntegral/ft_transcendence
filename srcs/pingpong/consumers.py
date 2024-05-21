@@ -24,7 +24,7 @@ from .utils import getUserFromToken
 import json
 import asyncio
 from django.utils import timezone
-
+import html
 
 class ChatConsumer(AsyncWebsocketConsumer):
     chatUsers = {}
@@ -126,9 +126,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 await self.close()
                 return
 
-        messageText = text_data_json["message"]
-        sender = text_data_json["sender"]
-        timestamp = text_data_json["timestamp"]
+        messageText = html.escape(text_data_json["message"])
+        sender = html.escape(text_data_json["sender"])
+        timestamp = html.escape(text_data_json["timestamp"])
         self.chat = await self.getChat(self.chatToken)
         self.sender = await self.getSender(sender)
         self.recipient = await self.getRecipient(self.sender, self.chat)

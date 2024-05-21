@@ -47,6 +47,7 @@ from datetime import timedelta
 from django.db import models
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
+import html
 
 
 # Create your views here.
@@ -142,6 +143,12 @@ class SignupView(APIView):
             )
         username = username.lower()
         email = email.lower()
+        email = html.escape(email)
+        if (len(username) > 150 or len(email) > 150 or len(password) > 128):
+            return Response(
+                {"error": "Username, email, or password is too long"},
+                status=status.HTTP_405_METHOD_NOT_ALLOWED,
+            )
         if User.objects.filter(username=username).exists():
             return Response(
                 {"error": "Username is already taken"},
@@ -156,6 +163,14 @@ class SignupView(APIView):
             return Response(
                 {"error": "Passwords do not match"},
                 status=status.HTTP_402_PAYMENT_REQUIRED,
+            )
+
+        try:
+            UsernameValidator().validate(username)
+        except ValidationError as e:
+            return Response(
+                {"error": "Username should contain only alphanumeric characters"},
+                status=status.HTTP_403_FORBIDDEN
             )
 
         try:
@@ -237,6 +252,7 @@ class PasswordView(APIView):
                 {"error": "Please provide all required fields"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+
         if not user.check_password(old_password):
             return Response(
                 {"error": "Old password is incorrect"},
@@ -246,6 +262,12 @@ class PasswordView(APIView):
             return Response(
                 {"error": "New passwords do not match"},
                 status=status.HTTP_401_UNAUTHORIZED,
+            )
+
+        if (len(new_password) > 128):
+            return Response(
+                {"error": "Password is too long"},
+                status=status.HTTP_405_METHOD_NOT_ALLOWED,
             )
         try:
             validate_password(new_password)
@@ -312,15 +334,14 @@ class ProfileView(APIView):
             return Response(
                 {"error": str(e)}, status=status.HTTP_400_BAD_REQUEST
             )
-
-        try:
-            user.userprofile.displayName = request.data.get("displayName")
-        except:
+        displayName = html.escape(request.data.get("displayName"))
+        if (len(displayName) > 50):
             return Response(
-                {"error": "Invalid display name"},
-                status=status.HTTP_400_BAD_REQUEST,
+                {"error": "Display name is too long"},
+                status=status.HTTP_405_METHOD_NOT_ALLOWED,
             )
         email = request.data.get("email")
+        email = html.escape(email)
         email_validator = EmailValidator()
         if email is not None and len(email):
             try:
@@ -344,12 +365,14 @@ class ProfileView(APIView):
             token = str(RefreshToken.for_user(user))
             user.userprofile.isTwoStepEmailAuthEnabled = False
             sendVerificationEmail(email, token)
-        try:
-            user.email = email
-        except:
+        if (len(email) > 254):
             return Response(
-                {"error": "Invalid email"}, status=status.HTTP_400_BAD_REQUEST
+                {"error": "Invalid email address"},
+                status=status.HTTP_400_BAD_REQUEST,
             )
+
+        user.email = email
+        user.userprofile.displayName = displayName
         user.save()
         user.userprofile.save()
         return Response(

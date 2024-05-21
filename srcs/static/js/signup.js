@@ -79,10 +79,14 @@ document.addEventListener('DOMContentLoaded', function () {
               popupAlertError('Email is already taken')
             } else if (response.status === 402) {
               popupAlertError('Passwords do not match')
+            } else if (response.status === 403) {
+              popupAlertError('Username should contain only alphanumeric characters')
             } else if (response.status === 404) {
               popupAlertError(
                 'Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number and one special character'
               )
+            } else if (response.status === 405) {
+              popupAlertError('One of the fields are too long')
             }
           })
           .then(() => {
