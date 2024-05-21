@@ -37,13 +37,9 @@ urlpatterns = [
     path("", views.home, name="home"),
     path("verify-email/", VerifyEmailView.as_view(), name="verify_email"),
     path("api/login/", LoginView.as_view(), name="login"),
-    path(
-        "api/token/", TokenObtainPairView.as_view(), name="token_obtain_pair"
-    ),
+    path("api/token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
     path("api/signup/", SignupView.as_view(), name="signup"),
-    path(
-        "api/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"
-    ),
+    path("api/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
     path("api/profile/", ProfileView.as_view(), name="edit_profile"),
     path("api/password/", PasswordView.as_view(), name="change_password"),
     path("api/verify-token/", VerifyTokenView.as_view(), name="verify_token"),
@@ -68,9 +64,7 @@ urlpatterns = [
         VerificationEmailView.as_view(),
         name="verification_email",
     ),
-    path(
-        "reset-password/", ForgetPasswordView.as_view(), name="reset_password"
-    ),
+    path("reset-password/", ForgetPasswordView.as_view(), name="reset_password"),
     path(
         "api/upload-picture/",
         UploadPictureView.as_view(),
@@ -93,13 +87,9 @@ urlpatterns = [
     path("", views.home, name="home"),
     path("verify-email/", VerifyEmailView.as_view(), name="verify_email"),
     path("api/login/", LoginView.as_view(), name="login"),
-    path(
-        "api/token/", TokenObtainPairView.as_view(), name="token_obtain_pair"
-    ),
+    path("api/token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
     path("api/signup/", SignupView.as_view(), name="signup"),
-    path(
-        "api/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"
-    ),
+    path("api/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
     path("api/profile/", ProfileView.as_view(), name="edit_profile"),
     path("api/password/", PasswordView.as_view(), name="change_password"),
     path("api/verify-token/", VerifyTokenView.as_view(), name="verify_token"),
@@ -124,9 +114,7 @@ urlpatterns = [
         VerificationEmailView.as_view(),
         name="verification_email",
     ),
-    path(
-        "reset-password/", ForgetPasswordView.as_view(), name="reset_password"
-    ),
+    path("reset-password/", ForgetPasswordView.as_view(), name="reset_password"),
     path(
         "api/upload-picture/",
         UploadPictureView.as_view(),

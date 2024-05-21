@@ -75,12 +75,8 @@ class VerifyTokenView(APIView):
         try:
             JWTTokenValidator().validate(auth_header)
         except ValidationError as e:
-            return Response(
-                {"error": str(e)}, status=status.HTTP_400_BAD_REQUEST
-            )
-        return Response(
-            {"status": "Token is valid"}, status=status.HTTP_200_OK
-        )
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"status": "Token is valid"}, status=status.HTTP_200_OK)
 
 
 class LoginView(APIView):
@@ -176,13 +172,9 @@ class SignupView(APIView):
         try:
             validate_password(password)
         except ValidationError as e:
-            return Response(
-                {"error": str(e)}, status=status.HTTP_404_NOT_FOUND
-            )
+            return Response({"error": str(e)}, status=status.HTTP_404_NOT_FOUND)
 
-        user = User.objects.create_user(
-            username=username, email=email, password=password
-        )
+        user = User.objects.create_user(username=username, email=email, password=password)
         userProfile = UserProfile.objects.create(user=user)
 
         return Response(
@@ -234,15 +226,11 @@ class PasswordView(APIView):
         try:
             token = JWTTokenValidator().validate(auth_header)
         except ValidationError as e:
-            return Response(
-                {"error": str(e)}, status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         try:
             user = getUserFromToken(token)
         except ValidationError as e:
-            return Response(
-                {"error": str(e)}, status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         old_password = request.data.get("old_password")
         new_password = request.data.get("new_password")
         new_password_confirm = request.data.get("new_password_confirm")
@@ -272,9 +260,7 @@ class PasswordView(APIView):
         try:
             validate_password(new_password)
         except ValidationError as e:
-            return Response(
-                {"error": str(e)}, status=status.HTTP_402_PAYMENT_REQUIRED
-            )
+            return Response({"error": str(e)}, status=status.HTTP_402_PAYMENT_REQUIRED)
 
         user.set_password(new_password)
         user.save()
@@ -298,15 +284,11 @@ class ProfileView(APIView):
         try:
             token = JWTTokenValidator().validate(auth_header)
         except ValidationError as e:
-            return Response(
-                {"error": str(e)}, status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         try:
             user = getUserFromToken(token)
         except ValidationError as e:
-            return Response(
-                {"error": str(e)}, status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
         data = {
             "username": user.username,
@@ -325,9 +307,7 @@ class ProfileView(APIView):
         try:
             token = JWTTokenValidator().validate(auth_header)
         except ValidationError as e:
-            return Response(
-                {"error": str(e)}, status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         try:
             user = getUserFromToken(token)
         except ValidationError as e:
@@ -339,7 +319,7 @@ class ProfileView(APIView):
             return Response(
                 {"error": "Display name is too long"},
                 status=status.HTTP_405_METHOD_NOT_ALLOWED,
-            )
+                )
         email = request.data.get("email")
         email = html.escape(email)
         email_validator = EmailValidator()
@@ -395,24 +375,18 @@ class FriendsRequestsView(APIView):
         try:
             token = JWTTokenValidator().validate(auth_header)
         except ValidationError as e:
-            return Response(
-                {"error": str(e)}, status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         try:
             user = getUserFromToken(token)
         except ValidationError as e:
-            return Response(
-                {"error": str(e)}, status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
         page = request.query_params.get("page")
         page = 0 if not page else int(page)
         page_size = request.query_params.get("pageSize")
         page_size = 10 if not page_size else int(page_size)
 
-        friend_request_list = FriendRequest.objects.filter(
-            toUser=user.id
-        ).order_by("fromUser__username")
+        friend_request_list = FriendRequest.objects.filter(toUser=user.id).order_by("fromUser__username")
         request_list_count = friend_request_list.count()
         response = {
             "data": [],
@@ -429,9 +403,7 @@ class FriendsRequestsView(APIView):
         response["page"] = page
         response["totalPages"] = math.ceil(request_list_count / page_size)
 
-        friend_request_list = friend_request_list[
-            page_size * page : min(page_size * (page + 1), request_list_count)
-        ]
+        friend_request_list = friend_request_list[page_size * page : min(page_size * (page + 1), request_list_count)]
 
         for friend_request in friend_request_list:
             response["data"].append(
@@ -448,15 +420,11 @@ class FriendsRequestsView(APIView):
         try:
             token = JWTTokenValidator().validate(auth_header)
         except ValidationError as e:
-            return Response(
-                {"error": str(e)}, status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         try:
             user = getUserFromToken(token)
         except ValidationError as e:
-            return Response(
-                {"error": str(e)}, status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
         friend_username = request.data.get("friend_username")
         if not friend_username:
@@ -487,25 +455,17 @@ class FriendsRequestsView(APIView):
                 {"error": "User is already in your friend list"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        if FriendRequest.objects.filter(
-            fromUser=user, toUser=friend_user
-        ).exists():
+        if FriendRequest.objects.filter(fromUser=user, toUser=friend_user).exists():
             return Response(
-                {
-                    "error": "You have already sent a friend request to the user"
-                },
+                {"error": "You have already sent a friend request to the user"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        if FriendRequest.objects.filter(
-            fromUser=friend_user, toUser=user
-        ).exists():
+        if FriendRequest.objects.filter(fromUser=friend_user, toUser=user).exists():
             return Response(
                 {"error": "User has already sent you a friend request"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        friend_request = FriendRequest.objects.create(
-            fromUser=user, toUser=friend_user
-        )
+        friend_request = FriendRequest.objects.create(fromUser=user, toUser=friend_user)
         friend_request.save()
         return Response(
             {"status": "Friend request sent successfully"},
@@ -518,15 +478,11 @@ class FriendsRequestsView(APIView):
         try:
             token = JWTTokenValidator().validate(auth_header)
         except ValidationError as e:
-            return Response(
-                {"error": str(e)}, status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         try:
             user = getUserFromToken(token)
         except ValidationError as e:
-            return Response(
-                {"error": str(e)}, status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
         friend_username = request.data.get("friend_username")
         action = request.data.get("action")
@@ -548,16 +504,12 @@ class FriendsRequestsView(APIView):
                 {"error": "User does not have a profile"},
                 status=status.HTTP_404_NOT_FOUND,
             )
-        if not FriendRequest.objects.filter(
-            fromUser=friend_user, toUser=user
-        ).exists():
+        if not FriendRequest.objects.filter(fromUser=friend_user, toUser=user).exists():
             return Response(
                 {"error": "User has not sent you a friend request"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        FriendRequest.objects.filter(
-            fromUser=friend_user, toUser=user
-        ).delete()
+        FriendRequest.objects.filter(fromUser=friend_user, toUser=user).delete()
         if action == "accept":
             user.userprofile.friendList.add(friend)
             user.userprofile.save()
@@ -585,24 +537,18 @@ class FriendsView(APIView):
         try:
             token = JWTTokenValidator().validate(auth_header)
         except ValidationError as e:
-            return Response(
-                {"error": str(e)}, status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         try:
             user = getUserFromToken(token)
         except ValidationError as e:
-            return Response(
-                {"error": str(e)}, status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
         page = request.query_params.get("page")
         page = 0 if not page else int(page)
         page_size = request.query_params.get("pageSize")
         page_size = 10 if not page_size else int(page_size)
 
-        friend_list = user.userprofile.friendList.all().order_by(
-            "user__username"
-        )
+        friend_list = user.userprofile.friendList.all().order_by("user__username")
         friend_list_count = friend_list.count()
         response = {
             "data": [],
@@ -619,9 +565,7 @@ class FriendsView(APIView):
         response["page"] = page
         response["totalPages"] = math.ceil(friend_list_count / page_size)
 
-        friend_list = friend_list[
-            page_size * page : min(page_size * (page + 1), friend_list_count)
-        ]
+        friend_list = friend_list[page_size * page : min(page_size * (page + 1), friend_list_count)]
 
         for friend in friend_list:
             response["data"].append(
@@ -639,15 +583,11 @@ class FriendsView(APIView):
         try:
             token = JWTTokenValidator().validate(auth_header)
         except ValidationError as e:
-            return Response(
-                {"error": str(e)}, status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         try:
             user = getUserFromToken(token)
         except ValidationError as e:
-            return Response(
-                {"error": str(e)}, status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
         friend_username = request.data.get("friend_username")
         if not friend_username:
@@ -703,22 +643,16 @@ class TwoStepVerificationCodeView(APIView):
                 user_password_validator = UsernamePasswordValidator()
                 user = user_password_validator.validate(username, password)
             except ValidationError as e:
-                return Response(
-                    {"error": str(e)}, status=status.HTTP_400_BAD_REQUEST
-                )
+                return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         else:
             try:
                 token = JWTTokenValidator().validate(auth_header)
             except ValidationError as e:
-                return Response(
-                    {"error": str(e)}, status=status.HTTP_400_BAD_REQUEST
-                )
+                return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
             try:
                 user = getUserFromToken(token)
             except ValidationError as e:
-                return Response(
-                    {"error": str(e)}, status=status.HTTP_400_BAD_REQUEST
-                )
+                return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         verification_email_code = str(random.randint(100000, 999999))
         user.userprofile.verificationEmailCode = verification_email_code
         user.userprofile.save()
@@ -738,22 +672,16 @@ class TwoStepVerificationCodeView(APIView):
                 user_password_validator = UsernamePasswordValidator()
                 user = user_password_validator.validate(username, password)
             except ValidationError as e:
-                return Response(
-                    {"error": str(e)}, status=status.HTTP_400_BAD_REQUEST
-                )
+                return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         else:
             try:
                 token = JWTTokenValidator().validate(auth_header)
             except ValidationError as e:
-                return Response(
-                    {"error": str(e)}, status=status.HTTP_400_BAD_REQUEST
-                )
+                return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
             try:
                 user = getUserFromToken(token)
             except ValidationError as e:
-                return Response(
-                    {"error": str(e)}, status=status.HTTP_400_BAD_REQUEST
-                )
+                return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
         verification_email_code = request.data.get("code")
         if not verification_email_code:
@@ -768,9 +696,7 @@ class TwoStepVerificationCodeView(APIView):
             )
         user.userprofile.verificationEmailCode = ""
         user.userprofile.save()
-        return Response(
-            {"status": "Verification successful"}, status=status.HTTP_200_OK
-        )
+        return Response({"status": "Verification successful"}, status=status.HTTP_200_OK)
 
 
 class TwoStepVerification(APIView):
@@ -786,15 +712,11 @@ class TwoStepVerification(APIView):
         try:
             token = JWTTokenValidator().validate(auth_header)
         except ValidationError as e:
-            return Response(
-                {"error": str(e)}, status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         try:
             user = getUserFromToken(token)
         except ValidationError as e:
-            return Response(
-                {"error": str(e)}, status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
         if not user.userprofile.emailVerified:
             return Response(
@@ -817,15 +739,11 @@ class TwoStepVerification(APIView):
         try:
             token = JWTTokenValidator().validate(auth_header)
         except ValidationError as e:
-            return Response(
-                {"error": str(e)}, status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         try:
             user = getUserFromToken(token)
         except ValidationError as e:
-            return Response(
-                {"error": str(e)}, status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
         action = request.data.get("action")
         if action == None:
@@ -844,9 +762,7 @@ class TwoStepVerification(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
         if user.userprofile.verificationEmailCode != request.data.get("code"):
-            return Response(
-                {"error": "Incorrect code"}, status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({"error": "Incorrect code"}, status=status.HTTP_400_BAD_REQUEST)
 
         if action == "enable":
             if user.userprofile.isTwoStepEmailAuthEnabled:
@@ -872,9 +788,7 @@ class TwoStepVerification(APIView):
                 {"status": "2-step email verification disabled"},
                 status=status.HTTP_200_OK,
             )
-        return Response(
-            {"error": "Invalid action"}, status=status.HTTP_400_BAD_REQUEST
-        )
+        return Response({"error": "Invalid action"}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class VerificationEmailView(APIView):
@@ -883,15 +797,11 @@ class VerificationEmailView(APIView):
         try:
             token = JWTTokenValidator().validate(auth_header)
         except ValidationError as e:
-            return Response(
-                {"error": str(e)}, status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         try:
             user = getUserFromToken(token)
         except ValidationError as e:
-            return Response(
-                {"error": str(e)}, status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
         if user.userprofile.emailVerified:
             return Response(
@@ -939,15 +849,11 @@ class ForgetPasswordView(APIView):
     def get(self, request, format=None):
         token = request.query_params.get("token")
         if not token:
-            return HttpResponse(
-                {"Please provide a token"}, status=status.HTTP_400_BAD_REQUEST
-            )
+            return HttpResponse({"Please provide a token"}, status=status.HTTP_400_BAD_REQUEST)
         try:
             user = User.objects.get(userprofile__passwordResetToken=token)
         except (User.DoesNotExist, Exception):
-            return HttpResponse(
-                {"Invalid token"}, status=status.HTTP_400_BAD_REQUEST
-            )
+            return HttpResponse({"Invalid token"}, status=status.HTTP_400_BAD_REQUEST)
         user.userprofile.passwordResetToken = ""
         user.userprofile.save()
         user.set_password("Pong-42!")
@@ -966,15 +872,11 @@ class UploadPictureView(APIView):
         try:
             token = JWTTokenValidator().validate(auth_header)
         except ValidationError as e:
-            return Response(
-                {"error": str(e)}, status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         try:
             user = getUserFromToken(token)
         except ValidationError as e:
-            return Response(
-                {"error": str(e)}, status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         picture = request.data.get("picture")
         if not picture:
             return Response(
@@ -992,13 +894,8 @@ class UploadPictureView(APIView):
             image.verify()
             image = Image.open(picture)
         except Exception:
-            return Response(
-                {"error": "Invalid image"}, status=status.HTTP_400_BAD_REQUEST
-            )
-        if (
-            user.userprofile.picture != None
-            and user.userprofile.picture.url != "/media/images/default.jpg"
-        ):
+            return Response({"error": "Invalid image"}, status=status.HTTP_400_BAD_REQUEST)
+        if user.userprofile.picture != None and user.userprofile.picture.url != "/media/images/default.jpg":
             user.userprofile.picture.delete()
             user.userprofile.pictureSmall.delete()
 
@@ -1038,15 +935,11 @@ class FriendsSearchView(APIView):
         try:
             token = JWTTokenValidator().validate(auth_header)
         except ValidationError as e:
-            return Response(
-                {"error": str(e)}, status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         try:
             user = getUserFromToken(token)
         except ValidationError as e:
-            return Response(
-                {"error": str(e)}, status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         page_size = request.query_params.get("pageSize")
         page_size = 10 if not page_size else int(page_size)
         search_query = request.query_params.get("search_query")
@@ -1054,9 +947,9 @@ class FriendsSearchView(APIView):
         data = []
         if search_query:
             try:
-                friend_list = UserProfile.objects.filter(
-                    user__username__icontains=search_query
-                ).order_by("user__username")
+                friend_list = UserProfile.objects.filter(user__username__icontains=search_query).order_by(
+                    "user__username"
+                )
             except UserProfile.DoesNotExist:
                 return Response(data, status=status.HTTP_200_OK)
             for friend in friend_list[: min(page_size, friend_list.count())]:
@@ -1084,18 +977,14 @@ class LeaderboardView(APIView):
         try:
             JWTTokenValidator().validate(auth_header)
         except ValidationError as e:
-            return Response(
-                {"error": str(e)}, status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
         page = request.query_params.get("page")
         page = 0 if not page else int(page)
         page_size = request.query_params.get("pageSize")
         page_size = 10 if not page_size else int(page_size)
 
-        player_list = UserProfile.objects.all().order_by(
-            "-gamesWon", "user__username"
-        )
+        player_list = UserProfile.objects.all().order_by("-gamesWon", "user__username")
         player_list_count = player_list.count()
         response = {
             "data": [],
@@ -1112,9 +1001,7 @@ class LeaderboardView(APIView):
         response["page"] = page
         response["totalPages"] = math.ceil(player_list_count / page_size)
 
-        player_list = player_list[
-            page_size * page : min(page_size * (page + 1), player_list_count)
-        ]
+        player_list = player_list[page_size * page : min(page_size * (page + 1), player_list_count)]
 
         for player in player_list:
             response["data"].append(
@@ -1141,9 +1028,7 @@ class UserDetailsView(APIView):
         try:
             JWTTokenValidator().validate(auth_header)
         except ValidationError as e:
-            return Response(
-                {"error": str(e)}, status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         username = request.query_params.get("username")
         if not username:
             return Response(
@@ -1166,11 +1051,7 @@ class UserDetailsView(APIView):
         data = {
             "username": user.username,
             "email": user.email,
-            "displayName": (
-                userProfile.displayName
-                if userProfile.displayName
-                else "no info"
-            ),
+            "displayName": (userProfile.displayName if userProfile.displayName else "no info"),
             "picture": userProfile.picture.url,
             "wins": userProfile.gamesWon,
             "games": userProfile.gamesPlayed,
@@ -1190,15 +1071,11 @@ class ChatView(APIView):
         try:
             token = JWTTokenValidator().validate(auth_header)
         except ValidationError as e:
-            return Response(
-                {"error": str(e)}, status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         try:
             user = getUserFromToken(token)
         except ValidationError as e:
-            return Response(
-                {"error": str(e)}, status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         try:
             chat = Chat.objects.get(token=request.data.get("token"))
         except Chat.DoesNotExist:
@@ -1211,17 +1088,12 @@ class ChatView(APIView):
             "picture": secondUser.userprofile.pictureSmall.url,
             "username": secondUser.username,
             "token": chat.token,
-            "blocked": Block.objects.filter(
-                blocker=user, blocked=secondUser
-            ).exists(),
+            "blocked": Block.objects.filter(blocker=user, blocked=secondUser).exists(),
             "myPicture": user.userprofile.pictureSmall.url,
             "messages": [],
         }
         for message in chat.messages.order_by("timestamp"):
-            if (
-                message.sender != user
-                and message.messageRecipient.isRead == False
-            ):
+            if message.sender != user and message.messageRecipient.isRead == False:
                 message.messageRecipient.isRead = True
                 message.messageRecipient.save()
             data["messages"].append(
@@ -1241,15 +1113,11 @@ class ChatView(APIView):
         try:
             token = JWTTokenValidator().validate(auth_header)
         except ValidationError as e:
-            return Response(
-                {"error": str(e)}, status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         try:
             user = getUserFromToken(token)
         except ValidationError as e:
-            return Response(
-                {"error": str(e)}, status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
         username = request.data.get("username")
         if not username:
@@ -1270,17 +1138,12 @@ class ChatView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
         try:
-            chat = Chat.objects.get(
-                Q(userOne=user, userTwo=secondUser)
-                | Q(userOne=secondUser, userTwo=user)
-            )
+            chat = Chat.objects.get(Q(userOne=user, userTwo=secondUser) | Q(userOne=secondUser, userTwo=user))
         except Chat.DoesNotExist:
             chatToken = generateToken()
             while Chat.objects.filter(token=chatToken).exists():
                 chatToken = generateToken()
-            chat = Chat.objects.create(
-                userOne=user, userTwo=secondUser, token=chatToken
-            )
+            chat = Chat.objects.create(userOne=user, userTwo=secondUser, token=chatToken)
             chat.save()
         return Response({"token": chat.token}, status=status.HTTP_200_OK)
 
@@ -1291,23 +1154,15 @@ class MessagesView(APIView):
         try:
             token = JWTTokenValidator().validate(auth_header)
         except ValidationError as e:
-            return Response(
-                {"error": str(e)}, status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         try:
             user = getUserFromToken(token)
         except ValidationError as e:
-            return Response(
-                {"error": str(e)}, status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         chats = Chat.objects.filter(Q(userOne=user) | Q(userTwo=user))
         data = []
         for chat in chats:
-            secondUserUsername = (
-                chat.userOne.username
-                if chat.userOne != user
-                else chat.userTwo.username
-            )
+            secondUserUsername = chat.userOne.username if chat.userOne != user else chat.userTwo.username
             secondUser = User.objects.get(username=secondUserUsername)
             secondUserLastOnline = secondUser.userprofile.lastOnline
             secondUserPicture = secondUser.userprofile.pictureSmall.url
@@ -1315,24 +1170,11 @@ class MessagesView(APIView):
             if lastMessage is not None:
                 data.append(
                     {
-                        "username": (
-                            chat.userOne.username
-                            if chat.userOne != user
-                            else chat.userTwo.username
-                        ),
-                        "isOnline": (
-                            True
-                            if secondUserLastOnline
-                            > timezone.now() - timedelta(minutes=1)
-                            else False
-                        ),
+                        "username": (chat.userOne.username if chat.userOne != user else chat.userTwo.username),
+                        "isOnline": (True if secondUserLastOnline > timezone.now() - timedelta(minutes=1) else False),
                         "lastOnline": secondUserLastOnline,
                         "picture": secondUserPicture,
-                        "isRead": (
-                            lastMessage.messageRecipient.isRead
-                            if lastMessage.sender != user
-                            else True
-                        ),
+                        "isRead": (lastMessage.messageRecipient.isRead if lastMessage.sender != user else True),
                         "token": chat.token,
                         "lastTimestamp": lastMessage.timestamp,
                     }
@@ -1340,17 +1182,8 @@ class MessagesView(APIView):
             else:
                 data.append(
                     {
-                        "username": (
-                            chat.userOne.username
-                            if chat.userOne != user
-                            else chat.userTwo.username
-                        ),
-                        "isOnline": (
-                            True
-                            if secondUserLastOnline
-                            > timezone.now() - timedelta(minutes=1)
-                            else False
-                        ),
+                        "username": (chat.userOne.username if chat.userOne != user else chat.userTwo.username),
+                        "isOnline": (True if secondUserLastOnline > timezone.now() - timedelta(minutes=1) else False),
                         "lastOnline": secondUserLastOnline,
                         "picture": secondUserPicture,
                         "isRead": True,
@@ -1373,15 +1206,11 @@ class BlockUserView(APIView):
         try:
             token = JWTTokenValidator().validate(auth_header)
         except ValidationError as e:
-            return Response(
-                {"error": str(e)}, status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         try:
             user = getUserFromToken(token)
         except ValidationError as e:
-            return Response(
-                {"error": str(e)}, status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         username = request.data.get("username")
         if not username:
             return Response(

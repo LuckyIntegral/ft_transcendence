@@ -14,8 +14,7 @@ import uuid
 def sendVerificationEmail(email, token):
     send_mail(
         "Email Verification",
-        "Verify your email address by clicking the link below: http://localhost:8080/verify-email?token="
-        + token,
+        "Verify your email address by clicking the link below: http://localhost:8080/verify-email?token=" + token,
         "admin@localhost",
         [email],
         fail_silently=False,
@@ -35,8 +34,7 @@ def sendTwoStepVerificationEmail(email, code):
 def sendPasswordResetEmail(email, token):
     send_mail(
         "Password Reset",
-        "Reset your password by clicking the link below: http://localhost:8080/reset-password/?token="
-        + token,
+        "Reset your password by clicking the link below: http://localhost:8080/reset-password/?token=" + token,
         "admin@localhost",
         [email],
         fail_silently=False,
@@ -88,9 +86,7 @@ async def blockChainCreateGame(tournamentId, players):
         playersNames.append(player[0])
         playersPlaces.append(player[1])
 
-    txn_dict = contract.functions.createGame(
-        tournamentId, playersNames, playersPlaces
-    ).build_transaction(
+    txn_dict = contract.functions.createGame(tournamentId, playersNames, playersPlaces).build_transaction(
         {
             "chainId": settings.WEB3_CHAIN_ID,
             "gas": 700000,
@@ -101,9 +97,7 @@ async def blockChainCreateGame(tournamentId, players):
     signed_txn = web3.eth.account.sign_transaction(txn_dict, private_key)
     result = web3.eth.send_raw_transaction(signed_txn.rawTransaction)
     receipt = web3.eth.wait_for_transaction_receipt(result)
-    logs = contract.events.GameCreated().get_logs(
-        fromBlock=receipt["blockNumber"], toBlock=receipt["blockNumber"]
-    )
+    logs = contract.events.GameCreated().get_logs(fromBlock=receipt["blockNumber"], toBlock=receipt["blockNumber"])
     for log in logs:
         if log["event"] == "GameCreated":
             gameId = log["args"]["gameId"]
