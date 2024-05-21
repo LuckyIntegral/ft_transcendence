@@ -1,42 +1,31 @@
-var previousRoute = null;
-
-function checkAndReload() {
-    if (previousRoute === "pong") {
-        location.reload();
-    }
-}
-
 document.addEventListener("DOMContentLoaded", function () {
     var query_params = null;
     var routes = {
         profile: function () {
             loadProfilePage();
-            previousRoute = "profile";
         },
         pong: function () {
             if (query_params === null) {
                 let menu = new Menu();
                 menu.start();
-                previousRoute = "pong";
             } else {
-                // to be implemented
+                var gameToken = query_params.split("=")[1];
+                let game = new Game(gameToken);
+                game.loadGame(GameModes.PLAYER_VS_PLAYER);
+                query_params = null;
             }
         },
         friends: function () {
             loadFriendsPage();
-            previousRoute = "friends";
         },
         leadrboard: function () {
             loadLeaderboardPage();
-            previousRoute = "leadrboard";
         },
         messages: function () {
             loadMessagesPage();
-            previousRoute = "messages";
         },
         default: function () {
             document.getElementById("content").textContent = "Default page";
-            previousRoute = "default";
         },
     };
 

@@ -11,6 +11,7 @@ class Lobby {
 
         this.gameSocket.onopen = () => {
             console.log(`Game WebSocket connection established on ws://${window.location.host}/ws/game/${gameToken}/.`);
+            this.gameSocket.send(JSON.stringify({ auth_header: "Bearer " + localStorage.getItem("access") }));
         };
 
         this.gameSocket.onmessage = (e) => {

@@ -293,7 +293,7 @@ class LongPollConsumer(AsyncWebsocketConsumer):
 
 
 class GameConsumer(AsyncWebsocketConsumer):
-    users = []
+    playerAuth = {}
 
     async def connect(self):
         self.token = self.scope["url_route"]["kwargs"]["token"]
@@ -301,21 +301,20 @@ class GameConsumer(AsyncWebsocketConsumer):
 
         await self.channel_layer.group_add(self.game_group_name, self.channel_name)
 
-        await self.channel_layer.group_add(self.game_group_name, self.channel_name)
         await self.accept()
 
-        if len(self.users) < 2 and self.channel_name not in self.users:
-            self.users.append(self.channel_name)
-            role = f"player{len(self.users)}"
-        else:
-            role = "spectator"
+        # if len(self.users) < 2 and self.channel_name not in self.users:
+        #     self.users.append(self.channel_name)
+        #     role = f"player{len(self.users)}"
+        # else:
+        #     role = "spectator"
 
-        await self.send(text_data=json.dumps({"event": "assign_role", "role": role}))
+        # await self.send(text_data=json.dumps({"event": "assign_role", "role": role}))
 
-        await self.channel_layer.group_send(
-            self.game_group_name,
-            {"type": "player_connected", "players_connected": len(self.users)},
-        )
+        # await self.channel_layer.group_send(
+        #     self.game_group_name,
+        #     {"type": "player_connected", "players_connected": len(self.users)},
+        # )
 
     async def disconnect(self, close_code):
         await self.channel_layer.group_discard(self.game_group_name, self.channel_name)
@@ -330,6 +329,30 @@ class GameConsumer(AsyncWebsocketConsumer):
     async def receive(self, text_data):
         data = json.loads(text_data)
         event = data.get("event")
+        authHeader = data.get("auth_header")
+        if authHeader:
+            try:
+                self.jwtToken = JWTTokenValidator().validate(authHeader)
+                self.user = await self.get_user_from_token(self.jwtToken)
+                if not await self.userInLobby(self.user, self.token):
+                    await self.close()
+                    return
+                if self.token not in GameConsumer.playerAuth:
+                    GameConsumer.playerAuth[self.token] = {}
+                if self.user.username not in GameConsumer.playerAuth[self.token]:
+                    GameConsumer.playerAuth[self.token][self.user.username] = 0
+                GameConsumer.playerAuth[self.token][self.user.username] += 1
+                await self.channel_layer.group_send(
+                    self.game_group_name,
+                    {
+                        "type": "player_connected",
+                        "players_connected": 2 if self.isBothUsersConnected() else -42,
+                    },
+                )
+                return
+            except Exception as e:
+                await self.close()
+                return
 
         if event == "move":
             player1_pos = data.get("player1_pos")
@@ -377,3 +400,26 @@ class GameConsumer(AsyncWebsocketConsumer):
                 }
             )
         )
+
+    @database_sync_to_async
+    def get_user_from_token(self, token):
+        decoded_token = token_backend.decode(token)
+        user_id = decoded_token["user_id"]
+        try:
+            user = User.objects.get(id=user_id)
+        except User.DoesNotExist:
+            raise ValidationError("User does not exist.")
+        return user
+
+    @database_sync_to_async
+    def userInLobby(self, user, lobbyId):
+        return PongLobby.objects.filter(Q(host=user) | Q(guest=user)).exists()
+
+    def isBothUsersConnected(self):
+        count = 0
+        if self.chatToken in ChatConsumer.chatUsers:
+            if len(ChatConsumer.chatUsers[self.chatToken]) == 2:
+                for user, value in ChatConsumer.chatUsers[self.chatToken].items():
+                    if value > 0:
+                        count += 1
+        return count == 2
