@@ -1,0 +1,12 @@
+{
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "editor.formatOnSave": true,
+  "[yaml]": {
+    "editor.tabSize": 4
+  },
+  "[dockercompose]": {
+    "editor.tabSize": 4
+  }
+}

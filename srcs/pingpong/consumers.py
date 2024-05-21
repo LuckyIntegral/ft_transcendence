@@ -33,9 +33,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         count = 0
         if self.chatToken in ChatConsumer.chatUsers:
             if len(ChatConsumer.chatUsers[self.chatToken]) == 2:
-                for user, value in ChatConsumer.chatUsers[
-                    self.chatToken
-                ].items():
+                for user, value in ChatConsumer.chatUsers[self.chatToken].items():
                     if value > 0:
                         count += 1
         return count == 2
@@ -61,16 +59,12 @@ class ChatConsumer(AsyncWebsocketConsumer):
     @database_sync_to_async
     def createMessageRecipient(self, recipient):
         if self.isBothUsersConnected():
-            return MessagesRecipient.objects.create(
-                recipient=recipient, isRead=True, isNotified=True
-            )
+            return MessagesRecipient.objects.create(recipient=recipient, isRead=True, isNotified=True)
         return MessagesRecipient.objects.create(recipient=recipient)
 
     @database_sync_to_async
     def createMessage(self, sender, message, messageRecipient):
-        return Message.objects.create(
-            sender=sender, message=message, messageRecipient=messageRecipient
-        )
+        return Message.objects.create(sender=sender, message=message, messageRecipient=messageRecipient)
 
     @database_sync_to_async
     def addMessageToChat(self, chat, message):
@@ -99,9 +93,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         if self.chatToken in ChatConsumer.chatUsers:
             if self.user.username in ChatConsumer.chatUsers[self.chatToken]:
                 ChatConsumer.chatUsers[self.chatToken][self.user.username] -= 1
-        await self.channel_layer.group_discard(
-            self.chatToken, self.channel_name
-        )
+        await self.channel_layer.group_discard(self.chatToken, self.channel_name)
 
     async def receive(self, text_data):
         text_data_json = json.loads(text_data)
@@ -110,16 +102,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 token = JWTTokenValidator().validate(text_data_json["token"])
                 self.user = await self.get_user_from_token(token)
                 if not self.chatToken in ChatConsumer.chatUsers:
-                    ChatConsumer.chatUsers[self.chatToken] = {
-                        self.user.username: 0
-                    }
-                if (
-                    not self.user.username
-                    in ChatConsumer.chatUsers[self.chatToken]
-                ):
-                    ChatConsumer.chatUsers[self.chatToken][
-                        self.user.username
-                    ] = 0
+                    ChatConsumer.chatUsers[self.chatToken] = {self.user.username: 0}
+                if not self.user.username in ChatConsumer.chatUsers[self.chatToken]:
+                    ChatConsumer.chatUsers[self.chatToken][self.user.username] = 0
                 ChatConsumer.chatUsers[self.chatToken][self.user.username] += 1
                 return
             except Exception as e:
@@ -133,18 +118,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
         self.sender = await self.getSender(sender)
         self.recipient = await self.getRecipient(self.sender, self.chat)
         if await self.isBlocked(self.sender, self.recipient):
-            await self.send(
-                text_data=json.dumps(
-                    {"blocked": "You are blocked by this user!"}
-                )
-            )
+            await self.send(text_data=json.dumps({"blocked": "You are blocked by this user!"}))
             return
-        self.messageRecipient = await self.createMessageRecipient(
-            self.recipient
-        )
-        self.message = await self.createMessage(
-            self.sender, messageText, self.messageRecipient
-        )
+        self.messageRecipient = await self.createMessageRecipient(self.recipient)
+        self.message = await self.createMessage(self.sender, messageText, self.messageRecipient)
         await self.addMessageToChat(self.chat, self.message)
         await self.channel_layer.group_send(
             self.chatToken,
@@ -227,9 +204,7 @@ class LongPollConsumer(AsyncWebsocketConsumer):
 
     @database_sync_to_async
     def get_new_friend_requests(self, user):
-        return FriendRequest.objects.filter(
-            toUser=user, accepted=False
-        ).exists()
+        return FriendRequest.objects.filter(toUser=user, accepted=False).exists()
 
     @database_sync_to_async
     def get_token_from_key(self, key):
@@ -254,21 +229,15 @@ class LongPollConsumer(AsyncWebsocketConsumer):
 
     @database_sync_to_async
     def get_new_messages(self, user):
-        return MessagesRecipient.objects.filter(
-            recipient=user, isRead=False, isNotified=False
-        ).exists()
+        return MessagesRecipient.objects.filter(recipient=user, isRead=False, isNotified=False).exists()
 
     @database_sync_to_async
     def get_unread_messages(self, user):
-        return MessagesRecipient.objects.filter(
-            recipient=user, isRead=False
-        ).exists()
+        return MessagesRecipient.objects.filter(recipient=user, isRead=False).exists()
 
     @database_sync_to_async
     def set_notified(self, user):
-        messages = MessagesRecipient.objects.filter(
-            recipient=user, isRead=False, isNotified=False
-        )
+        messages = MessagesRecipient.objects.filter(recipient=user, isRead=False, isNotified=False)
         for message in messages:
             message.isNotified = True
             message.save()
@@ -303,13 +272,9 @@ class GameConsumer(AsyncWebsocketConsumer):
         self.token = self.scope["url_route"]["kwargs"]["token"]
         self.game_group_name = f"game_{self.token}"
 
-        await self.channel_layer.group_add(
-            self.game_group_name, self.channel_name
-        )
+        await self.channel_layer.group_add(self.game_group_name, self.channel_name)
 
-        await self.channel_layer.group_add(
-            self.game_group_name, self.channel_name
-        )
+        await self.channel_layer.group_add(self.game_group_name, self.channel_name)
         await self.accept()
 
         if len(self.users) < 2 and self.channel_name not in self.users:
@@ -318,9 +283,7 @@ class GameConsumer(AsyncWebsocketConsumer):
         else:
             role = "spectator"
 
-        await self.send(
-            text_data=json.dumps({"event": "assign_role", "role": role})
-        )
+        await self.send(text_data=json.dumps({"event": "assign_role", "role": role}))
 
         await self.channel_layer.group_send(
             self.game_group_name,
@@ -328,9 +291,7 @@ class GameConsumer(AsyncWebsocketConsumer):
         )
 
     async def disconnect(self, close_code):
-        await self.channel_layer.group_discard(
-            self.game_group_name, self.channel_name
-        )
+        await self.channel_layer.group_discard(self.game_group_name, self.channel_name)
         if self.channel_name in self.users:
             self.users.remove(self.channel_name)
 
@@ -347,9 +308,7 @@ class GameConsumer(AsyncWebsocketConsumer):
             player1_pos = data.get("player1_pos")
             player2_pos = data.get("player2_pos")
             ball_pos = data.get("ball_pos")
-            update_type = (
-                "host" if self.channel_name == self.users[0] else "client"
-            )
+            update_type = "host" if self.channel_name == self.users[0] else "client"
 
             await self.channel_layer.group_send(
                 self.game_group_name,

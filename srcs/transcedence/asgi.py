@@ -28,8 +28,6 @@ application = WhiteNoise(
 application = ProtocolTypeRouter(
     {
         "http": get_asgi_application(),
-        "websocket": AuthMiddlewareStack(
-            URLRouter(pingpong_routing.websocket_urlpatterns)
-        ),
+        "websocket": AuthMiddlewareStack(URLRouter(pingpong_routing.websocket_urlpatterns)),
     }
 )

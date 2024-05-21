@@ -15,9 +15,7 @@ class UppercaseValidator:
     def validate(self, password, user=None):
         """Validate whether the password contains at least 1 uppercase letter."""
         if not re.search("[A-Z]", password):
-            raise ValidationError(
-                "Password must contain at least 1 uppercase letter."
-            )
+            raise ValidationError("Password must contain at least 1 uppercase letter.")
 
 
 class LowercaseValidator:
@@ -26,9 +24,7 @@ class LowercaseValidator:
     def validate(self, password, user=None):
         """Validate whether the password contains at least 1 lowercase letter."""
         if not re.search("[a-z]", password):
-            raise ValidationError(
-                "Password must contain at least 1 lowercase letter."
-            )
+            raise ValidationError("Password must contain at least 1 lowercase letter.")
 
 
 class NumberValidator:
@@ -46,9 +42,7 @@ class SpecialCharacterValidator:
     def validate(self, password, user=None):
         """Validate whether the password contains at least 1 special character."""
         if not re.search("[^A-Za-z0-9]", password):
-            raise ValidationError(
-                "Password must contain at least 1 special character."
-            )
+            raise ValidationError("Password must contain at least 1 special character.")
 
 
 class RepeatableCharacterValidator:
@@ -58,13 +52,9 @@ class RepeatableCharacterValidator:
         """Validate whether the password contains any character more than 3 times."""
         counter_chars = Counter(password)
         if len(counter_chars) == 0:
-            raise ValidationError(
-                "Password must contain at least 1 character."
-            )
+            raise ValidationError("Password must contain at least 1 character.")
         if counter_chars.most_common(1)[0][1] > 3:
-            raise ValidationError(
-                "Password must not contain any character more than 3 times."
-            )
+            raise ValidationError("Password must not contain any character more than 3 times.")
 
 
 class EmailValidator:

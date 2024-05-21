@@ -25,12 +25,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = (
-    "django-insecure-h*ke$v)8x(u94_$l@--&e_s&+(gh47lg=g+n1b+lhwc2&+!$f&"
-)
-SECRET_KEY = (
-    "django-insecure-h*ke$v)8x(u94_$l@--&e_s&+(gh47lg=g+n1b+lhwc2&+!$f&"
-)
+SECRET_KEY = "django-insecure-h*ke$v)8x(u94_$l@--&e_s&+(gh47lg=g+n1b+lhwc2&+!$f&"
+SECRET_KEY = "django-insecure-h*ke$v)8x(u94_$l@--&e_s&+(gh47lg=g+n1b+lhwc2&+!$f&"
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -161,9 +157,7 @@ MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
 # Rest Framework
 REST_FRAMEWORK = {
-    "DEFAULT_AUTHENTICATION_CLASSES": (
-        "rest_framework_simplejwt.authentication.JWTAuthentication",
-    ),
+    "DEFAULT_AUTHENTICATION_CLASSES": ("rest_framework_simplejwt.authentication.JWTAuthentication",),
     "DEFAULT_RENDERER_CLASSES": [
         "rest_framework.renderers.JSONRenderer",
     ],

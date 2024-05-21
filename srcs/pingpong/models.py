@@ -30,17 +30,11 @@ class UserProfile(models.Model):
     isTwoStepEmailAuthEnabled = models.BooleanField(default=False)
     verificationEmailCode = models.CharField(max_length=6, blank=True)
     passwordResetToken = models.CharField(max_length=100, blank=True)
-    friendList = models.ManyToManyField(
-        "self", related_name="friendList", blank=True
-    )
+    friendList = models.ManyToManyField("self", related_name="friendList", blank=True)
     gamesWon = models.IntegerField(default=0)
     gamesPlayed = models.IntegerField(default=0)
-    picture = models.ImageField(
-        upload_to=userDirectoryPath, default="images/default.jpg"
-    )
-    pictureSmall = models.ImageField(
-        upload_to=userDirectoryPath, default="images/defaultSmall.jpg"
-    )
+    picture = models.ImageField(upload_to=userDirectoryPath, default="images/default.jpg")
+    pictureSmall = models.ImageField(upload_to=userDirectoryPath, default="images/defaultSmall.jpg")
     isOnline = models.BooleanField(default=False)
     lastOnline = models.DateTimeField(auto_now=True)
 
@@ -54,28 +48,20 @@ class FriendRequest(models.Model):
     accepted: A boolean field to check if the request is accepted.
     """
 
-    fromUser = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name="fromUser"
-    )
-    toUser = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name="toUser"
-    )
+    fromUser = models.ForeignKey(User, on_delete=models.CASCADE, related_name="fromUser")
+    toUser = models.ForeignKey(User, on_delete=models.CASCADE, related_name="toUser")
     accepted = models.BooleanField(default=False)
 
 
 class MessagesRecipient(models.Model):
-    recipient = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name="recipient"
-    )
+    recipient = models.ForeignKey(User, on_delete=models.CASCADE, related_name="recipient")
     message = models.ForeignKey("Message", on_delete=models.CASCADE, null=True)
     isRead = models.BooleanField(default=False)
     isNotified = models.BooleanField(default=False)
 
 
 class Message(models.Model):
-    sender = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name="sender"
-    )
+    sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name="sender")
     message = models.TextField()
     timestamp = models.DateTimeField(auto_now_add=True)
     messageRecipient = models.OneToOneField(
@@ -87,36 +73,22 @@ class Message(models.Model):
 
 
 class Chat(models.Model):
-    userOne = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name="userOne"
-    )
-    userTwo = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name="userTwo"
-    )
-    messages = models.ManyToManyField(
-        Message, related_name="messages", blank=True
-    )
+    userOne = models.ForeignKey(User, on_delete=models.CASCADE, related_name="userOne")
+    userTwo = models.ForeignKey(User, on_delete=models.CASCADE, related_name="userTwo")
+    messages = models.ManyToManyField(Message, related_name="messages", blank=True)
     token = models.CharField(max_length=100)
     timestamp = models.DateTimeField(auto_now=True)
 
 
 class Block(models.Model):
-    blocker = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name="blocker"
-    )
-    blocked = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name="blocked"
-    )
+    blocker = models.ForeignKey(User, on_delete=models.CASCADE, related_name="blocker")
+    blocked = models.ForeignKey(User, on_delete=models.CASCADE, related_name="blocked")
 
 
 class Game(models.Model):
     token = models.CharField(max_length=255, unique=True)
-    player_one = models.ForeignKey(
-        User, related_name="player_one_games", on_delete=models.CASCADE
-    )
-    player_two = models.ForeignKey(
-        User, related_name="player_two_games", on_delete=models.CASCADE
-    )
+    player_one = models.ForeignKey(User, related_name="player_one_games", on_delete=models.CASCADE)
+    player_two = models.ForeignKey(User, related_name="player_two_games", on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -126,13 +98,9 @@ class Game(models.Model):
 class GameData(models.Model):
     sender = models.ForeignKey(User, on_delete=models.CASCADE)
     data = models.TextField()
-    recipient = models.ForeignKey(
-        User, related_name="received_game_data", on_delete=models.CASCADE
-    )
+    recipient = models.ForeignKey(User, related_name="received_game_data", on_delete=models.CASCADE)
     timestamp = models.DateTimeField(auto_now_add=True)
-    game = models.ForeignKey(
-        Game, related_name="data", on_delete=models.CASCADE
-    )
+    game = models.ForeignKey(Game, related_name="data", on_delete=models.CASCADE)
 
     def __str__(self):
         f"GameData from {self.sender} to {self.recipient} at {self.timestamp}."
