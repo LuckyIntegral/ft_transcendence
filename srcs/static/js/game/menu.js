@@ -227,7 +227,7 @@ class Menu {
     }
 
     fetchOnlineFriends() {
-        var url = new URL("http://localhost:8080/api/friends/");
+        var url = new URL(`http://${window.location.host}/api/friends/`);
         return fetchWithToken(url, {
             method: "GET",
             headers: {

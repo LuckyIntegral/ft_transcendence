@@ -86,7 +86,7 @@ function loadLeaderboardTable(page = 0) {
 
     leaderboardTable.appendChild(table);
 
-    var url = new URL("http://localhost:8080/api/leaderboard/");
+    var url = new URL(`http://${window.location.host}/api/leaderboard/`);
     url.searchParams.append("page", page);
     url.searchParams.append("pageSize", PAGE_SIZE);
 
@@ -149,7 +149,7 @@ function loadLeaderboardTable(page = 0) {
 }
 
 function loadProfilePopup(username) {
-    var url = new URL("http://localhost:8080/api/user-details/");
+    var url = new URL(`http://${window.location.host}/api/user-details/`);
     url.searchParams.append("username", username);
     fetchWithToken(url, {
         method: "GET",
