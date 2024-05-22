@@ -309,13 +309,23 @@ class GameConsumer(AsyncWebsocketConsumer):
         if self.token in GameConsumer.playerAuth:
             if self.user.username in GameConsumer.playerAuth[self.token]:
                 GameConsumer.playerAuth[self.token][self.user.username] -= 1
-                print(self.user.username)
                 if await self.setDefaultLoss(self.user, self.token):
+                    try:
+                        lobby = await self.getLobbyData(self.token)
+                    except PongLobby.DoesNotExist:
+                        return
+                    winner = await self.getLobbyWinner(self.token)
                     await self.channel_layer.group_send(
                         self.game_group_name,
                         {
                             "type": "player_connected",
-                            "players_connected": 69,
+                            "players_connected": -42,
+                            "isExpired": lobby.isExpired,
+                            "isStarted": lobby.isStarted,
+                            "isFinished": lobby.isFinished,
+                            "hostScore": lobby.hostScore,
+                            "guestScore": lobby.guestScore,
+                            "winner": winner,
                         },
                     )
                 if GameConsumer.playerAuth[self.token][self.user.username] == 0:
@@ -373,10 +383,7 @@ class GameConsumer(AsyncWebsocketConsumer):
 
             print("--------------------", lobby.isExpired)
             print("--------------------", lobby.isStarted)
-            if (lobby.winner is not None):
-                winner = lobby.winner.username
-            else:
-                winner = "No one"
+            winner = await self.getLobbyWinner(self.token)
             await self.channel_layer.group_send(
                 self.game_group_name,
                 {
@@ -431,13 +438,13 @@ class GameConsumer(AsyncWebsocketConsumer):
         )
 
     async def player_connected(self, event):
-        players_connected = event["players_connected"]
-        isExpired = event["isExpired"]
-        isStarted = event["isStarted"]
-        isFinished = event["isFinished"]
-        hostScore = event["hostScore"]
-        guestScore = event["guestScore"]
-        winner = event["winner"]
+        players_connected = event.get("players_connected")
+        isExpired = event.get("isExpired")
+        isStarted = event.get("isStarted")
+        isFinished = event.get("isFinished")
+        hostScore = event.get("hostScore")
+        guestScore = event.get("guestScore")
+        winner = event.get("winner")
 
         await self.send(
             text_data=json.dumps(
@@ -514,3 +521,8 @@ class GameConsumer(AsyncWebsocketConsumer):
             lobby.save()
             return True
         return False
+
+    @database_sync_to_async
+    def getLobbyWinner(self, lobbyId):
+        lobby = PongLobby.objects.get(token=lobbyId)
+        return lobby.winner.username if lobby.winner else None
