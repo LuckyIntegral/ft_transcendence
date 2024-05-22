@@ -114,7 +114,6 @@ class Game {
 
     loop() {
         this.update();
-        console.log("Game loop");
         if (this.gameOver === false) {
             this.draw();
             window.requestAnimationFrame(this.loop.bind(this));
@@ -128,7 +127,6 @@ class Game {
 
             this.checkCollisions();
             this.checkGoals();
-            console.log("this.playerId:", this.playerId);
             if (this.playerId === "player1" || this.gameMode === GameModes.PLAYER_VS_AI) {
                 this.player1.move();
                 this.ball.move();
@@ -154,13 +152,11 @@ class Game {
 
     updatePositions(player1Pos, player2Pos, ballPos, updateType) {
         if (updateType === "host") {
-            console.log("Updating positions: Host");
             this.player1.x = player1Pos.x;
             this.player1.y = player1Pos.y;
             this.ball.x = ballPos.x;
             this.ball.y = ballPos.y;
         } else {
-            console.log("Updating positions: Client");
             this.player2.x = player2Pos.x;
             this.player2.y = player2Pos.y;
         }
@@ -210,7 +206,6 @@ class Game {
     }
 
     draw() {
-        console.log("Drawing game");
         this.clearCanvas();
         if (this.lobbyId !== undefined) {
             this.context.fillStyle = "WHITE";

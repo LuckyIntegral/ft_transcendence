@@ -309,61 +309,88 @@ class GameConsumer(AsyncWebsocketConsumer):
         if self.token in GameConsumer.playerAuth:
             if self.user.username in GameConsumer.playerAuth[self.token]:
                 GameConsumer.playerAuth[self.token][self.user.username] -= 1
-
-        await self.channel_layer.group_send(
-            self.game_group_name,
-            {
-                "type": "player_connected",
-                "players_connected": 2 if self.isBothUsersConnected() else -42,
-            },
-        )
+                print(self.user.username)
+                if await self.setDefaultLoss(self.user, self.token):
+                    await self.channel_layer.group_send(
+                        self.game_group_name,
+                        {
+                            "type": "player_connected",
+                            "players_connected": 69,
+                        },
+                    )
+                if GameConsumer.playerAuth[self.token][self.user.username] == 0:
+                    del GameConsumer.playerAuth[self.token][self.user.username]
+                if len(GameConsumer.playerAuth[self.token]) == 0:
+                    del GameConsumer.playerAuth[self.token]
 
     async def receive(self, text_data):
         data = json.loads(text_data)
         event = data.get("event")
         authHeader = data.get("auth_header")
         if authHeader:
-            print("Lol we are here")
             try:
                 self.jwtToken = JWTTokenValidator().validate(authHeader)
                 self.user = await self.get_user_from_token(self.jwtToken)
                 if not await self.userInLobby(self.user, self.token):
                     await self.close()
                     return
-                if self.token not in GameConsumer.playerAuth:
-                    GameConsumer.playerAuth[self.token] = {}
-                if self.user.username not in GameConsumer.playerAuth[self.token]:
-                    GameConsumer.playerAuth[self.token][self.user.username] = 0
-                GameConsumer.playerAuth[self.token][self.user.username] += 1
-                if await self.isUserHost(self.user, self.token):
-                    await self.send(
-                        text_data=json.dumps(
-                            {
-                                "event": "assign_role",
-                                "role": "player1",
-                            }
-                        )
-                    )
-                else:
-                    await self.send(
-                        text_data=json.dumps(
-                            {
-                                "event": "assign_role",
-                                "role": "player2",
-                            }
-                        )
-                    )
-                await self.channel_layer.group_send(
-                    self.game_group_name,
-                    {
-                        "type": "player_connected",
-                        "players_connected": 2 if self.isBothUsersConnected() else -42,
-                    },
-                )
-                return
             except Exception as e:
                 await self.close()
                 return
+            if self.token not in GameConsumer.playerAuth:
+                GameConsumer.playerAuth[self.token] = {}
+            if self.user.username not in GameConsumer.playerAuth[self.token]:
+                GameConsumer.playerAuth[self.token][self.user.username] = 0
+            GameConsumer.playerAuth[self.token][self.user.username] += 1
+            if await self.isUserHost(self.user, self.token):
+                await self.send(
+                    text_data=json.dumps(
+                        {
+                            "event": "assign_role",
+                            "role": "player1",
+                        }
+                    )
+                )
+            else:
+                await self.send(
+                    text_data=json.dumps(
+                        {
+                            "event": "assign_role",
+                            "role": "player2",
+                        }
+                    )
+                )
+
+            if self.isBothUsersConnected():
+                await self.setGameStarted(self.token)
+            try:
+                lobby = await self.getLobbyData(self.token)
+                print("Lobby exists in try")
+            except PongLobby.DoesNotExist:
+                print("Lobby does not exist")
+                await self.close()
+                return
+
+            print("--------------------", lobby.isExpired)
+            print("--------------------", lobby.isStarted)
+            if (lobby.winner is not None):
+                winner = lobby.winner.username
+            else:
+                winner = "No one"
+            await self.channel_layer.group_send(
+                self.game_group_name,
+                {
+                    "type": "player_connected",
+                    "players_connected": 2 if self.isBothUsersConnected() else -42,
+                    "isExpired": lobby.isExpired,
+                    "isStarted": lobby.isStarted,
+                    "isFinished": lobby.isFinished,
+                    "hostScore": lobby.hostScore,
+                    "guestScore": lobby.guestScore,
+                    "winner": winner,
+                },
+            )
+            return
 
         if event == "move":
             player1_pos = data.get("player1_pos")
@@ -405,12 +432,24 @@ class GameConsumer(AsyncWebsocketConsumer):
 
     async def player_connected(self, event):
         players_connected = event["players_connected"]
+        isExpired = event["isExpired"]
+        isStarted = event["isStarted"]
+        isFinished = event["isFinished"]
+        hostScore = event["hostScore"]
+        guestScore = event["guestScore"]
+        winner = event["winner"]
 
         await self.send(
             text_data=json.dumps(
                 {
                     "event": "player_connected",
                     "players_connected": players_connected,
+                    "isExpired": isExpired,
+                    "isStarted": isStarted,
+                    "isFinished": isFinished,
+                    "hostScore": hostScore,
+                    "guestScore": guestScore,
+                    "winner": winner,
                 }
             )
         )
@@ -441,3 +480,37 @@ class GameConsumer(AsyncWebsocketConsumer):
     @database_sync_to_async
     def isUserHost(self, user, lobbyId):
         return PongLobby.objects.filter(host=user, token=lobbyId).exists()
+
+    @database_sync_to_async
+    def getLobbyData(self, lobbyId):
+        lobby = PongLobby.objects.get(token=lobbyId)
+        return lobby
+
+    @database_sync_to_async
+    def setGameStarted(self, lobbyId):
+        try:
+            lobby = PongLobby.objects.get(token=lobbyId)
+        except PongLobby.DoesNotExist:
+            return
+        lobby.isStarted = True
+        lobby.save()
+
+    @database_sync_to_async
+    def setDefaultLoss(self, user, lobbyId):
+        try:
+            lobby = PongLobby.objects.get(token=lobbyId)
+        except PongLobby.DoesNotExist:
+            return False
+        if lobby.isStarted and not lobby.isFinished:
+            lobby.isFinished = True
+            if lobby.host == user:
+                lobby.hostScore = 0
+                lobby.guestScore = 5
+                lobby.winner = lobby.guest
+            else:
+                lobby.hostScore = 5
+                lobby.guestScore = 0
+                lobby.winner = lobby.host
+            lobby.save()
+            return True
+        return False

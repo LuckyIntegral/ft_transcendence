@@ -25,10 +25,22 @@ class Lobby {
 
             if (data.event === "player_connected") {
                 this.playersConnected = data.players_connected;
-                if (this.playersConnected === 2) {
+                if (data.isFinished === true || this.playersConnected === 69) {
+                    console.log("Game is finished. Displaying end game message.");
+                    this.game.drawEndGameMessage(`GAME OVER! ${data.winner} WINS!`);
+                    window.removeEventListener("keydown", this.boundKeyPress);
+                    window.removeEventListener("keyup", this.boundKeyPress);
+                    this.gameOver = true;
+                } else if (data.isExpired === true) {
+                    window.removeEventListener("keydown", this.boundKeyPress);
+                    window.removeEventListener("keyup", this.boundKeyPress);
+                    console.log("Game has expired. Displaying end game message.");
+                    this.gameOver = true;
+                } else if (this.playersConnected === 2) {
                     console.log("Both players connected. Starting game.");
                     this.game.startCountdown();
                 }
+                console.log(`Players connected: ${this.playersConnected}`);
             }
 
             if (data.event === "game_move") {

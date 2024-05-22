@@ -1299,20 +1299,17 @@ class PongLobbyView(APIView):
 
     def post(self, request, format=None):
         auth_header = request.headers.get("Authorization")
-        print(f"Authorization Header: {auth_header}")
         try:
             token = JWTTokenValidator().validate(auth_header)
         except ValidationError as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         try:
             userHost = getUserFromToken(token)
-            print(f"Host Username: {userHost}")
         except ValidationError as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         usernameGuest = request.data.get("username")
         try:
             userGuest = User.objects.get(username=usernameGuest)
-            print(f"Guest Username: {usernameGuest}")
         except User.DoesNotExist as e:
             return Response(
                 {"error": "User not found"},
@@ -1322,6 +1319,74 @@ class PongLobbyView(APIView):
         while PongLobby.objects.filter(token=lobbyId).exists():
             lobbyId = generateToken()
         PongLobby.objects.create(token=lobbyId, host=userHost, guest=userGuest)
-        print(f"Lobby ID: {lobbyId}")
         data = {"token": lobbyId}
         return Response(data, status=status.HTTP_201_CREATED)
+
+    # def get(self, request, format=None):
+    #     auth_header = request.headers.get("Authorization")
+    #     try:
+    #         token = JWTTokenValidator().validate(auth_header)
+    #     except ValidationError as e:
+    #         return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+    #     try:
+    #         userHost = getUserFromToken(token)
+    #     except ValidationError as e:
+    #         return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+    #     lobbyToken = request.query_params.get("token")
+    #     if not lobbyToken:
+    #         return Response(
+    #             {"error": "Please provide a token"},
+    #             status=status.HTTP_400_BAD_REQUEST,
+    #         )
+    #     try:
+    #         lobby = PongLobby.objects.get(token=lobbyToken)
+    #     except PongLobby.DoesNotExist:
+    #         return Response(
+    #             {"error": "Lobby not found"},
+    #             status=status.HTTP_404_NOT_FOUND,
+    #         )
+    #     data = {
+    #         "host": lobby.host.username,
+    #         "guest": lobby.guest.username,
+    #         "isStarted": lobby.isStarted,
+    #         "isFinished": lobby.isFinished,
+    #         "isExpired": (lobby.created < timezone.now() - timedelta(minutes=5)) if not lobby.isStarted else False,
+    #     }
+    #     return Response(data, status=status.HTTP_200_OK)
+
+    # def put(self, request, format=None):
+    #     auth_header = request.headers.get("Authorization")
+    #     try:
+    #         token = JWTTokenValidator().validate(auth_header)
+    #     except ValidationError as e:
+    #         return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+    #     try:
+    #         userHost = getUserFromToken(token)
+    #     except ValidationError as e:
+    #         return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+    #     lobbyToken = request.data.get("token")
+    #     if not lobbyToken:
+    #         return Response(
+    #             {"error": "Please provide a token"},
+    #             status=status.HTTP_400_BAD_REQUEST,
+    #         )
+    #     try:
+    #         lobby = PongLobby.objects.get(token=lobbyToken)
+    #     except PongLobby.DoesNotExist:
+    #         return Response(
+    #             {"error": "Lobby not found"},
+    #             status=status.HTTP_404_NOT_FOUND,
+    #         )
+    #     if lobby.userHost != userHost:
+    #         return Response(
+    #             {"error": "You are not the host of this lobby"},
+    #             status=status.HTTP_400_BAD_REQUEST,
+    #         )
+    #     event = request.data.get("event")
+    #     if not event:
+    #         return Response(
+    #             {"error": "Please provide an event"},
+    #             status=status.HTTP_400_BAD_REQUEST,
+    #         )
+    #     if event == "goal":
+    #         score
