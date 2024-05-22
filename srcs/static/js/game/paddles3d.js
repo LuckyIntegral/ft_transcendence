@@ -33,8 +33,6 @@ class Paddle3D {
 		return false
 	}
 
-
-
 	move(dt, ball) {
 		if (!this.outOfBounds(this.position.x + this.velocity.x * dt, 
 			GameConstants3D.PADL_H_RANGE, -GameConstants3D.PADL_H_RANGE))

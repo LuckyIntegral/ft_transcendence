@@ -178,7 +178,6 @@ class Game3D {
 			this.assetsLoaded = true;
 			this.showLoadingScreen = false;
 			this.createGameElements(gameMode);
-			this.start()
 		}.bind(this);
 		
 		loadingManager.onProgress = function(url, itemsLoaded, itemsTotal) {
@@ -203,19 +202,19 @@ class Game3D {
 		this.paddle1 = new Paddle3D('player1', this.paddle_mesh1);
 		this.paddle2 = new Paddle3D('player2', this.paddle_mesh2);
 		this.ball = new Ball3D(this.scene, [this.ping, this.pong]);
-
+		this.gameMode = gameMode
+		this.gameOver = false
 		this.player1 = new Player3D('player1', this.paddle1)
 		if (gameMode === GameModes.PLAYER_VS_AI) {
 			this.playerId = 'player1';
 			this.player2 = new AI3D(this.paddle2);
+			this.start();
 		}
 		else {
 			this.player2 = new Player3D('player2', this.paddle2);
 			this.lobby.join(this.lobbyId, this);
 			this.displayWaitingMessage();
 		}
-		this.gameOver = false
-		this.gameMode = gameMode
 	}
 
 	initGameEngine (gameMode) {
@@ -318,11 +317,14 @@ class Game3D {
 		this.checkGoals();
 
 		if (this.playerId === "player1" || this.gameMode === GameModes.PLAYER_VS_AI) {
+			console.log('this.playerId: ', this.playerId)
+			console.log('this.gameMode: ', this.gameMode)
 			this.ball.update(dt, [this.paddle1, this.paddle2]);
 			this.player1.update(dt, this.keystate, this.ball);
 			if (this.gameMode === GameModes.PLAYER_VS_AI) {
 				this.player2.update(this.ball, dt);
-			} else {
+			} 
+			else {
 				this.lobby.sendGameData({
 					event: "game_move",
 					player1_pos: { x: this.player1.x, y: this.player1.y },

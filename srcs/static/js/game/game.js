@@ -33,7 +33,8 @@ class Game {
         if (gameMode === GameModes.PLAYER_VS_AI) {
             this.playerId = "player1";
             this.start();
-        } else {
+        } 
+		else {
             this.lobby.join(this.lobbyId, this);
             this.displayWaitingMessage();
         }
