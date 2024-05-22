@@ -9,6 +9,25 @@ class Game {
         this.isGameStarted = false;
     }
 
+    updateCountdown(countdown) {
+        this.clearCanvas();
+        this.context.fillStyle = "WHITE";
+        this.context.font = "40px Arial";
+        this.context.textAlign = "center";
+        this.context.fillText(`Game starting in ${countdown > 0 ? countdown : 'now'}`, GameConstants.GAME_WIDTH / 2, GameConstants.GAME_HEIGHT / 2);
+        if (countdown > 0) {
+            setTimeout(() => {
+                this.updateCountdown(countdown - 1);
+            }, 1000);
+        } else {
+            this.start();
+        }
+    }
+
+    startCountdown() {
+        this.updateCountdown(3);
+    }
+
     initGameElements(gameMode) {
         this.ball = new Ball();
         this.player1 = new Player(PlayerPosition.PLAYER1);

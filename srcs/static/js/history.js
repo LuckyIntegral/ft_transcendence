@@ -5,7 +5,7 @@ document.addEventListener("DOMContentLoaded", function () {
             loadProfilePage();
         },
         pong: function () {
-            if (query_params === null) {
+            if (query_params === null || query_params === undefined) {
                 let menu = new Menu();
                 menu.start();
             } else {

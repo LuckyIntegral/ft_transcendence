@@ -27,7 +27,7 @@ class Lobby {
                 this.playersConnected = data.players_connected;
                 if (this.playersConnected === 2) {
                     console.log("Both players connected. Starting game.");
-                    this.game.start();
+                    this.game.startCountdown();
                 }
             }
 
