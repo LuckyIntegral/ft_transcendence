@@ -14,14 +14,13 @@ class Paddle3D {
 	resetPosition (player) {
 		if (player === 'player1'){
 			this.paddlemesh.position.x = 0.0;
-			this.paddlemesh.position.y = 0.2;
+			this.paddlemesh.position.y = GameConstants3D.PADDLE_YPOS;
 			this.paddlemesh.position.z = GameConstants3D.TABLE_MAX_DEPTH;
 		}
 		else {
 			this.paddlemesh.position.x = 0.0;
-			this.paddlemesh.position.y = 0.2;
+			this.paddlemesh.position.y = GameConstants3D.PADDLE_YPOS;
 			this.paddlemesh.position.z = GameConstants3D.TABLE_MIN_DEPTH;
-			this.paddlemesh.rotation.y = Math.PI;
 		}
 		this.position = this.paddlemesh.position;
 		// console.log('Paddle3D: player, resetPosition: position:', player, this.position);
@@ -34,28 +33,37 @@ class Paddle3D {
 		return false
 	}
 
-	move(dt) {
+
+
+	move(dt, ball) {
 		if (!this.outOfBounds(this.position.x + this.velocity.x * dt, 
 			GameConstants3D.PADL_H_RANGE, -GameConstants3D.PADL_H_RANGE))
 			this.position.x += this.velocity.x * dt;
-		if (!this.outOfBounds(this.position.y + this.velocity.y * dt, 
-			GameConstants3D.PADL_V_RANGE, 0.0))
-			this.position.y += this.velocity.y * dt;
-		this.position.z += this.velocity.z * dt;
+		let ball_dist = Math.abs(ball.position.z - this.position.z)
+		let ball_dist_aspect = ball_dist / GameConstants3D.PADDLE_DIST_TO_BALL;
+		if (ball_dist <  GameConstants3D.PADDLE_DIST_TO_BALL){
+			this.position.y = GameConstants3D.PADDLE_YPOS * ball_dist_aspect + 
+							(1 - ball_dist_aspect) * ball.position.y;
+		}
 		this.paddlemesh.position.x = this.position.x;
 		this.paddlemesh.position.y = this.position.y;
 		this.paddlemesh.position.z = this.position.z;
+		if (Math.abs(this.paddlemesh.rotation.y) >= 0.001)
+			this.paddlemesh.rotation.y += -Math.sign(this.paddlemesh.rotation.y) * dt;
+		else
+			this.paddlemesh.rotation.y = 0.0;
+
 	}
 
 	update_controls(keystate) {
-		(keystate['w'] || keystate['W'])? this.velocity.y = this.speed : this.velocity.y = 0;
-		(keystate['s'] || keystate['S'])? this.velocity.y += -this.speed : this.velocity.y += 0;
+		// (keystate['w'] || keystate['W'])? this.velocity.y = this.speed : this.velocity.y = 0;
+		// (keystate['s'] || keystate['S'])? this.velocity.y += -this.speed : this.velocity.y += 0;
 		(keystate['a'] || keystate['A'])? this.velocity.x = -this.speed : this.velocity.x = 0;
 		(keystate['d'] || keystate['D'])? this.velocity.x += this.speed : this.velocity.x += 0;
 	}
 
-	update(dt, keystate) {
+	update(dt, keystate, ball) {
 		this.update_controls(keystate);
-		this.move(dt);
+		this.move(dt, ball);
 	}
 }

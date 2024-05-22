@@ -1,5 +1,6 @@
 class Ball3D {
-  constructor (scene) {
+  constructor (scene, sounds) {
+	this.sounds = sounds;
 	this.ball_geomethry = new THREE.SphereGeometry(0.03, 32, 32)	
 	this.ball_material = new THREE.MeshStandardMaterial({ 
 		color: 0xffff00, 
@@ -19,11 +20,11 @@ class Ball3D {
 	this.ball_mesh.position.y = this.ball_height
 	this.ball_mesh.position.z = 0 
 	this.position = this.ball_mesh.position
-    this.speed = GameConstants3D.BALL_SPEED
+    this.speed = GameConstants3D.BALL_Y_SPEED
 	this.velocity = getRandomVectorDirection()
-	this.velocity.x *= this.speed
-	this.velocity.y *= this.speed	
-	this.velocity.z *= this.speed
+	this.velocity.x *= GameConstants3D.BALL_Y_SPEED / this.velocity.z 
+	this.velocity.y *= 0.0	
+	this.velocity.z = GameConstants3D.BALL_Y_SPEED
 	this.ballOutsideTable = false;
   }
 
@@ -41,8 +42,16 @@ class Ball3D {
   }
 
   bounceWalls() {
-	if (this.position.x > 1.0 || this.position.x < -1.0) 
+	if (this.position.x > 1.0) 
+	{
+		this.position.x = 1.0;
 		this.velocity.x *= -1.0; 
+	}
+	if (this.position.x < -1.0) 
+	{
+		this.position.x = -1.0;
+		this.velocity.x *= -1.0; 
+	}
   }
 
   bounceGround(dt) {
@@ -52,7 +61,7 @@ class Ball3D {
 	{
 		this.position.y = GameConstants3D.BALL_RADIUS;
 		this.velocity.y = this.gravity * Math.sqrt(2 / this.gravity * this.ball_height);
-		//playSound();
+		this.sounds[0].play();	
 	}
 	else 
 	{
@@ -60,31 +69,37 @@ class Ball3D {
 	}
   }
 
+  calculateBallPosition(paddle) {
+	let ball_dist = Math.abs(this.position.z - paddle.position.z)
+	let time_to_reach = ball_dist / GameConstants3D.BALL_Y_SPEED;
+	let ball_x = this.position.x + this.velocity.x * time_to_reach;
+	let ball_x_diff = Math.abs(ball_x - paddle.position.x);
+	return (ball_x_diff / (GameConstants3D.PADDLE_WIDTH / 2));
+  }
+
   bouncePaddle(paddle){
-		if (this.position.x < paddle.position.x + (GameConstants3D.PADDLE_WIDTH / 2) &&
-			this.position.x > paddle.position.x - (GameConstants3D.PADDLE_WIDTH / 2))
+		if (this.position.x < paddle.position.x + ((GameConstants3D.PADDLE_WIDTH / 2) * GameConstants3D.PADL_SCALE) &&
+			this.position.x > paddle.position.x - ((GameConstants3D.PADDLE_WIDTH / 2) * GameConstants3D.PADL_SCALE))
 		{
 			if (!this.ballOutsideTable)
 			{
-				if ((this.velocity.z < 0.0) && (paddle.position.z < 0.0) && 
-					(this.position.z - GameConstants3D.BALL_RADIUS < paddle.position.z))
+				// ball reached player side
+				if (Math.abs(this.position.z - paddle.position.z) < GameConstants3D.BALL_RADIUS) 
 				{
-					this.velocity.z *= -1.0;
-				} 
-				if ((this.velocity.z > 0.0) && (paddle.position.z > 0.0) && 
-					(this.position.z + GameConstants3D.BALL_RADIUS > paddle.position.z))
-				{
-					this.velocity.z *= -1.0;
+					let offset_bias = (this.position.x  - paddle.position.x) / 
+										(GameConstants3D.PADDLE_WIDTH / 2 * GameConstants3D.PADL_SCALE);
+					this.velocity.x = Math.sign(offset_bias) * 
+										clamp(GameConstants3D.BALL_Y_SPEED / Math.cos(0.5 * Math.PI * offset_bias), 
+										-4 * GameConstants3D.BALL_Y_SPEED,
+										 4 * GameConstants3D.BALL_Y_SPEED);
+					let dir = paddle.position.z < 0.0 ? 1.0 : -1.0;
+					this.velocity.z = dir * GameConstants3D.BALL_Y_SPEED;
+
+					let baspect = this.calculateBallPosition(paddle);
+					paddle.paddlemesh.rotation.y = -Math.sign(offset_bias) *
+												Math.PI / 4 * baspect * (1 - offset_bias);
+					this.sounds[1].play();
 				}
-				// if ((paddle.position.z < 0.0) && (this.position.z < paddle.position.z) || 
-				// 	(paddle.position.z > 0.0) && (this.position.z > paddle.position.z))
-				// {
-				// 	let offset_bias = (this.positiont  - paddle.position.x) / 
-				// 						(GameConstants3D.PADDLE_WIDTH / 2);
-				// 	this.velocity.x = Math.sin(0.5 * Math.PI * offset_bias) * this.speed;
-				// 	let dir = paddle.position.z < 0.0 ? 1.0 : -1.0;
-				// 	this.velocity.z = dir * Math.cos(0.5 * Math.PI * offset_bias) * this.speed;
-				// }
 			}
 		}
 		else {

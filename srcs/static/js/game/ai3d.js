@@ -58,8 +58,20 @@ class AI3D {
             newX = GameConstants3D.TABLE_HALF_WIDTH;
         }
         this.position.x = ball.position.x; //newX;
-		this.position.y = 0.2;
-		this.position.z = GameConstants3D.TABLE_MIN_DEPTH;
+		// vertical movement
+		let ball_dist = Math.abs(ball.position.z - this.position.z)
+		let ball_dist_aspect = ball_dist / GameConstants3D.PADDLE_DIST_TO_BALL;
+		if (ball_dist <  GameConstants3D.PADDLE_DIST_TO_BALL){
+			this.position.y = GameConstants3D.PADDLE_YPOS * ball_dist_aspect + 
+							(1 - ball_dist_aspect) * ball.position.y;
+		}
+		this.paddle.paddlemesh.position.x = this.position.x;
+		this.paddle.paddlemesh.position.y = this.position.y;
+		this.paddle.paddlemesh.position.z = this.position.z;
+		if (Math.abs(this.paddle.paddlemesh.rotation.y) >= 0.001)
+			this.paddle.paddlemesh.rotation.y += -Math.sign(this.paddle.paddlemesh.rotation.y) * dt;
+		else
+			this.paddle.paddlemesh.rotation.y = 0.0;
     }
 
     calculateOptimalX(ball) {

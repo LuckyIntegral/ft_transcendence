@@ -5,9 +5,10 @@ class Game3D {
 		this.lobby = new Lobby()
 		this.playerId = null
 		this.lastUpdateTime = 0
-		// this.buffer = null
+		this.buffer = null
 		this.keystate = {'w': false, 's': false, 'a': false, 'd': false, 'W': false, 'S': false, 'A': false, 'D': false}
 		this.isGameStarted = false
+		this.gameOverTimer = 0.0
 		this.updateInterval = 1000 / GameConstants.FPS
 	}
 
@@ -43,9 +44,10 @@ class Game3D {
 		this.paddle_mesh2 = null;
 
 		//Audio
-		// this.linstener = new THREE.AudioListener();
-		// this.camera.add(listener);
-		// this.sound = new THREE.Audio(listener);
+		this.listener = new THREE.AudioListener();
+		this.camera.add(this.listener);
+		this.ping = new THREE.Audio(this.listener);
+		this.pong = new THREE.Audio(this.listener);
 
 		// this.gameOver = false;
 		this.assetsLoaded = false;
@@ -53,9 +55,6 @@ class Game3D {
 		this.loadingProgress = 0;
 
 		this.loadAssets(gameMode);
-
-		// this.boundReset = this.startNewGame.bind(this);
-		// this.startNewGame();
 	}
 
 	// Create the lights for the scene
@@ -132,9 +131,11 @@ class Game3D {
 				});
 				this.paddle_mesh1 = gltf.scene;
 				this.paddle_mesh1.castShadow = true;
+				this.paddle_mesh1.scale.set(GameConstants3D.PADL_SCALE, GameConstants3D.PADL_SCALE, GameConstants3D.PADL_SCALE);
 				this.scene.add(this.paddle_mesh1);
 				this.paddle_mesh2 = this.paddle_mesh1.clone();
 				this.paddle_mesh2.castShadow = true;
+				this.paddle_mesh2.scale.set(GameConstants3D.PADL_SCALE, GameConstants3D.PADL_SCALE, GameConstants3D.PADL_SCALE);
 				this.scene.add(this.paddle_mesh2);
 			}.bind(this),
 			function (xhr){
@@ -146,17 +147,22 @@ class Game3D {
 		);
 	}
 
-	// loadSounds () {
-	// 	// Load Sound
-	// 	var audioLoader = new THREE.AudioLoader(loadingManager);
-
-	// 	audioLoader.load('static/assets3d/sounds/ping.mp3', 
-	// 	function(this.buffer){
-	// 		this.sound.setBuffer(this.buffer);
-	// 		this.sound.setLoop(false);
-	// 		this.sound.setVolume(0.5);
-	// 	}.bind(this));
-	// }
+	loadSounds (loadingManager) { // 	// Load Sound
+		var audioLoader = new THREE.AudioLoader(loadingManager);
+		audioLoader.load('static/assets3d/sounds/ping.mp3', 
+		function(buffer){
+			this.ping.setBuffer(buffer);
+			this.ping.setLoop(false);
+			this.ping.setVolume(0.3);
+		}.bind(this));
+		audioLoader.load('static/assets3d/sounds/pong.mp3', 
+		function(buffer){
+			this.pong.setBuffer(buffer);
+			this.pong.setLoop(false);
+			this.pong.setVolume(0.6);
+		}.bind(this));
+	
+	}
 
 	loadAssets (gameMode) {
 		var loadingManager = new THREE.LoadingManager();
@@ -186,7 +192,7 @@ class Game3D {
 
 		this.loadPaddles(loader);
 
-		// this.loadSounds();
+		this.loadSounds(loadingManager);
 	}
 
 	createGameElements (gameMode) {
@@ -196,7 +202,7 @@ class Game3D {
 		}
 		this.paddle1 = new Paddle3D('player1', this.paddle_mesh1);
 		this.paddle2 = new Paddle3D('player2', this.paddle_mesh2);
-		this.ball = new Ball3D(this.scene);
+		this.ball = new Ball3D(this.scene, [this.ping, this.pong]);
 
 		this.player1 = new Player3D('player1', this.paddle1)
 		if (gameMode === GameModes.PLAYER_VS_AI) {
@@ -309,18 +315,11 @@ class Game3D {
 		var dt = (now - this.lastUpdateTime) / 1000.0
 		this.lastUpdateTime = now
 
-		// this.updatePlayers(dt)
-		// this.ball.update(dt, [this.paddle1, this.paddle2])
-
-		// if (this.paddle1)
-		// 	this.paddle1.update(dt, this.keystate);
-		// if (this.paddle2)
-		// 	this.paddle2.update(dt, this.keystate);
 		this.checkGoals();
 
 		if (this.playerId === "player1" || this.gameMode === GameModes.PLAYER_VS_AI) {
-			this.player1.update(dt, this.keystate);
 			this.ball.update(dt, [this.paddle1, this.paddle2]);
+			this.player1.update(dt, this.keystate, this.ball);
 			if (this.gameMode === GameModes.PLAYER_VS_AI) {
 				this.player2.update(this.ball, dt);
 			} else {
@@ -332,7 +331,7 @@ class Game3D {
 			}
 		} 
 		else if (this.playerId === "player2") {
-			this.player2.update(dt, this.keystate);
+			this.player2.update(dt, this.keystate, this.ball);
 			this.lobby.sendGameData({
 				event: "game_move",
 				player2_pos: { x: this.player2.x, y: this.player2.y },
@@ -363,13 +362,11 @@ class Game3D {
   }
 
   checkGoals () {
-    if (this.ball.position.z < 
-	GameConstants3D.TABLE_MIN_DEPTH) {
+    if (this.ball.position.z < GameConstants3D.GAME_OVER_TIME * GameConstants3D.TABLE_MIN_DEPTH) {
     	this.player1.scoreGoal()
     	this.goal()
     }
-	else if (this.ball.position.z >
- 	GameConstants3D.TABLE_MAX_DEPTH) {
+	else if (this.ball.position.z > GameConstants3D.GAME_OVER_TIME * GameConstants3D.TABLE_MAX_DEPTH) {
     	this.player2.scoreGoal()
     	this.goal()
     }
@@ -379,8 +376,8 @@ class Game3D {
     this.clearCanvas()
     if (this.lobbyId !== undefined) {
 		this.ctx.fillStyle = 'WHITE'
-		this.ctx.font = '20px Arial'
-		this.ctx.fillText(`Lobby ID: ${this.lobbyId}`, 10, 20)
+		this.ctx.font = '10px Arial'
+		this.ctx.fillText(`Lobby ID: ${this.lobbyId}`, 40, 12)
     }
     this.drawScores()
   }
@@ -391,16 +388,16 @@ class Game3D {
 
   drawScores () {
   	this.ctx.fillStyle = 'WHITE'
-    this.ctx.font = '75px Arial'
+    this.ctx.font = '20px Arial'
     this.ctx.fillText(
-    	this.player1.score,
-    	GameConstants.GAME_WIDTH / 4,
-    	GameConstants.GAME_HEIGHT / 5
+    	'Player: ' + this.player1.score,
+    	GameConstants.GAME_WIDTH / 6,
+    	GameConstants.GAME_HEIGHT - 35 
     )
     this.ctx.fillText(
-    	this.player2.score,
-    	(3 * GameConstants.GAME_WIDTH) / 4,
-    	GameConstants.GAME_HEIGHT / 5
+    	'AI: ' + this.player2.score,
+    	(GameConstants.GAME_WIDTH - GameConstants.GAME_WIDTH / 6),
+    	GameConstants.GAME_HEIGHT - 35 
     )
   }
 
@@ -410,7 +407,7 @@ class Game3D {
     this.player2.resetScore()
     this.player2.resetPaddles()
     this.ball.resetPosition()
-    // this.canvas_ui.removeEventListener('click', this.boundReset)
+    this.canvas_three.removeEventListener('click', this.boundReset)
     this.gameOver = false
   }
 
@@ -433,7 +430,7 @@ class Game3D {
 
     window.removeEventListener('keydown', this.boundKeyPress)
     window.removeEventListener('keyup', this.boundKeyPress)
-    this.canvas_ui.addEventListener('click', this.boundReset)
+    this.canvas_three.addEventListener('click', this.boundReset)
     this.gameOver = true
   }
 
@@ -441,12 +438,13 @@ class Game3D {
     this.ctx.textBaseline = 'middle'
     this.ctx.textAlign = 'center'
     this.ctx.fillStyle = 'WHITE'
-    this.ctx.font = '40px Arial'
+    this.ctx.font = '70px Arial'
     this.ctx.fillText(
       message,
       GameConstants.GAME_WIDTH / 2,
       GameConstants.GAME_HEIGHT / 2 - 50
     )
+    this.ctx.font = '30px Arial'
     this.ctx.fillText(
       'Click to play again',
       GameConstants.GAME_WIDTH / 2,
