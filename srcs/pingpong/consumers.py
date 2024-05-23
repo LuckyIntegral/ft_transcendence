@@ -12,6 +12,7 @@ from pingpong.models import (
     Block,
     FriendRequest,
     PongLobby,
+    TournamentLobby,
 )
 from django.contrib.auth.models import User
 from django.db.models import Q
@@ -492,7 +493,11 @@ class GameConsumer(AsyncWebsocketConsumer):
     @database_sync_to_async
     def getLobbyData(self, lobbyId):
         lobby = PongLobby.objects.get(token=lobbyId)
-        if (not lobby.isStarted and lobby.created < timezone.now() - timezone.timedelta(minutes=5) and not lobby.isExpired):
+        if (
+            not lobby.isStarted
+            and lobby.created < timezone.now() - timezone.timedelta(minutes=5)
+            and not lobby.isExpired
+        ):
             lobby.isExpired = True
             lobby.save()
         return lobby
@@ -540,15 +545,94 @@ class GameConsumer(AsyncWebsocketConsumer):
         lobby.isFinished = True
         lobby.hostScore = data["hostScore"]
         lobby.guestScore = data["guestScore"]
-        lobby.winner = lobby.host if data["hostScore"] > data["guestScore"] else lobby.guest
+        lobby.winner = (
+            lobby.host if data["hostScore"] > data["guestScore"] else lobby.guest
+        )
         lobby.save()
 
+
 class TournamentConsumer(AsyncWebsocketConsumer):
-    async def connect():
+    players_auth = {}
+    game_ids = {}
+
+    async def connect(self):
+        self.token = self.scope["url_route"]["kwargs"]["token"]
+        self.game_group_name = f"game_{self.token}"
+
+        await self.channel_layer.group_add(self.game_group_name, self.channel_name)
+
+        await self.accept()
+
+    async def disconnect(self):
+        await self.channel_layer.group_discard(self.game_group_name, self.channel_name)
+        TournamentConsumer.players_auth[self.token][self.user.username] -= 1
+        if TournamentConsumer.players_auth[self.token][self.user.username] == 0:
+            del TournamentConsumer.players_auth[self.token][self.user.username]
+            if self.user.username in TournamentConsumer.game_ids[self.token]:
+                index = TournamentConsumer.game_ids[self.token].index(
+                    self.user.username
+                )
+                TournamentConsumer.game_ids[self.token][index] = ""
+
+    async def receive(self, text_data):
+        data = json.loads(text_data)
+        event = data.get("event")
+        auth_header = data.get("auth_header")
+        if auth_header:
+            try:
+                self.jwt_token = JWTTokenValidator().validate(auth_header)
+                self.user = await self.get_user_from_token(self.jwt_token)
+                if not await self.user_in_tournament(self.user, self.token):
+                    await self.close()
+                    return
+            except Exception:
+                await self.close()
+                return
+
+            # JOIN LOGIC
+            if self.token not in TournamentConsumer.players_auth:
+                TournamentConsumer.players_auth[self.token] = {}
+                TournamentConsumer.game_ids[self.token] = ["", "", "", ""]
+            if self.user.username not in TournamentConsumer.players_auth[self.token]:
+                TournamentConsumer.players_auth[self.token][self.user.username] = 0
+                if not self.user.username in TournamentConsumer.game_ids[self.token]:
+                    for i in range(4):
+                        if TournamentConsumer.game_ids[self.token][i] == "":
+                            TournamentConsumer.game_ids[self.token][i] = self.user.username
+            TournamentConsumer.players_auth[self.token][self.user.username] += 1
+            index = TournamentConsumer.game_ids[self.token].index(self.user.username)
+            await self.send(
+                text_data=json.dumps(
+                    {
+                        "event": "assign_role",
+                        "role": f"player{index + 1}",
+                    }
+                )
+            )
+            # START LOGIC
+            if self.token not in TournamentConsumer.players_auth:
+                return
+            if len(TournamentConsumer.players_auth[self.token]) == 4:
+                pass
+        #TOURNAMENT PROCESS LOGIC
         pass
 
-    async def receive():
-        pass
+    @database_sync_to_async
+    def get_user_from_token(self, token):
+        decoded_token = token_backend.decode(token)
+        user_id = decoded_token["user_id"]
+        try:
+            user = User.objects.get(id=user_id)
+        except User.DoesNotExist:
+            raise ValidationError("User does not exist.")
+        return user
 
-    async def disconnect():
+    @database_sync_to_async
+    def user_in_tournament(self, user, tournament_id):
+        return TournamentLobby.objects.filter(
+            (Q(player1=user) | Q(player2=user) | Q(player3=user) | Q(player4=user)) & Q(token=tournament_id) 
+        ).exists()
+
+    @database_sync_to_async
+    def start_tournament(self):
         pass

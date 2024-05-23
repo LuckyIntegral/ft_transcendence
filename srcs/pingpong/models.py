@@ -103,4 +103,21 @@ class PongLobby(models.Model):
     isExpired = models.BooleanField(default=False)
     hostScore = models.IntegerField(default=0)
     guestScore = models.IntegerField(default=0)
-    winner = models.ForeignKey(User, on_delete=models.CASCADE, related_name="winner", null=True)
+    winner = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="winner", null=True
+    )
+
+
+class TournamentLobby(models.Model):
+    token = models.CharField(max_length=100)
+    upper_bracket = models.ForeignKey(
+        PongLobby, on_delete=models.CASCADE, related_name="upper_bracket", null=True
+    )
+    lower_bracket = models.ForeignKey(
+        PongLobby, on_delete=models.CASCADE, related_name="lower_bracket", null=True
+    )
+    final = models.ForeignKey(
+        PongLobby, on_delete=models.CASCADE, related_name="final", null=True
+    )
+    finished = models.BooleanField(default=False)
+    started = models.BooleanField(default=False)
