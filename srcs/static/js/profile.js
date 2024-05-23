@@ -80,7 +80,7 @@ function saveProfile() {
         method: "PUT",
         headers: {
             "Content-Type": "application/json",
-            Authorization: "Bearer " + localStorage.getItem("token"),
+            Authorization: "Bearer " + localStorage.getItem("access"),
         },
         body: JSON.stringify({
             displayName: newDisplayName.value,
@@ -169,7 +169,7 @@ function getAndSetProfileData() {
         method: "GET",
         headers: {
             "Content-Type": "application/json",
-            Authorization: "Bearer " + localStorage.getItem("token"),
+            Authorization: "Bearer " + localStorage.getItem("access"),
         },
     })
         .then(function (response) {
@@ -298,7 +298,7 @@ function getTwoStepVerificationStatus() {
         method: "GET",
         headers: {
             "Content-Type": "application/json",
-            Authorization: "Bearer " + localStorage.getItem("token"),
+            Authorization: "Bearer " + localStorage.getItem("access"),
         },
     })
         .then((response) => {
@@ -321,7 +321,7 @@ function enableTwoStepVerification(popup) {
         method: "PUT",
         headers: {
             "Content-Type": "application/json",
-            Authorization: "Bearer " + localStorage.getItem("token"),
+            Authorization: "Bearer " + localStorage.getItem("access"),
         },
         body: JSON.stringify({
             code: verificationCode.value,
@@ -351,7 +351,7 @@ function disableTwoStepVerification(popup) {
         method: "PUT",
         headers: {
             "Content-Type": "application/json",
-            Authorization: "Bearer " + localStorage.getItem("token"),
+            Authorization: "Bearer " + localStorage.getItem("access"),
         },
         body: JSON.stringify({
             code: verificationCode.value,

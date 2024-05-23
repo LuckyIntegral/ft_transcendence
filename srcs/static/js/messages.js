@@ -21,7 +21,7 @@ function createSearchResultItem(data, popup) {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
-                Authorization: "Bearer " + localStorage.getItem("token"),
+                Authorization: "Bearer " + localStorage.getItem("access"),
             },
             body: JSON.stringify({
                 username: data["username"],
@@ -250,7 +250,7 @@ function createChatHeader(data) {
             method: "PUT",
             headers: {
                 "Content-Type": "application/json",
-                Authorization: "Bearer " + localStorage.getItem("token"),
+                Authorization: "Bearer " + localStorage.getItem("access"),
             },
             body: JSON.stringify({
                 username: data["username"],
@@ -288,7 +288,7 @@ function getChatMessages() {
         method: "PUT",
         headers: {
             "Content-Type": "application/json",
-            Authorization: "Bearer " + localStorage.getItem("token"),
+            Authorization: "Bearer " + localStorage.getItem("access"),
         },
         body: JSON.stringify({
             token: chatToken,
@@ -445,7 +445,7 @@ function getUserListChats() {
         method: "GET",
         headers: {
             "Content-Type": "application/json",
-            Authorization: "Bearer " + localStorage.getItem("token"),
+            Authorization: "Bearer " + localStorage.getItem("access"),
         },
     })
         .then((response) => {

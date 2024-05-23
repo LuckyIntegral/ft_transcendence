@@ -113,6 +113,7 @@ class Game {
     }
 
     loop() {
+        if (this.gameOver) return;
         this.update();
         if (this.gameOver === false) {
             this.draw();
@@ -256,19 +257,28 @@ class Game {
     }
 
     checkIfOver() {
+        var isOver = false;
         if (this.player2.score >= 5) {
             this.endGame(this.player2);
         } else if (this.player1.score >= 5) {
             this.endGame(this.player1);
         }
+        if (this.player2.score >= 5 || this.player1.score >= 5) {
+            this.lobby.gameSocket.send(JSON.stringify({
+                event: "game_over",
+                hostScore: this.player1.score,
+                guestScore: this.player2.score}
+            ));
+        }
     }
 
     endGame(winner) {
         this.clearCanvas();
-        if (winner === this.player2) {
-            this.drawEndGameMessage("GAME OVER");
+        var winner = this.player1.score > this.player2.score ? "player1" : "player2";
+        if (this.playerId === winner) {
+            this.drawEndGameMessage("GAME OVER, You WON");
         } else {
-            this.drawEndGameMessage("YOU WIN");
+            this.drawEndGameMessage("GAME OVER, You LOST");
         }
         window.removeEventListener("keydown", this.boundKeyPress);
         window.removeEventListener("keyup", this.boundKeyPress);
@@ -277,6 +287,8 @@ class Game {
     }
 
     drawEndGameMessage(message) {
+        this.gameOver = true;
+        this.clearCanvas();
         this.context.textBaseline = "middle";
         this.context.textAlign = "center";
         this.context.fillStyle = "WHITE";

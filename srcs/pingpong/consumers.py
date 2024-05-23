@@ -419,6 +419,9 @@ class GameConsumer(AsyncWebsocketConsumer):
                 },
             )
 
+        if event == "game_over":
+            await self.setGameFinished(self.token, data)
+
     async def game_move(self, event):
         player1_pos = event.get("player1_pos")
         player2_pos = event.get("player2_pos")
@@ -491,12 +494,15 @@ class GameConsumer(AsyncWebsocketConsumer):
     @database_sync_to_async
     def getLobbyData(self, lobbyId):
         lobby = PongLobby.objects.get(token=lobbyId)
+        if (not lobby.isStarted and lobby.created < timezone.now() - timezone.timedelta(minutes=5) and not lobby.isExpired):
+            lobby.isExpired = True
+            lobby.save()
         return lobby
 
     @database_sync_to_async
     def setGameStarted(self, lobbyId):
         try:
-            lobby = PongLobby.objects.get(token=lobbyId)
+            lobby = PongLobby.objects.get(token=lobbyId, isStarted=False)
         except PongLobby.DoesNotExist:
             return
         lobby.isStarted = True
@@ -526,3 +532,15 @@ class GameConsumer(AsyncWebsocketConsumer):
     def getLobbyWinner(self, lobbyId):
         lobby = PongLobby.objects.get(token=lobbyId)
         return lobby.winner.username if lobby.winner else None
+
+    @database_sync_to_async
+    def setGameFinished(self, lobbyId, data):
+        try:
+            lobby = PongLobby.objects.get(token=lobbyId)
+        except PongLobby.DoesNotExist:
+            return
+        lobby.isFinished = True
+        lobby.hostScore = data["hostScore"]
+        lobby.guestScore = data["guestScore"]
+        lobby.winner = lobby.host if data["hostScore"] > data["guestScore"] else lobby.guest
+        lobby.save()

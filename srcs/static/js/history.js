@@ -1,10 +1,19 @@
 document.addEventListener("DOMContentLoaded", function () {
     var query_params = null;
+
+    function closeSockets() {
+        if (chatSocket !== null) {
+            chatSocket.close();
+            chatSocket = null;
+        }
+    }
     var routes = {
         profile: function () {
+            closeSockets();
             loadProfilePage();
         },
         pong: function () {
+            closeSockets();
             if (query_params === null || query_params === undefined) {
                 let menu = new Menu();
                 menu.start();
@@ -16,15 +25,19 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         },
         friends: function () {
+            closeSockets();
             loadFriendsPage();
         },
         leadrboard: function () {
+            closeSockets();
             loadLeaderboardPage();
         },
         messages: function () {
+            closeSockets();
             loadMessagesPage();
         },
         default: function () {
+            closeSockets();
             document.getElementById("content").textContent = "Default page";
         },
     };

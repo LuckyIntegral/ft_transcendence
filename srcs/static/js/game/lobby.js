@@ -3,6 +3,7 @@ class Lobby {
         this.gameSocket = null;
         this.playerId = null;
         this.playersConnected = 0;
+        this.gameOver = false;
     }
 
     join(gameToken, game) {
@@ -16,7 +17,6 @@ class Lobby {
 
         this.gameSocket.onmessage = (e) => {
             const data = JSON.parse(e.data);
-            console.log("Received data", data);
             if (data.event === "assign_role") {
                 this.playerId = data.role;
                 this.game.playerId = data.role;
@@ -25,25 +25,25 @@ class Lobby {
 
             if (data.event === "player_connected") {
                 this.playersConnected = data.players_connected;
-                if (data.isFinished === true || this.playersConnected === 69) {
+                if (data.isFinished === true) {
+                    this.gameOver = true;
                     console.log("Game is finished. Displaying end game message.");
                     this.game.drawEndGameMessage(`GAME OVER! ${data.winner} WINS!`);
                     window.removeEventListener("keydown", this.boundKeyPress);
                     window.removeEventListener("keyup", this.boundKeyPress);
-                    this.gameOver = true;
                 } else if (data.isExpired === true) {
+                    this.gameOver = true;
                     window.removeEventListener("keydown", this.boundKeyPress);
                     window.removeEventListener("keyup", this.boundKeyPress);
-                    console.log("Game has expired. Displaying end game message.");
-                    this.gameOver = true;
+                    this.game.drawEndGameMessage("Invitation link expired.");
                 } else if (this.playersConnected === 2) {
                     console.log("Both players connected. Starting game.");
                     this.game.startCountdown();
                 }
                 console.log(`Players connected: ${this.playersConnected}`);
             }
-
-            if (data.event === "game_move") {
+            if (data.event === "game_move" && this.gameOver === false) {
+                console.log("Received game move data.");
                 this.game.updatePositions(data.player1_pos, data.player2_pos, data.ball_pos, data.update_type);
             }
         };
@@ -58,7 +58,7 @@ class Lobby {
     }
 
     sendGameData(data) {
-        if (this.gameSocket.readyState === WebSocket.OPEN) {
+        if (this.gameSocket.readyState === WebSocket.OPEN && this.gameOver === false) {
             data.event = "move";
             this.gameSocket.send(JSON.stringify(data));
         }
