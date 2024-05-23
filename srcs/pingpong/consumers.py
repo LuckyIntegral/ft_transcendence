@@ -61,16 +61,12 @@ class ChatConsumer(AsyncWebsocketConsumer):
     @database_sync_to_async
     def createMessageRecipient(self, recipient):
         if self.isBothUsersConnected():
-            return MessagesRecipient.objects.create(
-                recipient=recipient, isRead=True, isNotified=True
-            )
+            return MessagesRecipient.objects.create(recipient=recipient, isRead=True, isNotified=True)
         return MessagesRecipient.objects.create(recipient=recipient)
 
     @database_sync_to_async
     def createMessage(self, sender, message, messageRecipient):
-        return Message.objects.create(
-            sender=sender, message=message, messageRecipient=messageRecipient
-        )
+        return Message.objects.create(sender=sender, message=message, messageRecipient=messageRecipient)
 
     @database_sync_to_async
     def addMessageToChat(self, chat, message):
@@ -131,21 +127,19 @@ class ChatConsumer(AsyncWebsocketConsumer):
             if not await self.is_token_exists_in_pong_lobby(gameToken):
                 await self.send(text_data=json.dumps({"error": "Game does not exist!"}))
                 return
-            messageText = f"You have been invited to play a game! Click here <a href='#pong?game-token={gameToken}'>to play</a>."
+            messageText = (
+                f"You have been invited to play a game! Click here <a href='#pong?game-token={gameToken}'>to play</a>."
+            )
         sender = html.escape(text_data_json["sender"])
         timestamp = html.escape(text_data_json["timestamp"])
         self.chat = await self.getChat(self.chatToken)
         self.sender = await self.getSender(sender)
         self.recipient = await self.getRecipient(self.sender, self.chat)
         if await self.isBlocked(self.sender, self.recipient):
-            await self.send(
-                text_data=json.dumps({"blocked": "You are blocked by this user!"})
-            )
+            await self.send(text_data=json.dumps({"blocked": "You are blocked by this user!"}))
             return
         self.messageRecipient = await self.createMessageRecipient(self.recipient)
-        self.message = await self.createMessage(
-            self.sender, messageText, self.messageRecipient
-        )
+        self.message = await self.createMessage(self.sender, messageText, self.messageRecipient)
         await self.addMessageToChat(self.chat, self.message)
         await self.channel_layer.group_send(
             self.chatToken,
@@ -253,9 +247,7 @@ class LongPollConsumer(AsyncWebsocketConsumer):
 
     @database_sync_to_async
     def get_new_messages(self, user):
-        return MessagesRecipient.objects.filter(
-            recipient=user, isRead=False, isNotified=False
-        ).exists()
+        return MessagesRecipient.objects.filter(recipient=user, isRead=False, isNotified=False).exists()
 
     @database_sync_to_async
     def get_unread_messages(self, user):
@@ -263,9 +255,7 @@ class LongPollConsumer(AsyncWebsocketConsumer):
 
     @database_sync_to_async
     def set_notified(self, user):
-        messages = MessagesRecipient.objects.filter(
-            recipient=user, isRead=False, isNotified=False
-        )
+        messages = MessagesRecipient.objects.filter(recipient=user, isRead=False, isNotified=False)
         for message in messages:
             message.isNotified = True
             message.save()
@@ -545,9 +535,7 @@ class GameConsumer(AsyncWebsocketConsumer):
         lobby.isFinished = True
         lobby.hostScore = data["hostScore"]
         lobby.guestScore = data["guestScore"]
-        lobby.winner = (
-            lobby.host if data["hostScore"] > data["guestScore"] else lobby.guest
-        )
+        lobby.winner = lobby.host if data["hostScore"] > data["guestScore"] else lobby.guest
         lobby.save()
 
 
@@ -568,11 +556,6 @@ class TournamentConsumer(AsyncWebsocketConsumer):
         TournamentConsumer.players_auth[self.token][self.user.username] -= 1
         if TournamentConsumer.players_auth[self.token][self.user.username] == 0:
             del TournamentConsumer.players_auth[self.token][self.user.username]
-            if self.user.username in TournamentConsumer.game_ids[self.token]:
-                index = TournamentConsumer.game_ids[self.token].index(
-                    self.user.username
-                )
-                TournamentConsumer.game_ids[self.token][index] = ""
 
     async def receive(self, text_data):
         data = json.loads(text_data)
@@ -592,29 +575,25 @@ class TournamentConsumer(AsyncWebsocketConsumer):
             # JOIN LOGIC
             if self.token not in TournamentConsumer.players_auth:
                 TournamentConsumer.players_auth[self.token] = {}
-                TournamentConsumer.game_ids[self.token] = ["", "", "", ""]
             if self.user.username not in TournamentConsumer.players_auth[self.token]:
                 TournamentConsumer.players_auth[self.token][self.user.username] = 0
-                if not self.user.username in TournamentConsumer.game_ids[self.token]:
-                    for i in range(4):
-                        if TournamentConsumer.game_ids[self.token][i] == "":
-                            TournamentConsumer.game_ids[self.token][i] = self.user.username
             TournamentConsumer.players_auth[self.token][self.user.username] += 1
-            index = TournamentConsumer.game_ids[self.token].index(self.user.username)
-            await self.send(
-                text_data=json.dumps(
-                    {
-                        "event": "assign_role",
-                        "role": f"player{index + 1}",
-                    }
-                )
-            )
+
             # START LOGIC
             if self.token not in TournamentConsumer.players_auth:
                 return
-            if len(TournamentConsumer.players_auth[self.token]) == 4:
+            if len(TournamentConsumer.players_auth[self.token]) == 4 and await self.start_tournament():
+                for username in TournamentConsumer.players_auth[self.token].keys():
+                    await self.channel_layer.group_send(
+                        self.game_group_name,
+                        {
+                            "type": "assign_semfinals",
+                            "game_token": await self.get_game_for_user(username),
+                            "username": username,
+                        },
+                    )
                 pass
-        #TOURNAMENT PROCESS LOGIC
+        # TOURNAMENT PROCESS LOGIC
         pass
 
     @database_sync_to_async
@@ -630,9 +609,46 @@ class TournamentConsumer(AsyncWebsocketConsumer):
     @database_sync_to_async
     def user_in_tournament(self, user, tournament_id):
         return TournamentLobby.objects.filter(
-            (Q(player1=user) | Q(player2=user) | Q(player3=user) | Q(player4=user)) & Q(token=tournament_id) 
+            (Q(player1=user) | Q(player2=user) | Q(player3=user) | Q(player4=user)) & Q(token=tournament_id)
         ).exists()
 
     @database_sync_to_async
     def start_tournament(self):
-        pass
+        try:
+            tournament = TournamentLobby.objects.get(token=self.token, started=False)
+        except:
+            return False
+        tournament.started = True
+        return True
+
+    @database_sync_to_async
+    def get_game_for_user(self, username):
+        try:
+            tournament_lobby = TournamentLobby.objects.get(token=self.token)
+            if username in [
+                tournament_lobby.upper_bracket.guest.username,
+                tournament_lobby.upper_bracket.host.username,
+            ]:
+                return tournament_lobby.upper_bracket.token
+            elif username in [
+                tournament_lobby.lower_bracket.guest.username,
+                tournament_lobby.lower_bracket.host.username,
+            ]:
+                return tournament_lobby.lower_bracket.token
+            return "None"
+        except:
+            return "None"
+
+    async def assign_semifinals(self, event):
+        game_token = event["game_token"]
+        username = event["username"]
+
+        await self.send(
+            text_data=json.dumps(
+                {
+                    "event": "assign_semifinals",
+                    "game_token": game_token,
+                    "username": username,
+                }
+            )
+        )
