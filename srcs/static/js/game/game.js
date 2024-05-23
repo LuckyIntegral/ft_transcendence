@@ -266,7 +266,7 @@ class Game {
         } else if (this.player1.score >= 5) {
             this.endGame(this.player1);
         }
-        if (this.player2.score >= 5 || this.player1.score >= 5 ) {
+        if ((this.player2.score >= 5 || this.player1.score >= 5) && this.gameMode !== GameModes.PLAYER_VS_AI) {
             this.lobby.gameSocket.send(JSON.stringify({
                 event: "game_over",
                 hostScore: this.player1.score,
@@ -298,7 +298,9 @@ class Game {
         this.context.font = "40px Arial";
         this.context.fillText(message, GameConstants.GAME_WIDTH / 2, GameConstants.GAME_HEIGHT / 2 - 50);
         this.context.fillText("Click to play again", GameConstants.GAME_WIDTH / 2, GameConstants.GAME_HEIGHT / 2 + 50);
-        g_GameSocket.close();
+        if (g_GameSocket !== null) {
+            g_GameSocket.close();
+        }
     }
 
     goal() {
