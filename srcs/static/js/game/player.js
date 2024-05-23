@@ -1,6 +1,6 @@
 class Player {
     constructor(position) {
-        this.lobby = new Lobby();
+        this.lobby = new GameLobby();
         this.position = position;
         this.moveUp = false;
         this.moveDown = false;

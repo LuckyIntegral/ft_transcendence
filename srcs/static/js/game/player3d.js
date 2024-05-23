@@ -2,7 +2,7 @@ class Player3D {
 
 	constructor (player, paddle) {
 		this.player = player
-		this.lobby = new Lobby()
+		this.lobby = new GameLobby()
 		this.paddle = paddle 
 		this.resetScore()
 		this.resetPaddles()
