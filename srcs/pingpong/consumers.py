@@ -381,8 +381,6 @@ class GameConsumer(AsyncWebsocketConsumer):
                 await self.close()
                 return
 
-            print("--------------------", lobby.isExpired)
-            print("--------------------", lobby.isStarted)
             winner = await self.getLobbyWinner(self.token)
             await self.channel_layer.group_send(
                 self.game_group_name,
@@ -544,3 +542,13 @@ class GameConsumer(AsyncWebsocketConsumer):
         lobby.guestScore = data["guestScore"]
         lobby.winner = lobby.host if data["hostScore"] > data["guestScore"] else lobby.guest
         lobby.save()
+
+class TournamentConsumer(AsyncWebsocketConsumer):
+    async def connect():
+        pass
+
+    async def receive():
+        pass
+
+    async def disconnect():
+        pass
