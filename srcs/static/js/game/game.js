@@ -10,6 +10,7 @@ class Game {
     }
 
     updateCountdown(countdown) {
+        if (this.gameOver) return;
         this.clearCanvas();
         this.context.fillStyle = "WHITE";
         this.context.font = "40px Arial";
@@ -52,7 +53,7 @@ class Game {
         if (gameMode === GameModes.PLAYER_VS_AI) {
             this.playerId = "player1";
             this.start();
-        } 
+        }
 		else {
             this.lobby.join(this.lobbyId, this);
             this.displayWaitingMessage();
@@ -106,6 +107,7 @@ class Game {
     }
 
     startNewGame() {
+        if (this.gameOver) return;
         this.reset();
         this.boundKeyPress = this.keyPressHandler.bind(this);
         window.addEventListener("keydown", this.boundKeyPress);
@@ -264,7 +266,7 @@ class Game {
         } else if (this.player1.score >= 5) {
             this.endGame(this.player1);
         }
-        if (this.player2.score >= 5 || this.player1.score >= 5) {
+        if (this.player2.score >= 5 || this.player1.score >= 5 ) {
             this.lobby.gameSocket.send(JSON.stringify({
                 event: "game_over",
                 hostScore: this.player1.score,
@@ -296,6 +298,7 @@ class Game {
         this.context.font = "40px Arial";
         this.context.fillText(message, GameConstants.GAME_WIDTH / 2, GameConstants.GAME_HEIGHT / 2 - 50);
         this.context.fillText("Click to play again", GameConstants.GAME_WIDTH / 2, GameConstants.GAME_HEIGHT / 2 + 50);
+        g_GameSocket.close();
     }
 
     goal() {

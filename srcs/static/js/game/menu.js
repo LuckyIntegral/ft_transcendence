@@ -8,13 +8,6 @@ class Menu {
                 action: () => this.game.loadGame(GameModes.PLAYER_VS_AI),
                 image: "static/images/ai.png",
             },
-            {
-                text: "PLAYER VS PLAYER",
-                action: () => {
-                    this.game.loadGame(GameModes.PLAYER_VS_PLAYER);
-                },
-                image: "static/images/pvp.png",
-            },
         ];
         this.images = {};
         this.init(true);

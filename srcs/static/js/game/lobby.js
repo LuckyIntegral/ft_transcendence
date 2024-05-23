@@ -1,3 +1,5 @@
+var g_GameSocket = null;
+
 class Lobby {
     constructor() {
         this.gameSocket = null;
@@ -8,6 +10,7 @@ class Lobby {
 
     join(gameToken, game) {
         this.gameSocket = new WebSocket(`ws://${window.location.host}/ws/game/${gameToken}/`);
+        g_GameSocket = this.gameSocket;
         this.game = game;
 
         this.gameSocket.onopen = () => {

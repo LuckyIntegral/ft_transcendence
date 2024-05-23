@@ -6,6 +6,10 @@ document.addEventListener("DOMContentLoaded", function () {
             chatSocket.close();
             chatSocket = null;
         }
+        if (g_GameSocket !== null) {
+            g_GameSocket.close();
+            g_GameSocket = null;
+        }
     }
     var routes = {
         profile: function () {
