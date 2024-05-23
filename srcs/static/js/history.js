@@ -24,6 +24,11 @@ document.addEventListener("DOMContentLoaded", function () {
                 query_params = null;
             }
         },
+        pong3d: function() {
+            let menu3d = new Menu3D()
+            menu3d.start()
+            previousRoute = 'pong3d';
+        },
         friends: function () {
             closeSockets();
             loadFriendsPage();
