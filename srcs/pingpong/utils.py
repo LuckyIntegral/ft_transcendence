@@ -12,33 +12,42 @@ import uuid
 
 
 def sendVerificationEmail(email, token):
-    send_mail(
-        "Email Verification",
-        "Verify your email address by clicking the link below: http://localhost:8080/verify-email?token=" + token,
-        "admin@localhost",
-        [email],
-        fail_silently=False,
-    )
+    try:
+        send_mail(
+            "Email Verification",
+            "Verify your email address by clicking the link below: http://localhost:8080/verify-email?token=" + token,
+            "admin@localhost",
+            [email],
+            fail_silently=False,
+        )
+    except Exception as e:
+        print(e)
 
 
 def sendTwoStepVerificationEmail(email, code):
-    send_mail(
-        "Two-Step Verification",
-        "Your two-step verification code is: " + code,
-        "admin@localhost",
-        [email],
-        fail_silently=False,
-    )
+    try:
+        send_mail(
+            "Two-Step Verification",
+            "Your two-step verification code is: " + code,
+            "admin@localhost",
+            [email],
+            fail_silently=False,
+        )
+    except Exception as e:
+        print(e)
 
 
 def sendPasswordResetEmail(email, token):
-    send_mail(
-        "Password Reset",
-        "Reset your password by clicking the link below: http://localhost:8080/reset-password/?token=" + token,
-        "admin@localhost",
-        [email],
-        fail_silently=False,
-    )
+    try:
+        send_mail(
+            "Password Reset",
+            "Reset your password by clicking the link below: http://localhost:8080/reset-password/?token=" + token,
+            "admin@localhost",
+            [email],
+            fail_silently=False,
+        )
+    except Exception as e:
+        print(e)
 
 
 def getUserFromToken(token_key):
