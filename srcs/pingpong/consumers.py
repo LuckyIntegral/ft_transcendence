@@ -648,7 +648,7 @@ class TournamentConsumer(AsyncWebsocketConsumer):
             tournament = TournamentLobby.objects.get(token=token)
         except TournamentLobby.DoesNotExist:
             return "None"
-        if tournament.upper_bracket.isFinished or tournament.lower_bracket.isFinished:
+        if tournament.upper_bracket.isFinished and tournament.lower_bracket.isFinished:
             return "final_game_ready"
         if tournament.final.isFinished:
             return "tournament_over"
