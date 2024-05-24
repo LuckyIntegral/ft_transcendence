@@ -1363,6 +1363,10 @@ class TournamentLobbyView(APIView):
         while PongLobby.objects.filter(token=second_game_token).exists():
             second_game_token = generateToken()
 
+        final_game_token = generateToken()
+        while PongLobby.objects.filter(token=final_game_token).exists():
+            final_game_token = generateToken()
+
         player1 = User.objects.get(username=users[0])
         player2 = User.objects.get(username=users[1])
         player3 = User.objects.get(username=users[2])
@@ -1372,7 +1376,10 @@ class TournamentLobbyView(APIView):
             token=first_game_token, host=player1, guest=player2
         )
         upper_bracket = PongLobby.objects.create(
-            token=first_game_token, host=player3, guest=player4
+            token=second_game_token, host=player3, guest=player4
         )
-        TournamentLobby.objects.create(token=tournament_id, upper_bracket=upper_bracket, lower_bracket=lower_bracket)
+        final = PongLobby.objects.create(
+            token=final_game_token
+        )
+        TournamentLobby.objects.create(token=tournament_id, upper_bracket=upper_bracket, lower_bracket=lower_bracket, final=final)
         return Response({"token": tournament_id}, status=status.HTTP_201_CREATED)

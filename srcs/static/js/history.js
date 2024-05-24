@@ -45,7 +45,7 @@ document.addEventListener("DOMContentLoaded", function () {
             closeSockets();
             loadMessagesPage();
         },
-        tournaments: function () {
+        tournamentslobby: function () {
             closeSockets();
             if (query_params === null || query_params === undefined) {
                 let menu = new Menu();
@@ -53,7 +53,7 @@ document.addEventListener("DOMContentLoaded", function () {
             } else {
                 var tournamentLobby = new TournamentLobby();
                 var lobbyToken = query_params.split("=")[1];
-                tournamentLobby.join(query_params.split("=")[1]);
+                tournamentLobby.join(lobbyToken);
             }
         },
         default: function () {

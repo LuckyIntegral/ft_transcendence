@@ -95,8 +95,8 @@ class Block(models.Model):
 
 class PongLobby(models.Model):
     token = models.CharField(max_length=100)
-    host = models.ForeignKey(User, on_delete=models.CASCADE, related_name="host")
-    guest = models.ForeignKey(User, on_delete=models.CASCADE, related_name="guest")
+    host = models.ForeignKey(User, on_delete=models.CASCADE, related_name="host", null=True)
+    guest = models.ForeignKey(User, on_delete=models.CASCADE, related_name="guest", null=True)
     created = models.DateTimeField(auto_now_add=True)
     isStarted = models.BooleanField(default=False)
     isFinished = models.BooleanField(default=False)

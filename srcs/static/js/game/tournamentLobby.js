@@ -14,40 +14,37 @@ class TournamentLobby {
 
         this.lobbySocket.onopen = () => {
             console.log(
-                `Tournament Lobby WebSocket connection established on ws://${window.location.host}/ws/game/${gameToken}/.`
+                `Tournament Lobby WebSocket connection established on ws://${window.location.host}/ws/game/${lobbyToken}/.`
             );
             this.lobbySocket.send(JSON.stringify({ auth_header: "Bearer " + localStorage.getItem("access") }));
         };
         this.lobbySocket.onmessage = (event) => {
             const data = JSON.parse(event.data);
-            if (data.type === "ping") {
-                this.lobbySocket.send(JSON.stringify({ type: "pong" }));
-                if (data.stage === "game_over") {
-                    this.displayGameOverMessage(data.results);
-                }
-                if (data.stage === "assign_semifinals" && data.username === localStorage.getItem("username")) {
-                    this.displaySemifinalsWaitingMessage();
-                }
-                if (data.stage === "assign_finals" && data.username === localStorage.getItem("username")) {
-                    this.displayFinalsWaitingMessage();
-                }
-                if (data.stage === "game_ready" && data.username === localStorage.getItem("username")) {
-                    this.displayJoinGameMessage(data.gameToken);
-                }
-                if (data.stage === "waiting_for_semifinals" && data.username === localStorage.getItem("username")) {
-                    this.displaySemifinalsWaitingMessage();
-                }
-
+            if (data.stage === "tournament_over") {
+                this.displayGameOverMessage(data.results);
             }
+            if (data.stage === "semifinal_game_ready" && data.username === localStorage.getItem("username")) {
+                this.displayJoinSemifinalGameMessage(data.game_token);
+            }
+            if (data.stage === "final_game_ready" && data.username === localStorage.getItem("username")) {
+                this.displayJoinFinalGameMessage(data.game_token);
+            }
+            if (data.stage === "waiting_for_semifinals" && data.username === localStorage.getItem("username")) {
+                this.displaySemifinalsWaitingMessage();
+            }
+            console.log(data.stage)
+            console.log(data.username)
+            console.log(localStorage.getItem("username"))
+            this.lobbySocket.send(JSON.stringify({ type: "pong" }));
         }
         this.lobbySocket.onclose = () => {
             console.log("Tournament Lobby WebSocket connection closed.");
         }
     }
 
-    joinGame(gameToken) {
+    joinGame(game_token) {
         // open new tab with game and switch to it
-        window.open(`/#pong?game-token=${gameToken}`, "_blank");
+        window.open(`/#pong?game-token=${game_token}`, "_blank");
         window.focus();
     }
 
@@ -61,16 +58,16 @@ class TournamentLobby {
         canvas.id = "game";
         content.textContent = "";
         content.appendChild(canvas);
+        this.canvas = canvas;
+        this.context = canvas.getContext("2d");
         console.log("Canvas created");
     }
 
     setUpCanvas() {
-        this.canvas = document.getElementById("game");
         if (!this.canvas) {
             console.error("Canvas element not found");
             return;
         }
-        this.context = this.canvas.getContext("2d");
         this.canvas.width = GameConstants.GAME_WIDTH;
         this.canvas.height = GameConstants.GAME_HEIGHT;
         console.log("Canvas set up");
@@ -100,18 +97,36 @@ class TournamentLobby {
         );
     }
 
-    displayJoinGameMessage(gameToken) {
+    displayJoinSemifinalGameMessage(game_token) {
         this.clearCanvas();
         this.context.fillStyle = "WHITE";
         this.context.font = "40px Arial";
         this.context.textAlign = "center";
         this.context.fillText(
-            "Your game is ready.\nClick to join the game",
+            "Your semifinal game is ready.\nClick to join the game",
             GameConstants.GAME_WIDTH / 2,
             GameConstants.GAME_HEIGHT / 2
         );
         this.canvas.addEventListener("click", () => {
-            this.joinGame(gameToken);
+            this.joinGame(game_token);
+        });
+    }
+
+    displayJoinFinalGameMessage(game_token) {
+        this.clearCanvas();
+        this.context.fillStyle = "WHITE";
+        this.context.font = "40px Arial";
+        this.context.textAlign = "center";
+        this.context.fillText(
+            "Your final game is ready.\nClick to join the game",
+            GameConstants.GAME_WIDTH / 2,
+            GameConstants.GAME_HEIGHT / 2
+        );
+        this.canvas.removeEventListener("click", () => {
+            this.joinGame(game_token);
+        });
+        this.canvas.addEventListener("click", () => {
+            this.joinGame(game_token);
         });
     }
 
