@@ -541,7 +541,7 @@ class GameConsumer(AsyncWebsocketConsumer):
 
 class TournamentConsumer(AsyncWebsocketConsumer):
     players_auth = {}
-    game_ids = {}
+    tournament_stage = {}
 
     async def connect(self):
         self.token = self.scope["url_route"]["kwargs"]["token"]
@@ -551,7 +551,7 @@ class TournamentConsumer(AsyncWebsocketConsumer):
 
         await self.accept()
 
-    async def disconnect(self):
+    async def disconnect(self, close_code):
         await self.channel_layer.group_discard(self.game_group_name, self.channel_name)
         TournamentConsumer.players_auth[self.token][self.user.username] -= 1
         if TournamentConsumer.players_auth[self.token][self.user.username] == 0:
@@ -575,6 +575,7 @@ class TournamentConsumer(AsyncWebsocketConsumer):
             # JOIN LOGIC
             if self.token not in TournamentConsumer.players_auth:
                 TournamentConsumer.players_auth[self.token] = {}
+                TournamentConsumer.tournament_stage[self.token] = "waiting_for_semifinals"
             if self.user.username not in TournamentConsumer.players_auth[self.token]:
                 TournamentConsumer.players_auth[self.token][self.user.username] = 0
             TournamentConsumer.players_auth[self.token][self.user.username] += 1
@@ -584,6 +585,7 @@ class TournamentConsumer(AsyncWebsocketConsumer):
                 return
             if len(TournamentConsumer.players_auth[self.token]) == 4 and await self.start_tournament():
                 for username in TournamentConsumer.players_auth[self.token].keys():
+                    print("Sending ping")
                     await self.channel_layer.group_send(
                         self.game_group_name,
                         {
@@ -596,6 +598,14 @@ class TournamentConsumer(AsyncWebsocketConsumer):
                 pass
         # TOURNAMENT PROCESS LOGIC
         pass
+
+    @database_sync_to_async
+    def set_tournament_stage(self, token):
+        try:
+            tournament = TournamentLobby.objects.get(token=token)
+        except TournamentLobby.DoesNotExist:
+            return "None"
+
 
     @database_sync_to_async
     def get_user_from_token(self, token):

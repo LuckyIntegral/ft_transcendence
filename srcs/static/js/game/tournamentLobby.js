@@ -3,14 +3,14 @@ var g_LobbySocket = null;
 class TournamentLobby {
     constructor() {
         this.lobbySocket = null;
-        this.playerId = null;
-        this.playersConnected;
-        this.gameOver = false;
     }
 
     join(lobbyToken) {
         this.lobbySocket = new WebSocket(`ws://${window.location.host}/ws/tournament/${lobbyToken}/`);
         g_LobbySocket = this.lobbySocket;
+
+        this.createCanvas()
+        this.setUpCanvas()
 
         this.lobbySocket.onopen = () => {
             console.log(
@@ -25,10 +25,23 @@ class TournamentLobby {
                 if (data.stage === "game_over") {
                     this.displayGameOverMessage(data.results);
                 }
-                if (data.stage === "assign_semifinals") {
+                if (data.stage === "assign_semifinals" && data.username === localStorage.getItem("username")) {
                     this.displaySemifinalsWaitingMessage();
                 }
+                if (data.stage === "assign_finals" && data.username === localStorage.getItem("username")) {
+                    this.displayFinalsWaitingMessage();
+                }
+                if (data.stage === "game_ready" && data.username === localStorage.getItem("username")) {
+                    this.displayJoinGameMessage(data.gameToken);
+                }
+                if (data.stage === "waiting_for_semifinals" && data.username === localStorage.getItem("username")) {
+                    this.displaySemifinalsWaitingMessage();
+                }
+
             }
+        }
+        this.lobbySocket.onclose = () => {
+            console.log("Tournament Lobby WebSocket connection closed.");
         }
     }
 
@@ -64,8 +77,6 @@ class TournamentLobby {
     }
 
     displaySemifinalsWaitingMessage() {
-        this.createCanvas()
-        this.setUpCanvas()
         this.clearCanvas();
         this.context.fillStyle = "WHITE";
         this.context.font = "40px Arial";

@@ -1349,10 +1349,10 @@ class TournamentLobbyView(APIView):
             tournament_id = generateToken()
 
         users = [
-            request.get("player1"),
-            request.get("player2"),
-            request.get("player3"),
-            request.get("player4"),
+            request.data.get("player1"),
+            request.data.get("player2"),
+            request.data.get("player3"),
+            request.data.get("player4"),
         ]
         if not self.all_users_exists(users):
             return Response({"error": "Nice try"}, status=status.HTTP_400_BAD_REQUEST)
@@ -1375,3 +1375,4 @@ class TournamentLobbyView(APIView):
             token=first_game_token, host=player3, guest=player4
         )
         TournamentLobby.objects.create(token=tournament_id, upper_bracket=upper_bracket, lower_bracket=lower_bracket)
+        return Response({"token": tournament_id}, status=status.HTTP_201_CREATED)

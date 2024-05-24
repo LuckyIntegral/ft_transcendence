@@ -47,7 +47,14 @@ document.addEventListener("DOMContentLoaded", function () {
         },
         tournaments: function () {
             closeSockets();
-            loadTournamentsPage();
+            if (query_params === null || query_params === undefined) {
+                let menu = new Menu();
+                menu.start();
+            } else {
+                var tournamentLobby = new TournamentLobby();
+                var lobbyToken = query_params.split("=")[1];
+                tournamentLobby.join(query_params.split("=")[1]);
+            }
         },
         default: function () {
             closeSockets();
