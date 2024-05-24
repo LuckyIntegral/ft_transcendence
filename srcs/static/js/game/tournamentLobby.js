@@ -18,6 +18,24 @@ class TournamentLobby {
             );
             this.lobbySocket.send(JSON.stringify({ auth_header: "Bearer " + localStorage.getItem("access") }));
         };
+        this.lobbySocket.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            if (data.type === "ping") {
+                this.lobbySocket.send(JSON.stringify({ type: "pong" }));
+                if (data.stage === "game_over") {
+                    this.displayGameOverMessage(data.results);
+                }
+                if (data.stage === "assign_semifinals") {
+                    this.displaySemifinalsWaitingMessage();
+                }
+            }
+        }
+    }
+
+    joinGame(gameToken) {
+        // open new tab with game and switch to it
+        window.open(`/#pong?game-token=${gameToken}`, "_blank");
+        window.focus();
     }
 
     createCanvas() {
@@ -45,7 +63,7 @@ class TournamentLobby {
         console.log("Canvas set up");
     }
 
-    displayWaitingMessage() {
+    displaySemifinalsWaitingMessage() {
         this.createCanvas()
         this.setUpCanvas()
         this.clearCanvas();
@@ -53,10 +71,63 @@ class TournamentLobby {
         this.context.font = "40px Arial";
         this.context.textAlign = "center";
         this.context.fillText(
-            "Waiting for participants...",
+            "Waiting for all participants...",
             GameConstants.GAME_WIDTH / 2,
             GameConstants.GAME_HEIGHT / 2
         );
+    }
+
+    displayFinalsWaitingMessage() {
+        this.clearCanvas();
+        this.context.fillStyle = "WHITE";
+        this.context.font = "40px Arial";
+        this.context.textAlign = "center";
+        this.context.fillText(
+            "Waiting for all participants...",
+            GameConstants.GAME_WIDTH / 2,
+            GameConstants.GAME_HEIGHT / 2
+        );
+    }
+
+    displayJoinGameMessage(gameToken) {
+        this.clearCanvas();
+        this.context.fillStyle = "WHITE";
+        this.context.font = "40px Arial";
+        this.context.textAlign = "center";
+        this.context.fillText(
+            "Your game is ready.\nClick to join the game",
+            GameConstants.GAME_WIDTH / 2,
+            GameConstants.GAME_HEIGHT / 2
+        );
+        this.canvas.addEventListener("click", () => {
+            this.joinGame(gameToken);
+        });
+    }
+
+    displayGameOverMessage(results) {
+        this.clearCanvas();
+        this.context.fillStyle = "WHITE";
+        this.context.font = "40px Arial";
+        this.context.textAlign = "center";
+        this.context.fillText(
+            "Game Over",
+            GameConstants.GAME_WIDTH / 2,
+            GameConstants.GAME_HEIGHT / 2
+        );
+        this.context.font = "20px Arial";
+        this.context.fillText(
+            "Results:",
+            GameConstants.GAME_WIDTH / 2,
+            GameConstants.GAME_HEIGHT / 2 + 30
+        );
+        this.context.font = "15px Arial";
+        for (let i = 0; i < results.length; i++) {
+            this.context.fillText(
+                `${results[i].username}, aka ${results[i].displayName}: ${results[i].place}`,
+                GameConstants.GAME_WIDTH / 2,
+                GameConstants.GAME_HEIGHT / 2 + 50 + i * 20
+            );
+        }
     }
 
     clearCanvas() {

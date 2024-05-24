@@ -45,6 +45,10 @@ document.addEventListener("DOMContentLoaded", function () {
             closeSockets();
             loadMessagesPage();
         },
+        tournaments: function () {
+            closeSockets();
+            loadTournamentsPage();
+        },
         default: function () {
             closeSockets();
             document.getElementById("content").textContent = "Default page";

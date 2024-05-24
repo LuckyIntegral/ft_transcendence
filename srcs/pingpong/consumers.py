@@ -587,7 +587,8 @@ class TournamentConsumer(AsyncWebsocketConsumer):
                     await self.channel_layer.group_send(
                         self.game_group_name,
                         {
-                            "type": "assign_semfinals",
+                            "type": "ping",
+                            "stage": "assign_semifinals",
                             "game_token": await self.get_game_for_user(username),
                             "username": username,
                         },
