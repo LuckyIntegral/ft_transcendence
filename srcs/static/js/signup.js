@@ -67,27 +67,26 @@ document.addEventListener("DOMContentLoaded", function () {
                         password_confirm: passwordConfirm,
                     }),
                 })
-                    .then((response) => {
-                        if (response.status === 201) {
-                            alertSuccess("Signup successful!");
-                            obtainToken(username, password);
-                        } else if (response.status === 400) {
-                            popupAlertError("Username is already taken");
-                        } else if (response.status === 401) {
-                            popupAlertError("Email is already taken");
-                        } else if (response.status === 402) {
-                            popupAlertError("Passwords do not match");
-                        } else if (response.status === 404) {
-                            popupAlertError(
-                                "Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number and one special character"
-                            );
-                        } else if (response.status === 405) {
-                            popupAlertError('One of the fields are too long')
-                        }
-                    })
-                    .then(() => {
-                        sendVerificationEmail(email);
-                    });
+                .then((response) => {
+                    if (response.status === 201) {
+                        alertSuccess("Signup successful!");
+                        obtainToken(username, password).then(() => {
+                            //sendVerificationEmail(); TODO uncomment this line
+                        });
+                    } else if (response.status === 400) {
+                        popupAlertError("Username is already taken");
+                    } else if (response.status === 401) {
+                        popupAlertError("Email is already taken");
+                    } else if (response.status === 402) {
+                        popupAlertError("Passwords do not match");
+                    } else if (response.status === 404) {
+                        popupAlertError(
+                            "Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number and one special character"
+                        );
+                    } else if (response.status === 405) {
+                        popupAlertError('One of the fields are too long')
+                    }
+                })
             });
         }
     });

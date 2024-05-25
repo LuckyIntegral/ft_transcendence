@@ -10,6 +10,11 @@ document.addEventListener("DOMContentLoaded", function () {
             g_GameSocket.close();
             g_GameSocket = null;
         }
+
+        if (g_LobbySocket !== null) {
+            g_LobbySocket.close();
+            g_LobbySocket = null;
+        }
     }
     var routes = {
         profile: function () {

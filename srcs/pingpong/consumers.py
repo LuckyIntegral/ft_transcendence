@@ -132,9 +132,13 @@ class ChatConsumer(AsyncWebsocketConsumer):
             )
         sender = html.escape(text_data_json["sender"])
         timestamp = html.escape(text_data_json["timestamp"])
-        self.chat = await self.getChat(self.chatToken)
-        self.sender = await self.getSender(sender)
-        self.recipient = await self.getRecipient(self.sender, self.chat)
+        print(f"Sender: {sender}")
+        try:
+            self.chat = await self.getChat(self.chatToken)
+            self.sender = await self.getSender(sender)
+            self.recipient = await self.getRecipient(self.sender, self.chat)
+        except:
+            return
         if await self.isBlocked(self.sender, self.recipient):
             await self.send(text_data=json.dumps({"blocked": "You are blocked by this user!"}))
             return
@@ -568,13 +572,11 @@ class TournamentConsumer(AsyncWebsocketConsumer):
                 self.jwt_token = JWTTokenValidator().validate(auth_header)
                 self.user = await self.get_user_from_token(self.jwt_token)
                 if not await self.user_in_tournament(self.user, self.token):
-                    print("User not in tournament")
                     await self.close()
                     return
             except Exception:
                 await self.close()
                 return
-            print("Before JOIN")
             # JOIN LOGIC
             if self.token not in TournamentConsumer.players_auth:
                 TournamentConsumer.players_auth[self.token] = {}
@@ -582,7 +584,6 @@ class TournamentConsumer(AsyncWebsocketConsumer):
             if self.user.username not in TournamentConsumer.players_auth[self.token]:
                 TournamentConsumer.players_auth[self.token][self.user.username] = 0
             TournamentConsumer.players_auth[self.token][self.user.username] += 1
-            print("Before start")
             # START LOGIC
             if self.token not in TournamentConsumer.players_auth:
                 return
@@ -601,31 +602,126 @@ class TournamentConsumer(AsyncWebsocketConsumer):
                     )
             else:
                 await self.send(
-                    text_data=json.dumps(
-                    {
-                        "stage": TournamentConsumer.tournament_stage[self.token],
-                        "game_token": await self.get_game_for_user(self.user.username),
-                        "username": self.user.username,
-                    }
+                        text_data=json.dumps(
+                        {
+                            "stage": TournamentConsumer.tournament_stage[self.token],
+                            "game_token": await self.get_game_for_user(self.user.username),
+                            "username": self.user.username,
+                        }
+                    )
                 )
-        )
             return
         # TOURNAMENT PROCESS LOGIC
-        print("Before sleep")
         await asyncio.sleep(2)
         curStage = await self.get_tournament_stage(self.token)
         if (curStage != TournamentConsumer.tournament_stage[self.token] and curStage == "final_game_ready"):
             await self.update_game_timestamp(self.token, "final")
-            TournamentConsumer.tournament_stage[self.token] = curStage
-        print("Before send")
+            await self.assign_final_game()
+        if (curStage == "tournament_over" and TournamentConsumer.tournament_stage[self.token] == "final_game_ready"):
+            await self.set_tournament_finished()
+        TournamentConsumer.tournament_stage[self.token] = curStage
+        results = []
+        if (curStage == "tournament_over"):
+            results = await self.get_tournament_results()
+        if (curStage in ("semifinal_game_ready", "final_game_ready") and await self.is_user_eleminated(self.user)):
+            curStage = "eliminated"
+        if (curStage == "semifinal_game_ready" and await self.is_user_won_semifinals(self.user)):
+            curStage = "waiting_for_finals"
+        print(f"Stage: {curStage}")
         await self.send(
             text_data=json.dumps(
             {
-                "stage": TournamentConsumer.tournament_stage[self.token],
+                "stage": curStage,
                 "game_token": await self.get_game_for_user(self.user.username),
                 "username": self.user.username,
+                "results": results,
             })
         )
+
+    @database_sync_to_async
+    def is_user_won_semifinals(self, user):
+        try:
+            tournament = TournamentLobby.objects.get(token=self.token)
+        except TournamentLobby.DoesNotExist:
+            return False
+        if tournament.upper_bracket.winner == user or tournament.lower_bracket.winner == user:
+            return True
+        return False
+
+    @database_sync_to_async
+    def is_user_eleminated(self, user):
+        try:
+            tournament = TournamentLobby.objects.get(token=self.token)
+        except TournamentLobby.DoesNotExist:
+            return False
+        if (
+            tournament.upper_bracket.isFinished
+            and user in [tournament.upper_bracket.host, tournament.upper_bracket.guest]
+            and user != tournament.upper_bracket.winner
+        ):
+            return True
+        if (
+            tournament.lower_bracket.isFinished
+            and user in [tournament.lower_bracket.host, tournament.lower_bracket.guest]
+            and user != tournament.lower_bracket.winner
+        ):
+            return True
+        return False
+
+    @database_sync_to_async
+    def set_tournament_finished(self):
+        try:
+            tournament = TournamentLobby.objects.get(token=self.token)
+        except TournamentLobby.DoesNotExist:
+            return
+        if tournament.final.isFinished:
+            tournament.isFinished = True
+            tournament.save()
+
+    @database_sync_to_async
+    def get_tournament_results(self):
+        try:
+            tournament = TournamentLobby.objects.get(token=self.token)
+        except TournamentLobby.DoesNotExist:
+            return []
+        if not tournament.final.isFinished:
+            return []
+        first_place_user = tournament.final.winner
+        second_place_user = tournament.upper_bracket.winner if tournament.upper_bracket.winner != first_place_user else tournament.lower_bracket.winner
+        third_place_user = tournament.upper_bracket.host if tournament.upper_bracket.host != tournament.upper_bracket.winner else tournament.upper_bracket.guest
+        fourth_place_user = tournament.lower_bracket.host if tournament.lower_bracket.host != tournament.lower_bracket.winner else tournament.lower_bracket.guest
+        return [
+            {
+                "username": first_place_user.username,
+                "diplayName": first_place_user.userprofile.displayName,
+                "place": "1st",
+            },
+            {
+                "username": second_place_user.username,
+                "diplayName": second_place_user.userprofile.displayName,
+                "place": "2nd",
+            },
+            {
+                "username": third_place_user.username,
+                "diplayName": third_place_user.userprofile.displayName,
+                "place": "3/4th",
+            },
+            {
+                "username": fourth_place_user.username,
+                "diplayName": fourth_place_user.userprofile.displayName,
+                "place": "3/4th",
+            },
+        ]
+
+    @database_sync_to_async
+    def assign_final_game(self):
+        try:
+            tournament = TournamentLobby.objects.get(token=self.token)
+        except TournamentLobby.DoesNotExist:
+            return
+        tournament.final.host = tournament.upper_bracket.winner
+        tournament.final.guest = tournament.lower_bracket.winner
+        tournament.final.save()
 
     @database_sync_to_async
     def update_game_timestamp(self, token, stage):
@@ -648,14 +744,17 @@ class TournamentConsumer(AsyncWebsocketConsumer):
             tournament = TournamentLobby.objects.get(token=token)
         except TournamentLobby.DoesNotExist:
             return "None"
-        if tournament.upper_bracket.isFinished and tournament.lower_bracket.isFinished:
-            return "final_game_ready"
         if tournament.final.isFinished:
             return "tournament_over"
         if tournament.upper_bracket.isExpired or tournament.lower_bracket.isExpired:
             return "tournament_over"
         if tournament.final.isExpired:
             return "tournament_over"
+        if tournament.upper_bracket.isFinished and tournament.lower_bracket.isFinished:
+            return "final_game_ready"
+        if TournamentConsumer.tournament_stage[self.token] == "semifinal_game_ready":
+            return "semifinal_game_ready"
+        return "waiting_for_semifinals"
 
 
     @database_sync_to_async
@@ -681,6 +780,7 @@ class TournamentConsumer(AsyncWebsocketConsumer):
         except:
             return False
         tournament.started = True
+        tournament.save()
         return True
 
     @database_sync_to_async

@@ -3,6 +3,8 @@ var g_LobbySocket = null;
 class TournamentLobby {
     constructor() {
         this.lobbySocket = null;
+        this.game_token = null;
+        this.clickHandler = this.clickHandler.bind(this);
     }
 
     join(lobbyToken) {
@@ -24,22 +26,31 @@ class TournamentLobby {
                 this.displayGameOverMessage(data.results);
             }
             if (data.stage === "semifinal_game_ready" && data.username === localStorage.getItem("username")) {
+                this.game_token = data.game_token;
                 this.displayJoinSemifinalGameMessage(data.game_token);
             }
             if (data.stage === "final_game_ready" && data.username === localStorage.getItem("username")) {
+                this.game_token = data.game_token;
                 this.displayJoinFinalGameMessage(data.game_token);
             }
             if (data.stage === "waiting_for_semifinals" && data.username === localStorage.getItem("username")) {
                 this.displaySemifinalsWaitingMessage();
             }
-            console.log(data.stage)
-            console.log(data.username)
-            console.log(localStorage.getItem("username"))
+            if (data.stage === "eliminated" && data.username === localStorage.getItem("username")) {
+                this.displayEliminatedMessage();
+            }
+            if (data.stage === "waiting_for_finals" && data.username === localStorage.getItem("username")) {
+                this.displayWaitingForFinalsMessage();
+            }
             this.lobbySocket.send(JSON.stringify({ type: "pong" }));
         }
         this.lobbySocket.onclose = () => {
             console.log("Tournament Lobby WebSocket connection closed.");
         }
+    }
+
+    clickHandler() {
+        this.joinGame(this.game_token);
     }
 
     joinGame(game_token) {
@@ -73,70 +84,94 @@ class TournamentLobby {
         console.log("Canvas set up");
     }
 
+    displayEliminatedMessage() {
+        this.clearCanvas();
+        this.context.fillStyle = "WHITE";
+        this.context.font = "30px Arial";
+        this.context.textAlign = "center";
+        this.context.fillText(
+            "You have been eliminated from the tournament.",
+            GameConstants.GAME_WIDTH / 2,
+            GameConstants.GAME_HEIGHT / 2
+        );
+        this.canvas.removeEventListener("click", this.clickHandler);
+    }
+
+    displayWaitingForFinalsMessage() {
+        this.clearCanvas();
+        this.context.fillStyle = "WHITE";
+        this.context.font = "30px Arial";
+        this.context.textAlign = "center";
+        this.context.fillText(
+            "Waiting for the finals to begin...",
+            GameConstants.GAME_WIDTH / 2,
+            GameConstants.GAME_HEIGHT / 2
+        );
+        this.canvas.removeEventListener("click", this.clickHandler);
+    }
+
     displaySemifinalsWaitingMessage() {
         this.clearCanvas();
         this.context.fillStyle = "WHITE";
-        this.context.font = "40px Arial";
+        this.context.font = "30px Arial";
         this.context.textAlign = "center";
         this.context.fillText(
             "Waiting for all participants...",
             GameConstants.GAME_WIDTH / 2,
             GameConstants.GAME_HEIGHT / 2
         );
+        this.canvas.removeEventListener("click", this.clickHandler);
     }
 
     displayFinalsWaitingMessage() {
         this.clearCanvas();
         this.context.fillStyle = "WHITE";
-        this.context.font = "40px Arial";
+        this.context.font = "30px Arial";
         this.context.textAlign = "center";
         this.context.fillText(
             "Waiting for all participants...",
             GameConstants.GAME_WIDTH / 2,
             GameConstants.GAME_HEIGHT / 2
         );
+        this.canvas.removeEventListener("click", this.clickHandler);
     }
 
     displayJoinSemifinalGameMessage(game_token) {
         this.clearCanvas();
         this.context.fillStyle = "WHITE";
-        this.context.font = "40px Arial";
+        this.context.font = "30px Arial";
         this.context.textAlign = "center";
         this.context.fillText(
             "Your semifinal game is ready.\nClick to join the game",
             GameConstants.GAME_WIDTH / 2,
             GameConstants.GAME_HEIGHT / 2
         );
-        this.canvas.addEventListener("click", () => {
-            this.joinGame(game_token);
-        });
+        this.canvas.removeEventListener("click", this.clickHandler);
+        this.canvas.addEventListener("click", this.clickHandler);
     }
 
     displayJoinFinalGameMessage(game_token) {
         this.clearCanvas();
         this.context.fillStyle = "WHITE";
-        this.context.font = "40px Arial";
+        this.context.font = "30px Arial";
         this.context.textAlign = "center";
         this.context.fillText(
             "Your final game is ready.\nClick to join the game",
             GameConstants.GAME_WIDTH / 2,
             GameConstants.GAME_HEIGHT / 2
         );
-        this.canvas.removeEventListener("click", () => {
-            this.joinGame(game_token);
-        });
-        this.canvas.addEventListener("click", () => {
-            this.joinGame(game_token);
-        });
+        this.canvas.removeEventListener("click", this.clickHandler);
+        this.canvas.addEventListener("click", this.clickHandler);
     }
 
     displayGameOverMessage(results) {
         this.clearCanvas();
+        this.canvas.removeEventListener("click", this.clickHandler);
         this.context.fillStyle = "WHITE";
         this.context.font = "40px Arial";
         this.context.textAlign = "center";
         this.context.fillText(
-            "Game Over",
+            "Tournament Over",
             GameConstants.GAME_WIDTH / 2,
             GameConstants.GAME_HEIGHT / 2
         );
@@ -147,6 +182,22 @@ class TournamentLobby {
             GameConstants.GAME_HEIGHT / 2 + 30
         );
         this.context.font = "15px Arial";
+        if (!Array.isArray(results)) {
+            this.context.fillText(
+                "Loading...",
+                GameConstants.GAME_WIDTH / 2,
+                GameConstants.GAME_HEIGHT / 2 + 50
+            );
+            return;
+        }
+        if (results.length === 0) {
+            this.context.fillText(
+                "Tournament was cancelled.",
+                GameConstants.GAME_WIDTH / 2,
+                GameConstants.GAME_HEIGHT / 2 + 50
+            );
+            return;
+        }
         for (let i = 0; i < results.length; i++) {
             this.context.fillText(
                 `${results[i].username}, aka ${results[i].displayName}: ${results[i].place}`,

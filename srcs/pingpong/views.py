@@ -139,6 +139,7 @@ class SignupView(APIView):
                 {"error": "Please provide all required fields"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+        displayName = username
         username = username.lower()
         email = email.lower()
         email = html.escape(email)
@@ -176,10 +177,8 @@ class SignupView(APIView):
         except ValidationError as e:
             return Response({"error": str(e)}, status=status.HTTP_404_NOT_FOUND)
 
-        user = User.objects.create_user(
-            username=username, email=email, password=password
-        )
-        userProfile = UserProfile.objects.create(user=user)
+        user = User.objects.create_user(username=username, email=email, password=password)
+        userProfile = UserProfile.objects.create(user=user, displayName=displayName)
 
         return Response(
             {"status": "Successfully signed up"},
@@ -317,9 +316,9 @@ class ProfileView(APIView):
         except ValidationError as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         displayName = html.escape(request.data.get("displayName"))
-        if len(displayName) > 50:
+        if len(displayName) > 50 or len(displayName) == 0:
             return Response(
-                {"error": "Display name is too long"},
+                {"error": "Invalid display name"},
                 status=status.HTTP_405_METHOD_NOT_ALLOWED,
             )
         email = request.data.get("email")
@@ -1373,13 +1372,22 @@ class TournamentLobbyView(APIView):
         player4 = User.objects.get(username=users[3])
 
         lower_bracket = PongLobby.objects.create(
-            token=first_game_token, host=player1, guest=player2
+            token=first_game_token,
+            host=player1,
+            guest=player2
         )
         upper_bracket = PongLobby.objects.create(
-            token=second_game_token, host=player3, guest=player4
+            token=second_game_token,
+            host=player3,
+            guest=player4
         )
         final = PongLobby.objects.create(
             token=final_game_token
         )
-        TournamentLobby.objects.create(token=tournament_id, upper_bracket=upper_bracket, lower_bracket=lower_bracket, final=final)
+        TournamentLobby.objects.create(
+            token=tournament_id,
+            upper_bracket=upper_bracket,
+            lower_bracket=lower_bracket,
+            final=final
+        )
         return Response({"token": tournament_id}, status=status.HTTP_201_CREATED)

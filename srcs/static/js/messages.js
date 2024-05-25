@@ -377,7 +377,7 @@ function connectToSocket() {
 
 function sendMessage() {
     var message = document.getElementById("messageInput").value;
-    if (message === "") {
+    if (message.trimEnd() === "") {
         return;
     }
     chatSocket.send(
