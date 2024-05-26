@@ -555,6 +555,7 @@ class FriendsView(APIView):
         page_size = 10 if not page_size else int(page_size)
 
         friend_list = user.userprofile.friendList.all().order_by("user__username")
+        friend_list = friend_list.exclude(user__username="Notifications")
         friend_list_count = friend_list.count()
         response = {
             "data": [],
@@ -971,6 +972,7 @@ class FriendsSearchView(APIView):
                 ).order_by("user__username")
             except UserProfile.DoesNotExist:
                 return Response(data, status=status.HTTP_200_OK)
+            friend_list = friend_list.exclude(user__username="Notifications")
             for friend in friend_list[: min(page_size, friend_list.count())]:
                 if friend.user.username == user.username:
                     continue
@@ -1004,6 +1006,7 @@ class LeaderboardView(APIView):
         page_size = 10 if not page_size else int(page_size)
 
         player_list = UserProfile.objects.all().order_by("-gamesWon", "user__username")
+        player_list = player_list.exclude(user__username="Notifications")
         player_list_count = player_list.count()
         response = {
             "data": [],

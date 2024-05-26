@@ -591,6 +591,12 @@ class TournamentConsumer(AsyncWebsocketConsumer):
             if self.token not in TournamentConsumer.players_auth:
                 TournamentConsumer.players_auth[self.token] = {}
                 TournamentConsumer.tournament_stage[self.token] = "waiting_for_semifinals"
+                participants = await self.get_all_participants()
+                for username in participants:
+                    await self.send_game_ready_notification(
+                        username,
+                        TournamentConsumer.tournament_stage[self.token]
+                    )
             if self.user.username not in TournamentConsumer.players_auth[self.token]:
                 TournamentConsumer.players_auth[self.token][self.user.username] = 0
             TournamentConsumer.players_auth[self.token][self.user.username] += 1
@@ -627,6 +633,14 @@ class TournamentConsumer(AsyncWebsocketConsumer):
         if (curStage != TournamentConsumer.tournament_stage[self.token] and curStage == "final_game_ready"):
             await self.update_game_timestamp(self.token, "final")
             await self.assign_final_game()
+            finilists = await self.get_finilists_usernames()
+            for username in finilists:
+                print(username)
+                if username not in TournamentConsumer.players_auth[self.token]:
+                    await self.send_game_ready_notification(
+                        username,
+                        "final"
+                    )
         if (curStage == "tournament_over" and TournamentConsumer.tournament_stage[self.token] == "final_game_ready"):
             await self.set_tournament_finished()
         TournamentConsumer.tournament_stage[self.token] = curStage
@@ -647,6 +661,17 @@ class TournamentConsumer(AsyncWebsocketConsumer):
                 "results": results,
             })
         )
+
+    @database_sync_to_async
+    def get_finilists_usernames(self):
+        try:
+            tournament = TournamentLobby.objects.get(token=self.token)
+        except TournamentLobby.DoesNotExist:
+            return []
+        return [
+            tournament.upper_bracket.winner.username,
+            tournament.lower_bracket.winner.username,
+        ]
 
     @database_sync_to_async
     def is_user_won_semifinals(self, user):
@@ -825,7 +850,55 @@ class TournamentConsumer(AsyncWebsocketConsumer):
         except:
             return "None"
 
+    @database_sync_to_async
+    def get_notifications_chat(self, username):
+        try:
+            user = User.objects.get(username=username)
+        except User.DoesNotExist:
+            return None
+        return Chat.objects.filter(userOne=user, userTwo__username="Notifications").first()
 
+    @database_sync_to_async
+    def create_message_recipient(self, recipient, chatToken):
+        if chatToken in ChatConsumer.chatUsers:
+            if (
+                recipient.username in ChatConsumer.chatUsers[chatToken]
+                and ChatConsumer.chatUsers[chatToken][recipient.username] > 0
+            ):
+                return MessagesRecipient.objects.create(recipient=recipient, isRead=True, isNotified=True)
+        return MessagesRecipient.objects.create(recipient=recipient)
+
+    @database_sync_to_async
+    def create_message(self, sender, message, messageRecipient):
+        return Message.objects.create(sender=sender, message=message, messageRecipient=messageRecipient)
+
+    @database_sync_to_async
+    def send_game_ready_notification(self, username, stage):
+        chat = async_to_sync(self.get_notifications_chat)(username)
+        if not chat:
+            return
+        recipient = chat.userOne
+        sender = chat.userTwo
+        messageRecipient = async_to_sync(self.create_message_recipient)(recipient, chat.token)
+        if stage == "waiting_for_semifinals":
+            messageText = f"Your tournament is ready! <a href='#tournamentslobby?token={self.token}'>Click here</a> to join tournament lobby."
+        else:
+            messageText = f"Your {stage} game is ready! <a href='#tournamentslobby?token={self.token}'>Click here</a> to join tournament lobby."
+        message = async_to_sync(self.create_message)(sender, messageText, messageRecipient)
+        chat.messages.add(message)
+
+    @database_sync_to_async
+    def get_all_participants(self):
+        try:
+            tournament = TournamentLobby.objects.get(token=self.token)
+        except TournamentLobby.DoesNotExist:
+            return []
+        return [
+            tournament.upper_bracket.host.username,
+            tournament.upper_bracket.guest.username,
+            tournament.lower_bracket.host.username,
+            tournament.lower_bracket.guest.username,
+        ]
 
     async def ping(self, event):
         game_token = event["game_token"]
