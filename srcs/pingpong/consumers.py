@@ -189,6 +189,7 @@ class LongPollConsumer(AsyncWebsocketConsumer):
             unread_messages = await self.get_unread_messages(user)
             chatsInfo = await self.get_chats_info(user)
             new_friend_requests = await self.get_new_friend_requests(user)
+            await self.update_notification_last_online()
             await self.update_last_online(user)
             if new_messages:
                 await self.set_notified(user)
@@ -223,6 +224,15 @@ class LongPollConsumer(AsyncWebsocketConsumer):
                 )
         except Exception as e:
             await self.send(text_data=json.dumps({"error": str(e)}))
+
+    @database_sync_to_async
+    def update_notification_last_online(self):
+        try:
+            notif = User.objects.get(username="Notifications")
+            notif.userprofile.lastOnline = timezone.now()
+            notif.userprofile.save()
+        except User.DoesNotExist:
+            return
 
     @database_sync_to_async
     def get_new_friend_requests(self, user):

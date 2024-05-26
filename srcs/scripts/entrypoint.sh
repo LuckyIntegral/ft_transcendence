@@ -10,5 +10,6 @@ python manage.py makemigrations rest_framework_simplejwt
 python manage.py migrate
 python manage.py collectstatic --noinput
 # python manage.py runserver 0.0.0.0:8000
+python create_user_for_notif.py
 daphne -u /tmp/daphne.sock transcedence.asgi:application
 chmod 777 /tmp/daphne.sock

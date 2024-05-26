@@ -41,6 +41,7 @@ from .utils import (
     getCompressedPicture,
     blockChainCreateGame,
     generateToken,
+    create_chat_with_notification_user,
 )
 from PIL import Image
 from django.core.files.uploadedfile import InMemoryUploadedFile
@@ -179,7 +180,7 @@ class SignupView(APIView):
 
         user = User.objects.create_user(username=username, email=email, password=password)
         userProfile = UserProfile.objects.create(user=user, displayName=displayName)
-
+        create_chat_with_notification_user(user)
         return Response(
             {"status": "Successfully signed up"},
             status=status.HTTP_201_CREATED,
@@ -1159,6 +1160,7 @@ class ChatView(APIView):
                 {"error": "You cannot chat with yourself"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+
         try:
             chat = Chat.objects.get(
                 Q(userOne=user, userTwo=secondUser)
@@ -1187,6 +1189,12 @@ class MessagesView(APIView):
         except ValidationError as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         chats = Chat.objects.filter(Q(userOne=user) | Q(userTwo=user))
+        try:
+            notification_user = User.objects.get(username="Notifications")
+            notification_user.userprofile.lastOnline = timezone.now()
+            notification_user.userprofile.save()
+        except User.DoesNotExist:
+            print("Notifications user does not exist")
         data = []
         for chat in chats:
             secondUserUsername = (
@@ -1280,6 +1288,13 @@ class BlockUserView(APIView):
                 {"error": "You cannot block yourself"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+
+        if secondUser.username == "Notifications":
+            return Response(
+                {"error": "You cannot block the Notifications user", "button": "Unblock"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         blockRel = Block.objects.filter(blocker=user, blocked=secondUser)
         if blockRel.exists():
             blockRel.delete()
@@ -1313,6 +1328,16 @@ class PongLobbyView(APIView):
             return Response(
                 {"error": "User not found"},
                 status=status.HTTP_404_NOT_FOUND,
+            )
+        if userHost == userGuest:
+            return Response(
+                {"error": "You cannot play with yourself"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if Block.objects.filter(blocker=userGuest, blocked=userHost).exists():
+            return Response(
+                {"error": "User has blocked you"},
+                status=status.HTTP_400_BAD_REQUEST,
             )
         lobbyId = generateToken()
         while PongLobby.objects.filter(token=lobbyId).exists():
