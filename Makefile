@@ -7,16 +7,16 @@ PICTURES_FOLDER = ./srcs/media/pictures
 re: stop rmsocket debug
 
 run:
-	@docker-compose up -d --build
+	@docker compose up -d --build
 
 debug:
-	@docker-compose up --build
+	@docker compose up --build
 
 stop:
-	@docker-compose down
+	@docker compose down
 
 clean:
-	@docker-compose down
+	@docker compose down
 	@docker system prune -f
 	@docker volume prune -f
 	@docker network prune -f

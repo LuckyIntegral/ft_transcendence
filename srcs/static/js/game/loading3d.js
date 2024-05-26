@@ -11,7 +11,7 @@ class Loading {
         this.loadBarWidth = GameConstants3D.LOADBAR_WIDTH;
         this.loadBarHeight = GameConstants3D.LOADBAR_HEIGHT;
         this.bgImage.onload = function() {
-            console.log('Image loaded');
+            // console.log('Image loaded');
             this.drawLoadingScreen(0);
         }.bind(this);
     }

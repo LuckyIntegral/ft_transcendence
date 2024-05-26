@@ -1,3 +1,5 @@
+// import { THREE } from "./main";
+
 class Game3D {
     constructor(lobbyId) {
         this.lobbyId = lobbyId;
@@ -36,6 +38,14 @@ class Game3D {
 
         // Set the background color of the scene
         this.scene.background = new THREE.Color(0x55ceff);
+
+        this.mixer;
+        this.bobo;
+        this.headBone = null;
+        this.modelReady = false;
+        this.animationActions = []; // all actions
+        this.activeAction; // current action
+        this.lastAction; // last action played
 
         //Meshes
         this.level_mesh = null;
@@ -154,6 +164,46 @@ class Game3D {
         );
     }
 
+    loadBobo(loader) {
+        loader.load(
+            "static/assets3d/town/bobo.glb",
+            function (object) {
+                object.scene.traverse(function (child) {
+                    if (child.isMesh) {
+                        child.castShadow = true
+                    }
+                    // console.log(child.name + " " + child.isBone)
+                    if (child.isBone && child.name == "mixamorig1Neck")
+                    {
+                        this.headBone = child;
+                        console.log(this.headBone)
+                    }
+
+                }.bind(this));
+                this.bobo = object.scene;
+                this.mixer = new THREE.AnimationMixer(this.bobo);
+                const clips = object.animations;
+                for (let i = 0; i < clips.length; i++) {
+                    console.log(clips[i].name)
+                }
+                const clip = THREE.AnimationClip.findByName(clips, "standingIdle");
+                console.log(clip)
+                const action = this.mixer.clipAction(clip)//object.animations[4])
+                console.log(object.animations[4].name)
+                action.play();
+                this.bobo.position.set(2.0, -1.0, 0.0) 
+                this.bobo.rotation.y = -Math.PI / 2;
+                this.scene.add(this.bobo);
+            }.bind(this), 
+            function (xhr) {
+                // console.log((xhr.loaded / xhr.total * 100) + '% Bobo loaded')
+            },
+            function (error) {
+                console.log("An error happened");
+            }
+        );
+    }
+
     loadSounds(loadingManager) {
         // 	// Load Sound
         var audioLoader = new THREE.AudioLoader(loadingManager);
@@ -201,6 +251,8 @@ class Game3D {
         this.loadLevel(loader);
 
         this.loadPaddles(loader);
+
+        this.loadBobo(loader);
 
         this.loadSounds(loadingManager);
     }
@@ -319,16 +371,42 @@ class Game3D {
         }
     }
 
+    turnHead(target) {
+        // if (this.headBone && target) {
+            
+        //     const headWorldPosition = new THREE.Vector3();
+        //     this.headBone.getWorldPosition(headWorldPosition);
+
+        //     const targetWorldPosition = new THREE.Vector3();
+        //     target.getWorldPosition(targetWorldPosition);
+
+        //     const direction = new THREE.Vector3().subVectors(targetWorldPosition, headWorldPosition).normalize();
+
+        //     // Get current rotation of the head
+        //     const currentQuaternion = new THREE.Quaternion().copy(this.headBone.quaternion);
+  
+        //     // Calculate the quaternion that represents the rotation
+        //     const targetQuaternion = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 0, 1), direction);
+  
+        //     // Blend the current quaternion with the target quaternion
+        //     this.headBone.quaternion.slerp(targetQuaternion, 0.1); // Adjust the factor (0.1) for smoothness
+        //   }
+        // console.log("target: ", target);   
+        this.headBone.lookAt((new THREE.Vector3(0 ,target.position.y,target.position.z)));
+    }
+
     update() {
         const now = performance.now();
         var dt = (now - this.lastUpdateTime) / 1000.0;
         this.lastUpdateTime = now;
 
         this.checkGoals();
+        this.mixer.update(dt);
+        this.turnHead(this.ball);
 
         if (this.playerId === "player1" || this.gameMode === GameModes.PLAYER_VS_AI) {
-            console.log("this.playerId: ", this.playerId);
-            console.log("this.gameMode: ", this.gameMode);
+            // console.log("this.playerId: ", this.playerId);
+            // console.log("this.gameMode: ", this.gameMode);
             this.ball.update(dt, [this.paddle1, this.paddle2]);
             this.player1.update(dt, this.keystate, this.ball);
             if (this.gameMode === GameModes.PLAYER_VS_AI) {
