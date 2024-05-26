@@ -2,7 +2,7 @@ class Game {
     constructor(lobbyId) {
         this.lobbyId = lobbyId;
         this.setListeners();
-        this.lobby = new Lobby();
+        this.lobby = new GameLobby();
         this.playerId = null;
         this.lastUpdateTime = 0;
         this.updateInterval = 1000 / GameConstants.FPS;

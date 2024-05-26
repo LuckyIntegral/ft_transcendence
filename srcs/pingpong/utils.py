@@ -1,6 +1,7 @@
 from django.core.mail import send_mail
 from rest_framework_simplejwt.state import token_backend
 from django.contrib.auth.models import User
+from django.db.models import Q
 from io import BytesIO
 from django.core.files.base import ContentFile
 from PIL import Image
@@ -113,6 +114,24 @@ async def blockChainCreateGame(tournamentId, players):
     # instead of returning should update db to set gameId for the tournament
     return gameId
 
+def create_chat_with_notification_user(user):
+    from pingpong.models import Chat, Block
+    try:
+        notification_user = User.objects.get(username="Notifications")
+    except User.DoesNotExist:
+        return
+    try:
+        chat = Chat.objects.get(
+            Q(userOne=user, userTwo=notification_user)
+            | Q(userOne=notification_user, userTwo=user)
+        )
+    except Chat.DoesNotExist:
+        chatToken = generateToken()
+        while Chat.objects.filter(token=chatToken).exists():
+            chatToken = generateToken()
+        chat = Chat.objects.create(userOne=user, userTwo=notification_user, token=chatToken)
+        chat.save()
+        block = Block.objects.create(blocker=notification_user, blocked=user)
 
 def generateToken():
     return str(uuid.uuid4())

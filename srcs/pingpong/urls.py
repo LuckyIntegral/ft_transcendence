@@ -31,6 +31,7 @@ from pingpong.views import (
     MessagesView,
     BlockUserView,
     PongLobbyView,
+    TournamentLobbyView,
 )
 
 
@@ -135,4 +136,5 @@ urlpatterns = [
     path("api/chat/", ChatView.as_view(), name="chat"),
     path("api/messages/", MessagesView.as_view(), name="messages"),
     path("api/lobby/pong/", PongLobbyView.as_view(), name="pong-lobby"),
+    path("api/lobby/tournament/", TournamentLobbyView.as_view(), name="tournament-lobby"),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

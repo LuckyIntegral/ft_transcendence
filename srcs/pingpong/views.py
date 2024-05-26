@@ -41,6 +41,7 @@ from .utils import (
     getCompressedPicture,
     blockChainCreateGame,
     generateToken,
+    create_chat_with_notification_user,
 )
 from PIL import Image
 from django.core.files.uploadedfile import InMemoryUploadedFile
@@ -139,6 +140,7 @@ class SignupView(APIView):
                 {"error": "Please provide all required fields"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+        displayName = username
         username = username.lower()
         email = email.lower()
         email = html.escape(email)
@@ -176,11 +178,9 @@ class SignupView(APIView):
         except ValidationError as e:
             return Response({"error": str(e)}, status=status.HTTP_404_NOT_FOUND)
 
-        user = User.objects.create_user(
-            username=username, email=email, password=password
-        )
-        userProfile = UserProfile.objects.create(user=user)
-
+        user = User.objects.create_user(username=username, email=email, password=password)
+        userProfile = UserProfile.objects.create(user=user, displayName=displayName)
+        create_chat_with_notification_user(user)
         return Response(
             {"status": "Successfully signed up"},
             status=status.HTTP_201_CREATED,
@@ -317,9 +317,9 @@ class ProfileView(APIView):
         except ValidationError as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         displayName = html.escape(request.data.get("displayName"))
-        if len(displayName) > 50:
+        if len(displayName) > 50 or len(displayName) == 0:
             return Response(
-                {"error": "Display name is too long"},
+                {"error": "Invalid display name"},
                 status=status.HTTP_405_METHOD_NOT_ALLOWED,
             )
         email = request.data.get("email")
@@ -555,6 +555,7 @@ class FriendsView(APIView):
         page_size = 10 if not page_size else int(page_size)
 
         friend_list = user.userprofile.friendList.all().order_by("user__username")
+        friend_list = friend_list.exclude(user__username="Notifications")
         friend_list_count = friend_list.count()
         response = {
             "data": [],
@@ -971,6 +972,7 @@ class FriendsSearchView(APIView):
                 ).order_by("user__username")
             except UserProfile.DoesNotExist:
                 return Response(data, status=status.HTTP_200_OK)
+            friend_list = friend_list.exclude(user__username="Notifications")
             for friend in friend_list[: min(page_size, friend_list.count())]:
                 if friend.user.username == user.username:
                     continue
@@ -1004,6 +1006,7 @@ class LeaderboardView(APIView):
         page_size = 10 if not page_size else int(page_size)
 
         player_list = UserProfile.objects.all().order_by("-gamesWon", "user__username")
+        player_list = player_list.exclude(user__username="Notifications")
         player_list_count = player_list.count()
         response = {
             "data": [],
@@ -1160,6 +1163,7 @@ class ChatView(APIView):
                 {"error": "You cannot chat with yourself"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+
         try:
             chat = Chat.objects.get(
                 Q(userOne=user, userTwo=secondUser)
@@ -1188,6 +1192,12 @@ class MessagesView(APIView):
         except ValidationError as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         chats = Chat.objects.filter(Q(userOne=user) | Q(userTwo=user))
+        try:
+            notification_user = User.objects.get(username="Notifications")
+            notification_user.userprofile.lastOnline = timezone.now()
+            notification_user.userprofile.save()
+        except User.DoesNotExist:
+            print("Notifications user does not exist")
         data = []
         for chat in chats:
             secondUserUsername = (
@@ -1281,6 +1291,13 @@ class BlockUserView(APIView):
                 {"error": "You cannot block yourself"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+
+        if secondUser.username == "Notifications":
+            return Response(
+                {"error": "You cannot block the Notifications user", "button": "Unblock"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         blockRel = Block.objects.filter(blocker=user, blocked=secondUser)
         if blockRel.exists():
             blockRel.delete()
@@ -1315,6 +1332,16 @@ class PongLobbyView(APIView):
                 {"error": "User not found"},
                 status=status.HTTP_404_NOT_FOUND,
             )
+        if userHost == userGuest:
+            return Response(
+                {"error": "You cannot play with yourself"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if Block.objects.filter(blocker=userGuest, blocked=userHost).exists():
+            return Response(
+                {"error": "User has blocked you"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         lobbyId = generateToken()
         while PongLobby.objects.filter(token=lobbyId).exists():
             lobbyId = generateToken()
@@ -1322,71 +1349,73 @@ class PongLobbyView(APIView):
         data = {"token": lobbyId}
         return Response(data, status=status.HTTP_201_CREATED)
 
-    # def get(self, request, format=None):
-    #     auth_header = request.headers.get("Authorization")
-    #     try:
-    #         token = JWTTokenValidator().validate(auth_header)
-    #     except ValidationError as e:
-    #         return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-    #     try:
-    #         userHost = getUserFromToken(token)
-    #     except ValidationError as e:
-    #         return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-    #     lobbyToken = request.query_params.get("token")
-    #     if not lobbyToken:
-    #         return Response(
-    #             {"error": "Please provide a token"},
-    #             status=status.HTTP_400_BAD_REQUEST,
-    #         )
-    #     try:
-    #         lobby = PongLobby.objects.get(token=lobbyToken)
-    #     except PongLobby.DoesNotExist:
-    #         return Response(
-    #             {"error": "Lobby not found"},
-    #             status=status.HTTP_404_NOT_FOUND,
-    #         )
-    #     data = {
-    #         "host": lobby.host.username,
-    #         "guest": lobby.guest.username,
-    #         "isStarted": lobby.isStarted,
-    #         "isFinished": lobby.isFinished,
-    #         "isExpired": (lobby.created < timezone.now() - timedelta(minutes=5)) if not lobby.isStarted else False,
-    #     }
-    #     return Response(data, status=status.HTTP_200_OK)
 
-    # def put(self, request, format=None):
-    #     auth_header = request.headers.get("Authorization")
-    #     try:
-    #         token = JWTTokenValidator().validate(auth_header)
-    #     except ValidationError as e:
-    #         return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-    #     try:
-    #         userHost = getUserFromToken(token)
-    #     except ValidationError as e:
-    #         return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-    #     lobbyToken = request.data.get("token")
-    #     if not lobbyToken:
-    #         return Response(
-    #             {"error": "Please provide a token"},
-    #             status=status.HTTP_400_BAD_REQUEST,
-    #         )
-    #     try:
-    #         lobby = PongLobby.objects.get(token=lobbyToken)
-    #     except PongLobby.DoesNotExist:
-    #         return Response(
-    #             {"error": "Lobby not found"},
-    #             status=status.HTTP_404_NOT_FOUND,
-    #         )
-    #     if lobby.userHost != userHost:
-    #         return Response(
-    #             {"error": "You are not the host of this lobby"},
-    #             status=status.HTTP_400_BAD_REQUEST,
-    #         )
-    #     event = request.data.get("event")
-    #     if not event:
-    #         return Response(
-    #             {"error": "Please provide an event"},
-    #             status=status.HTTP_400_BAD_REQUEST,
-    #         )
-    #     if event == "goal":
-    #         score
+class TournamentLobbyView(APIView):
+
+    def all_users_exists(self, users) -> bool:
+        if len(users) != len(set(users)):
+            return False
+        for user in users:
+            if not User.objects.filter(username=user).exists():
+                return False
+        return True
+
+    def post(self, request, format=None):
+        auth_header = request.headers.get("Authorization")
+        try:
+            token = JWTTokenValidator().validate(auth_header)
+        except ValidationError as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            user = getUserFromToken(token)
+        except ValidationError as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+        tournament_id = generateToken()
+        while TournamentLobby.objects.filter(token=tournament_id).exists():
+            tournament_id = generateToken()
+
+        users = [
+            request.data.get("player1"),
+            request.data.get("player2"),
+            request.data.get("player3"),
+            request.data.get("player4"),
+        ]
+        if not self.all_users_exists(users):
+            return Response({"error": "Nice try"}, status=status.HTTP_400_BAD_REQUEST)
+        first_game_token = generateToken()
+        while PongLobby.objects.filter(token=first_game_token).exists():
+            first_game_token = generateToken()
+        second_game_token = generateToken()
+        while PongLobby.objects.filter(token=second_game_token).exists():
+            second_game_token = generateToken()
+
+        final_game_token = generateToken()
+        while PongLobby.objects.filter(token=final_game_token).exists():
+            final_game_token = generateToken()
+
+        player1 = User.objects.get(username=users[0])
+        player2 = User.objects.get(username=users[1])
+        player3 = User.objects.get(username=users[2])
+        player4 = User.objects.get(username=users[3])
+
+        lower_bracket = PongLobby.objects.create(
+            token=first_game_token,
+            host=player1,
+            guest=player2
+        )
+        upper_bracket = PongLobby.objects.create(
+            token=second_game_token,
+            host=player3,
+            guest=player4
+        )
+        final = PongLobby.objects.create(
+            token=final_game_token
+        )
+        TournamentLobby.objects.create(
+            token=tournament_id,
+            upper_bracket=upper_bracket,
+            lower_bracket=lower_bracket,
+            final=final
+        )
+        return Response({"token": tournament_id}, status=status.HTTP_201_CREATED)

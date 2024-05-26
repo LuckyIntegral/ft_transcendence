@@ -95,12 +95,30 @@ class Block(models.Model):
 
 class PongLobby(models.Model):
     token = models.CharField(max_length=100)
-    host = models.ForeignKey(User, on_delete=models.CASCADE, related_name="host")
-    guest = models.ForeignKey(User, on_delete=models.CASCADE, related_name="guest")
+    host = models.ForeignKey(User, on_delete=models.CASCADE, related_name="host", null=True)
+    guest = models.ForeignKey(User, on_delete=models.CASCADE, related_name="guest", null=True)
     created = models.DateTimeField(auto_now_add=True)
     isStarted = models.BooleanField(default=False)
     isFinished = models.BooleanField(default=False)
     isExpired = models.BooleanField(default=False)
     hostScore = models.IntegerField(default=0)
     guestScore = models.IntegerField(default=0)
-    winner = models.ForeignKey(User, on_delete=models.CASCADE, related_name="winner", null=True)
+    winner = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="winner", null=True
+    )
+
+
+class TournamentLobby(models.Model):
+    token = models.CharField(max_length=100)
+    upper_bracket = models.ForeignKey(
+        PongLobby, on_delete=models.CASCADE, related_name="upper_bracket", null=True
+    )
+    lower_bracket = models.ForeignKey(
+        PongLobby, on_delete=models.CASCADE, related_name="lower_bracket", null=True
+    )
+    final = models.ForeignKey(
+        PongLobby, on_delete=models.CASCADE, related_name="final", null=True
+    )
+    finished = models.BooleanField(default=False)
+    started = models.BooleanField(default=False)
+    expired = models.BooleanField(default=False)

@@ -1,6 +1,6 @@
 var g_GameSocket = null;
 
-class Lobby {
+class GameLobby {
     constructor() {
         this.gameSocket = null;
         this.playerId = null;

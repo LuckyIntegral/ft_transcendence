@@ -116,7 +116,7 @@ function loadLeaderboardTable(page = 0) {
                 <td>${user.games}</td>
                 <td>${winRate}</td>
                 <td>
-                    <button id="profile-popup" class="btn btn-outline-success">
+                    <button id="profile-popup-button" class="btn btn-outline-success">
                         <span class="material-symbols-outlined">info</span>
                     </button>
                     <button id="add-friend" class="btn btn-outline-danger">
@@ -127,7 +127,7 @@ function loadLeaderboardTable(page = 0) {
                 leaderboardTableBody.appendChild(row);
             }
             // Add event listeners to buttons
-            var profilePopupButtons = document.querySelectorAll("#profile-popup");
+            var profilePopupButtons = document.querySelectorAll("#profile-popup-button");
             profilePopupButtons.forEach((button) => {
                 button.addEventListener("click", function (e) {
                     e.preventDefault();
@@ -176,7 +176,7 @@ function loadProfilePopup(username) {
 }
 
 function disableButtons() {
-    var profilePopupButtons = document.querySelectorAll("#profile-popup");
+    var profilePopupButtons = document.querySelectorAll("#profile-popup-button");
     profilePopupButtons.forEach((button) => {
         button.disabled = true;
     });
@@ -187,7 +187,7 @@ function disableButtons() {
 }
 
 function enableButtons() {
-    var profilePopupButtons = document.querySelectorAll("#profile-popup");
+    var profilePopupButtons = document.querySelectorAll("#profile-popup-button");
     profilePopupButtons.forEach((button) => {
         button.disabled = false;
     });

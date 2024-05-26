@@ -131,24 +131,22 @@ async function sendPongInvite(username) {
         })
         .then((data) => {
             if (data === null) {
+                alertError("Failed to create pong lobby");
                 return null;
             }
             var gameToken = data["token"];
             if (gameToken === null) {
-                console.error("Failed to create pong lobby");
+                alertError("Failed to create pong lobby");
                 return;
             }
             let message = `gameToken=${gameToken}`;
-            console.log(message);
 
             let sender = localStorage.getItem("username");
             if (!sender) {
-                console.error("No username found in local storage");
                 return;
             }
 
             if (!chatSocket) {
-                console.error("chatSocket is not defined");
                 return;
             }
 
@@ -272,7 +270,7 @@ function createChatHeader(data) {
                 blockButton.textContent = data["button"];
             })
             .catch((error) => {
-                alertError("Something went wrong. Please try again later.");
+                alertError("Something went wrong.");
             });
     });
 
@@ -377,7 +375,7 @@ function connectToSocket() {
 
 function sendMessage() {
     var message = document.getElementById("messageInput").value;
-    if (message === "") {
+    if (message.trimEnd() === "") {
         return;
     }
     chatSocket.send(

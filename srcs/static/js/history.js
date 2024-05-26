@@ -10,13 +10,32 @@ document.addEventListener("DOMContentLoaded", function () {
             g_GameSocket.close();
             g_GameSocket = null;
         }
+
+        if (g_LobbySocket !== null) {
+            g_LobbySocket.close();
+            g_LobbySocket = null;
+        }
     }
+
+    function removePopups() {
+        var profilePopup = document.getElementById("profile-popup");
+        if (profilePopup !== null) {
+            profilePopup.remove();
+        }
+        var searchPopup = document.getElementById("searchPopup");
+        if (searchPopup !== null) {
+            searchPopup.remove();
+        }
+    }
+
     var routes = {
         profile: function () {
+            removePopups();
             closeSockets();
             loadProfilePage();
         },
         pong: function () {
+            removePopups();
             closeSockets();
             if (query_params === null || query_params === undefined) {
                 let menu = new Menu();
@@ -29,23 +48,41 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         },
         pong3d: function() {
+            removePopups();
+            closeSockets();
             let menu3d = new Menu3D()
             menu3d.start()
             previousRoute = 'pong3d';
         },
         friends: function () {
+            removePopups();
             closeSockets();
             loadFriendsPage();
         },
         leadrboard: function () {
+            removePopups();
             closeSockets();
             loadLeaderboardPage();
         },
         messages: function () {
+            removePopups();
             closeSockets();
             loadMessagesPage();
         },
+        tournamentslobby: function () {
+            removePopups();
+            closeSockets();
+            if (query_params === null || query_params === undefined) {
+                let menu = new Menu();
+                menu.start();
+            } else {
+                var tournamentLobby = new TournamentLobby();
+                var lobbyToken = query_params.split("=")[1];
+                tournamentLobby.join(lobbyToken);
+            }
+        },
         default: function () {
+            removePopups();
             closeSockets();
             document.getElementById("content").textContent = "Default page";
         },

@@ -120,7 +120,7 @@ function saveProfile() {
             } else if (response.status === 401) {
                 alertError("Email is already taken");
             } else if (response.status === 405) {
-                alertError('Display name is too long')
+                alertError('Display name is too long or empty');
             }
         })
         .finally(function () {

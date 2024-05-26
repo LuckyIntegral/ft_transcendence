@@ -56,19 +56,6 @@ class Menu {
         }
     }
 
-    preloadImages(imagePaths) {
-        imagePaths.forEach((path) => {
-            if (path && !this.images[path]) {
-                const img = new Image();
-                img.onload = () => {
-                    this.images[path] = img;
-                    this.drawMenu();
-                };
-                img.src = path;
-            }
-        });
-    }
-
     start() {
         this.createCanvas();
         this.setFont();
@@ -219,42 +206,16 @@ class Menu {
         return x >= startX && x <= startX + 400 && y >= startY + i * 60 && y <= startY + 50 + i * 60;
     }
 
-    fetchOnlineFriends() {
-        var url = new URL(`http://${window.location.host}/api/friends/`);
-        return fetchWithToken(url, {
-            method: "GET",
-            headers: {
-                "Content-Type": "application/json",
-                Authorization: "Bearer " + localStorage.getItem("access"),
-            },
-        }).then((response) => response.json());
-    }
-
-    updateMenuWithFriends(data) {
-        if (data.data.length === 0) {
-            this.title = "You have no friends lol";
-        } else {
-            this.menuItems = data.data.map((player) => {
-                return {
-                    text: player.username,
-                    image: player.pictureSmall,
-                    action: () => {
-                        cancelAnimationFrame(this.animationFrameId);
-                        this.lobby.join(69, this.game);
-                        this.lobby.game.loadGame();
-                    },
-                };
-            });
-            this.preloadImages(this.menuItems.map((item) => item.image));
-            this.title = "Online friends";
-        }
-        this.init();
-    }
-
-    displayOnlineFriends() {
-        this.clear();
-        this.lobby = new Lobby();
-        this.title = `Connected to lobby ${this.lobby.lobbyId}.\nUsers: ${this.lobby.lobbyUsers}`;
-        this.fetchOnlineFriends().then((data) => this.updateMenuWithFriends(data));
-    }
+    preloadImages (imagePaths) {
+        imagePaths.forEach(path => {
+          if (path && !this.images[path]) {
+            const img = new Image()
+            img.onload = () => {
+              this.images[path] = img
+              this.drawMenu()
+            }
+            img.src = path
+          }
+        })
+      }
 }

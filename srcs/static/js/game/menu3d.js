@@ -8,13 +8,6 @@ class Menu3D {
         action: () => this.game.loadGame(GameModes.PLAYER_VS_AI),
         image: 'static/images/ai.png'
       },
-      {
-        text: 'PLAYER VS PLAYER',
-        action: () => {
-          this.game.loadGame(GameModes.PLAYER_VS_PLAYER)
-        },
-        image: 'static/images/pvp.png'
-      }
     ]
     this.images = {}
     this.init(true)
@@ -239,44 +232,5 @@ class Menu3D {
       y >= startY + i * 60 &&
       y <= startY + 50 + i * 60
     )
-  }
-
-  fetchOnlineFriends () {
-    var url = new URL('http://localhost:8080/api/friends/')
-    return fetchWithToken(url, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: 'Bearer ' + localStorage.getItem('access')
-      }
-    }).then(response => response.json())
-  }
-
-  updateMenuWithFriends (data) {
-    if (data.data.length === 0) {
-      this.title = 'You have no friends lol'
-    } else {
-      this.menuItems = data.data.map(player => {
-        return {
-          text: player.username,
-          image: player.pictureSmall,
-          action: () => {
-            cancelAnimationFrame(this.animationFrameId)
-            this.lobby.join(69, this.game)
-            this.lobby.game.loadGame()
-          }
-        }
-      })
-      this.preloadImages(this.menuItems.map(item => item.image))
-      this.title = 'Online friends'
-    }
-    this.init()
-  }
-
-  displayOnlineFriends () {
-    this.clear()
-    this.lobby = new Lobby()
-    this.title = `Connected to lobby ${this.lobby.lobbyId}.\nUsers: ${this.lobby.lobbyUsers}`
-    this.fetchOnlineFriends().then(data => this.updateMenuWithFriends(data))
   }
 }
