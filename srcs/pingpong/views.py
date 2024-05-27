@@ -20,6 +20,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.authentication import InvalidToken, TokenError
+from rest_framework.throttling import ScopedRateThrottle
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from .validators import *
@@ -67,6 +68,8 @@ class VerifyTokenView(APIView):
     1. post: This method is used to verify the JWT token.
     """
 
+    throttle_scope = "two_hundred_per_minute"
+
     def post(self, request, format=None):
         """This method is used to verify the JWT token."""
         auth_header = request.headers.get("Authorization")
@@ -87,6 +90,7 @@ class LoginView(APIView):
     It has following methods:
     1. post: This method is used to login a user.
     """
+    throttle_scope = "ten_per_minute"
 
     def post(self, request, format=None):
         """This method is used to login a user."""
@@ -127,6 +131,8 @@ class SignupView(APIView):
     It has following methods:
     1. post: This method is used to sign up a user.
     """
+
+    throttle_scope = "ten_per_minute"
 
     def post(self, request, format=None):
         """This method is used to sign up a user."""
@@ -194,6 +200,8 @@ class VerifyEmailView(APIView):
         TODO: shold be put bc it changes the state of the server
     """
 
+    throttle_scope = "hundred_per_hour"
+
     def get(self, request, format=None):
         """This method is used to verify the email of a user."""
         token = request.query_params.get("token")
@@ -223,6 +231,8 @@ class PasswordView(APIView):
     It has following methods:
     1. put: This method is used to change the password of a user.
     """
+
+    throttle_scope = "hundred_per_hour"
 
     def put(self, request, format=None):
         """This method is used to change the password of a user."""
@@ -281,6 +291,8 @@ class ProfileView(APIView):
     1. get: This method is used to get the profile of a user.
     2. put: This method is used to update the profile of a user.
     """
+
+    throttle_scope = "two_hundred_per_minute"
 
     def get(self, request, format=None):
         """This method is used to get the profile of a user."""
@@ -370,6 +382,8 @@ class FriendsRequestsView(APIView):
     2. post: This method is used to send a friend request to a user.
     3. put: This method is used to accept or reject a friend request.
     """
+
+    throttle_scope = "two_hundred_per_minute"
 
     def get(self, request):
         """This method is used to get all the friend requests sent to the user."""
@@ -537,6 +551,8 @@ class FriendsView(APIView):
         from the user's friend list.
     """
 
+    throttle_scope = "two_hundred_per_minute"
+
     def get(self, request):
         """This method is used to get all the friends of the user."""
         auth_header = request.headers.get("Authorization")
@@ -642,6 +658,16 @@ class TwoStepVerificationCodeView(APIView):
     2. post: This method is used to verify the 2-step verification code.
     """
 
+    def get_throttles(self):
+        if self.request.method == "PUT":
+            self.throttle_scope = "one_per_minute"
+            return [ScopedRateThrottle()]
+        elif self.request.method == "POST":
+            self.throttle_scope = "hundred_per_hour"
+            return [ScopedRateThrottle()]
+        else:
+            return super().get_throttles()
+
     def put(self, request, format=None):
         """This method is used to send the 2-step verification code."""
         auth_header = request.headers.get("Authorization")
@@ -716,6 +742,16 @@ class TwoStepVerification(APIView):
     1. get: This method is used to check if 2-step email verification is enabled.
     2. put: This method is used to enable or disable 2-step email verification.
     """
+
+    def get_throttles(self):
+        if self.request.method == "GET":
+            self.throttle_scope = "two_hundred_per_minute"
+            return [ScopedRateThrottle()]
+        elif self.request.method == "PUT":
+            self.throttle_scope = "one_per_minute"
+            return [ScopedRateThrottle()]
+        else:
+            return super().get_throttles()
 
     def get(self, request, format=None):
         """This method is used to check if 2-step email verification is enabled."""
@@ -805,6 +841,9 @@ class TwoStepVerification(APIView):
 
 
 class VerificationEmailView(APIView):
+
+    throttle_scope = "one_per_minute"
+
     def get(self, request, format=None):
         auth_header = request.headers.get("Authorization")
         try:
@@ -830,6 +869,16 @@ class VerificationEmailView(APIView):
 
 
 class ForgetPasswordView(APIView):
+
+    def get_throttles(self):
+        if self.request.method == "POST":
+            self.throttle_scope = "one_per_minute"
+            return [ScopedRateThrottle()]
+        elif self.request.method == "GET":
+            self.throttle_scope = "two_hundred_per_minute"
+            return [ScopedRateThrottle()]
+        return super().get_throttles()
+
     def post(self, request, format=None):
         email = request.data.get("email")
         if not email:
@@ -877,6 +926,9 @@ class ForgetPasswordView(APIView):
 
 
 class UploadPictureView(APIView):
+
+    throttle_scope = "two_hundred_per_minute"
+
     def post(self, request, format=None):
         auth_header = request.headers.get("Authorization")
         if not auth_header:
@@ -949,6 +1001,8 @@ class FriendsSearchView(APIView):
     1. get: This method is used to search for friends using a query as a regex.
     """
 
+    throttle_scope = "two_hundred_per_minute"
+
     def get(self, request, format=None):
         """This method is used to search for friends."""
         auth_header = request.headers.get("Authorization")
@@ -991,6 +1045,8 @@ class LeaderboardView(APIView):
     It has following methods:
     1. get: This method is used to get the leaderboard.
     """
+
+    throttle_scope = "two_hundred_per_minute"
 
     def get(self, request, format=None):
         """This method is used to get the leaderboard."""
@@ -1044,6 +1100,8 @@ class UserSearchView(APIView):
     It has following methods:
     1. get: This method is used to search for users using a query as a regex.
     """
+
+    throttle_scope = "two_hundred_per_minute"
 
     def get(self, request, format=None):
         """This method is used to search for users.
@@ -1117,6 +1175,8 @@ class UserDetailsView(APIView):
     1. get: This method is used to get the details of a user.
     """
 
+    throttle_scope = "two_hundred_per_minute"
+
     def get(self, request, format=None):
         """This method is used to get the details of a user."""
         auth_header = request.headers.get("Authorization")
@@ -1161,6 +1221,8 @@ class ChatView(APIView):
     It has following methods:
     1. get: This method is used to get the chat messages.
     """
+
+    throttle_scope = "two_hundred_per_minute"
 
     def put(self, request, format=None):
         """This method is used to get the chat messages."""
@@ -1252,6 +1314,9 @@ class ChatView(APIView):
 
 
 class MessagesView(APIView):
+
+    throttle_scope = "two_hundred_per_minute"
+
     def get(self, request, format=None):
         auth_header = request.headers.get("Authorization")
         try:
@@ -1334,6 +1399,8 @@ class BlockUserView(APIView):
     It has following methods:
     1. put: This method is used to unblock/block a user."""
 
+    throttle_scope = "two_hundred_per_minute"
+
     def put(self, request, format=None):
         auth_header = request.headers.get("Authorization")
         try:
@@ -1385,6 +1452,8 @@ class BlockUserView(APIView):
 
 class PongLobbyView(APIView):
 
+    throttle_scope = "one_per_minute"
+
     def post(self, request, format=None):
         auth_header = request.headers.get("Authorization")
         try:
@@ -1422,6 +1491,7 @@ class PongLobbyView(APIView):
 
 
 class TournamentLobbyView(APIView):
+    throttle_scope = "one_minute"
 
     def all_users_exists(self, users) -> bool:
         if len(users) != len(set(users)):

@@ -87,31 +87,6 @@ function createIncomeMessageItemLi(message, time, avatarUrl) {
     return li;
 }
 
-async function generatePongLobby(username) {
-    fetchWithToken("/api/lobby/pong/", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            Authorization: "Bearer " + localStorage.getItem("access"),
-        },
-        body: JSON.stringify({
-            username: username,
-        }),
-    })
-        .then((response) => {
-            if (response.ok) {
-                return response.json();
-            }
-            return null;
-        })
-        .then((data) => {
-            if (data === null) {
-                return null;
-            }
-            return data["token"];
-        });
-}
-
 async function sendPongInvite(username) {
     fetchWithToken("/api/lobby/pong/", {
         method: "POST",
@@ -126,6 +101,9 @@ async function sendPongInvite(username) {
         .then((response) => {
             if (response.ok) {
                 return response.json();
+            } else if (response.status === 429) {
+                alertError("You are sending too many invites. Please wait a bit.");
+                throw new Error("You are sending too many invites. Please wait a bit.");
             }
             return null;
         })
@@ -172,6 +150,8 @@ async function sendPongInvite(username) {
                 return dateB - dateA;
             });
             list.empty().append(listItems);
+        }).catch((error) => {
+
         });
 }
 

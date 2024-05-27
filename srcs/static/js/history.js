@@ -81,11 +81,6 @@ document.addEventListener("DOMContentLoaded", function () {
                 tournamentLobby.join(lobbyToken);
             }
         },
-        tournamentmenu: function () {
-            closeSockets();
-            let tournamentMenu = new TournamentMenu();
-            tournamentMenu.start();
-        },
         tournaments: function () {
             closeSockets();
             if (query_params === null || query_params === undefined) {

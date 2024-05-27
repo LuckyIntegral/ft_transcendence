@@ -252,6 +252,10 @@ class TournamentMenu {
             body: JSON.stringify(requestData),
         })
         .then((response) => {
+            if (response.status === 429) {
+                alertError("Too many tournaments created by you. Please try again later.");
+                throw new Error(response.statusText);
+            }
             return response.json();
         })
         .then((data) => {
@@ -261,7 +265,9 @@ class TournamentMenu {
                 window.location.hash = `tournamentslobby?token=${data.token}`;
                 alertSuccess("Tournament created successfully. You joined the tournament lobby.");
             }
-        })
+        }).catch((error) => {
+
+        });
     }
 
     init() {

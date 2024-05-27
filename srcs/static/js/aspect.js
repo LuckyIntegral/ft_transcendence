@@ -1,4 +1,5 @@
 async function fetchWithToken(url, options) {
+    document.getElementById("loading").style.display = "block";
     options.headers = options.headers || {};
     options.headers.Authorization = "Bearer " + localStorage.getItem("access");
     return fetch(url, options).then((response) => {
@@ -13,15 +14,18 @@ async function fetchWithToken(url, options) {
                     refresh: localStorage.getItem("refresh"),
                 }),
             })
-                .then((response) => response.json())
-                .then((data) => {
-                    // Store the new access token in local storage
-                    localStorage.setItem("access", data.access);
-                    // Retry the original request
-                    options.headers.Authorization = "Bearer " + data.access;
-                    return fetch(url, options);
-                });
+            .then((response) => response.json())
+            .then((data) => {
+                // Store the new access token in local storage
+                localStorage.setItem("access", data.access);
+                // Retry the original request
+                options.headers.Authorization = "Bearer " + data.access;
+                return fetch(url, options);
+            }).finally(() => {
+                document.getElementById("loading").style.display = "none";
+            });
         } else {
+            document.getElementById("loading").style.display = "none";
             return response;
         }
     });

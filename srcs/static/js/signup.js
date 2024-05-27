@@ -85,6 +85,8 @@ document.addEventListener("DOMContentLoaded", function () {
                         );
                     } else if (response.status === 405) {
                         popupAlertError('One of the fields are too long')
+                    } else if (response.status === 429) {
+                        popupAlertError("Too many signup attempts. Please try again later.");
                     }
                 })
             });

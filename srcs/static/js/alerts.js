@@ -14,6 +14,7 @@ function alertError(message) {
     alert.appendChild(button);
 
     var toast = document.getElementById("toastContent");
+    toast.textContent = "";
     toast.appendChild(alert);
 
     setTimeout(() => {
@@ -37,6 +38,7 @@ function alertSuccess(message) {
     alert.appendChild(button);
 
     var toast = document.getElementById("toastContent");
+    toast.textContent = "";
     toast.appendChild(alert);
 
     // here we add timeout to remove the alert

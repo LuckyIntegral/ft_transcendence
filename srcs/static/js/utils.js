@@ -165,7 +165,6 @@ function createVerificationSpan(is_verified) {
         span.style.cursor = "pointer";
         span.addEventListener("click", function () {
             sendVerificationEmail();
-            alertSuccess("Verification email sent");
         });
     }
     return span;
@@ -223,6 +222,10 @@ function sendVerificationCodeEmail(username = null, password = null) {
             }),
         })
             .then(function (response) {
+                if (response.status === 429) {
+                    alertError("You can request only one verification email every 1 minute. Please try again later.");
+                    return
+                }
                 if (!response.ok) {
                     throw new Error("Error: " + response.statusText);
                 }
@@ -245,6 +248,10 @@ function sendVerificationCodeEmail(username = null, password = null) {
             },
         })
             .then(function (response) {
+                if (response.status === 429) {
+                    alertError("You can request only one verification email every 1 minute. Please try again later.");
+                    return
+                }
                 if (!response.ok) {
                     throw new Error("Error: " + response.statusText);
                 }
@@ -301,6 +308,8 @@ function processTwoStepVerification(username, password) {
         if (response.ok) {
             obtainToken(username, password);
             return response.json();
+        } else if (response.status === 429) {
+            alertError("Too many attempts. Please try again later.");
         } else {
             var errorMessage = document.createElement("p");
             errorMessage.textContent = "Invalid code. Please try again.";
@@ -321,12 +330,16 @@ function sendVerificationEmail() {
             Authorization: "Bearer " + localStorage.getItem("access"),
         },
     })
-        .then(function (response) {
-            if (!response.ok) {
-                throw new Error("Error: " + response.statusText);
-            }
-        })
-        .catch(function (error) {});
+    .then(function (response) {
+        if (response.ok) {
+            alertSuccess("Verification email sent successfully");
+        } else if (response.status === 429) {
+            alertError("You can request only one verification email every 1 minute. Please try again later.");
+        } else {
+            throw new Error("Error: " + response.statusText);
+        }
+    })
+    .catch(function (error) {});
 }
 
 function handlePhotoUpload() {

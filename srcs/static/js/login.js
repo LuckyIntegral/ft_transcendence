@@ -24,6 +24,8 @@ document.addEventListener("DOMContentLoaded", function () {
                     if (response.ok) {
                         alertSuccess("An email has been sent to you with instructions to reset your password.");
                         document.body.removeChild(forgotPasswordPopup);
+                    } else if (response.status === 429) {
+                        popupAlertError("You can only request a password reset every 1 minute. Please try again later.");
                     } else {
                         popupAlertError("Invalid email. Please try again.");
                     }
@@ -133,6 +135,8 @@ document.addEventListener("DOMContentLoaded", function () {
                                 e.preventDefault();
                                 processTwoStepVerification(username, password);
                             });
+                        } else if (response.status === 429) {
+                            popupAlertError("Too many login attempts. Please try again later.");
                         } else {
                             popupAlertError("Incorrect username or password");
                         }
