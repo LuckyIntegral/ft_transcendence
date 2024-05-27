@@ -1039,6 +1039,77 @@ class LeaderboardView(APIView):
 
         return Response(response, status=status.HTTP_200_OK)
 
+class UserSearchView(APIView):
+    """ This view is used to search for users.
+    It has following methods:
+    1. get: This method is used to search for users using a query as a regex.
+    """
+
+    def get(self, request, format=None):
+        """This method is used to search for users.
+        The request should contain the following query parameters:
+            page_size, page_index, is_friends_only, search_query
+        Example:
+            /api/user-search?page_size=10&page_index=0&is_friends_only=false&search_query=test
+        """
+        auth_header = request.headers.get("Authorization")
+        try:
+            token = JWTTokenValidator().validate(auth_header)
+        except ValidationError as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            user = getUserFromToken(token)
+        except ValidationError as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+        page_size = request.query_params.get("page_size")
+        if page_size and page_size.isdigit() is False:
+            return Response({"error": "Invalid page_size"}, status=status.HTTP_400_BAD_REQUEST)
+        page_size = 10 if not page_size else int(page_size)
+
+        page_index = request.query_params.get("page_index")
+        if page_index and page_index.isdigit() is False:
+            return Response({"error": "Invalid page_index"}, status=status.HTTP_400_BAD_REQUEST)
+        page_index = 0 if not page_index else int(page_index)
+
+        is_friends_only = request.query_params.get("is_friends_only")
+        is_friends_only = is_friends_only == "true"
+
+        search_query = request.query_params.get("username")
+
+        response = {
+            "data": [],
+            "page": 0,
+            "totalPages": 0,
+        }
+        if search_query:
+            user_list = []
+            if is_friends_only:
+                user_list = user.userprofile.friendList.filter(
+                    user__username__icontains=search_query
+                ).order_by("user__username")
+            else:
+                user_list = UserProfile.objects.filter(
+                    user__username__icontains=search_query
+                ).order_by("user__username")
+            lower_bound = page_size * page_index
+            upper_bound = min(page_size * (page_index + 1), user_list.count())
+            if lower_bound >= user_list.count() or lower_bound < 0 or page_size < 1:
+                return Response(response, status=status.HTTP_200_OK)
+            for record in user_list[lower_bound:upper_bound]:
+                if record.user.username == user.username:
+                    continue
+                response["data"].append(
+                    {
+                        "picture": record.pictureSmall.url,
+                        "username": record.user.username,
+                        "online": record.lastOnline > timezone.now() - timedelta(minutes=1),
+                    }
+                )
+            response["page"] = page_index
+            response["totalPages"] = math.ceil(user_list.count() / page_size)
+
+        return Response(response, status=status.HTTP_200_OK)
 
 class UserDetailsView(APIView):
     """This view is used to get the details of a user.
