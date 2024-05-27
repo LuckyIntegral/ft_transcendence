@@ -238,10 +238,30 @@ class TournamentMenu {
             alertError("Tournament must have 4 participants");
             return;
         }
-        console.log(
-            "Creating tournament for the next squad: ",
-            this.participants
-        );
+        console.log("Creating tournament with participants: ", this.participants)
+        var requestData = {}
+        for (let i = 0; i < this.participants.length; i++) {
+            requestData[`player${i + 1}`] = this.participants[i].username;
+        }
+        fetchWithToken("/api/lobby/tournament/", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + localStorage.getItem("access"),
+            },
+            body: JSON.stringify(requestData),
+        })
+        .then((response) => {
+            return response.json();
+        })
+        .then((data) => {
+            if (data.error) {
+                alertError(data.error);
+            } else {
+                window.location.hash = `tournamentslobby?token=${data.token}`;
+                alertSuccess("Tournament created successfully. You joined the tournament lobby.");
+            }
+        })
     }
 
     init() {

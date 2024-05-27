@@ -1436,11 +1436,11 @@ class TournamentLobbyView(APIView):
         try:
             token = JWTTokenValidator().validate(auth_header)
         except ValidationError as e:
-            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "User not found"}, status=status.HTTP_400_BAD_REQUEST)
         try:
             user = getUserFromToken(token)
         except ValidationError as e:
-            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "User not found"}, status=status.HTTP_400_BAD_REQUEST)
 
         tournament_id = generateToken()
         while TournamentLobby.objects.filter(token=tournament_id).exists():
