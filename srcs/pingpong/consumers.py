@@ -20,12 +20,13 @@ from rest_framework_simplejwt.tokens import UntypedToken
 from rest_framework_simplejwt.state import token_backend
 from rest_framework_simplejwt.authentication import InvalidToken, TokenError
 from django.core.exceptions import ValidationError
-from .utils import getUserFromToken
+from .utils import getUserFromToken, blockChainCreateGame
 import json
 import asyncio
 from django.utils import timezone
 import html
 import re
+import threading
 
 
 class ChatConsumer(AsyncWebsocketConsumer):
@@ -118,12 +119,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 return
         regex = r"gameToken=([A-Za-z0-9\-]*)"
         match = re.match(regex, text_data_json["message"])
-        print(match)
         if not match:
             messageText = html.escape(text_data_json["message"])
         else:
             gameToken = match.group(1)
-            print(gameToken)
             if not await self.is_token_exists_in_pong_lobby(gameToken):
                 await self.send(text_data=json.dumps({"error": "Game does not exist!"}))
                 return
@@ -132,7 +131,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
             )
         sender = html.escape(text_data_json["sender"])
         timestamp = html.escape(text_data_json["timestamp"])
-        print(f"Sender: {sender}")
         try:
             self.chat = await self.getChat(self.chatToken)
             self.sender = await self.getSender(sender)
@@ -380,9 +378,7 @@ class GameConsumer(AsyncWebsocketConsumer):
                 await self.setGameStarted(self.token)
             try:
                 lobby = await self.getLobbyData(self.token)
-                print("Lobby exists in try")
             except PongLobby.DoesNotExist:
-                print("Lobby does not exist")
                 await self.close()
                 return
 
@@ -709,9 +705,17 @@ class TournamentConsumer(AsyncWebsocketConsumer):
             tournament = TournamentLobby.objects.get(token=self.token)
         except TournamentLobby.DoesNotExist:
             return
-        if tournament.final.isFinished:
-            tournament.isFinished = True
+        if tournament.final.isFinished and tournament.finished == False:
+            tournament.finished = True
             tournament.save()
+            results = async_to_sync(self.get_tournament_results)()
+            data = []
+            for result in results:
+                data.append(
+                    [result["username"], int(result["place"][0])]
+                )
+            # TODO uncomment this line
+            # threading.Thread(target=async_to_sync(blockChainCreateGame), args=(self.token, data)).start()
 
     @database_sync_to_async
     def get_tournament_results(self):

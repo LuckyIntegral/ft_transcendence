@@ -1491,7 +1491,7 @@ class PongLobbyView(APIView):
 
 
 class TournamentLobbyView(APIView):
-    throttle_scope = "one_minute"
+    throttle_scope = "one_per_minute"
 
     def all_users_exists(self, users) -> bool:
         if len(users) != len(set(users)):

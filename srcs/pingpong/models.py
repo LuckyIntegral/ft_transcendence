@@ -122,3 +122,4 @@ class TournamentLobby(models.Model):
     finished = models.BooleanField(default=False)
     started = models.BooleanField(default=False)
     expired = models.BooleanField(default=False)
+    blockchain_id = models.IntegerField(default=-1)

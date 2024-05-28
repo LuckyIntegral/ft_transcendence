@@ -81,16 +81,10 @@ document.addEventListener("DOMContentLoaded", function () {
                 tournamentLobby.join(lobbyToken);
             }
         },
-        tournaments: function () {
+        tournamentmenu: function () {
             closeSockets();
-            if (query_params === null || query_params === undefined) {
-                let menu = new Menu();
-                menu.start();
-            } else {
-                var tournamentLobby = new TournamentLobby();
-                var lobbyToken = query_params.split("=")[1];
-                tournamentLobby.join(lobbyToken);
-            }
+            let tournamentMenu = new TournamentMenu();
+            tournamentMenu.start();
         },
         default: function () {
             removePopups();

@@ -10,6 +10,7 @@ from django.conf import settings
 from eth_account import Account
 import asyncio
 import uuid
+from channels.db import database_sync_to_async
 
 
 def sendVerificationEmail(email, token):
@@ -73,10 +74,17 @@ def userDirectoryPath(instance, filename):
     return "pictures/{0}/{1}".format(instance.user.username, filename)
 
 
-# tournamentName: probably tournamentId and players: dict {playerNickname: player's place}
-async def blockChainCreateGame(tournamentId, players):
-    if len(players) == 0:
-        return None
+@database_sync_to_async
+def setBlockchainIdForTournament(tournamentId, blockchainId):
+    from .models import TournamentLobby
+    try:
+        tournament = TournamentLobby.objects.get(token=tournamentId)
+        tournament.blockchain_id = blockchainId
+        tournament.save()
+    except TournamentLobby.DoesNotExist:
+        return
+
+def print_player_info_from_blockchain(game_id):
     web3 = Web3(Web3.HTTPProvider(settings.WEB3_PROVIDER))
 
     private_key = settings.WEB3_PRIVATE_KEY
@@ -90,29 +98,68 @@ async def blockChainCreateGame(tournamentId, players):
 
     nonce = web3.eth.get_transaction_count(account.address)
 
-    playersNames = []
-    playersPlaces = []
-    for player in players.items():
-        playersNames.append(player[0])
-        playersPlaces.append(player[1])
+    results = []
 
-    txn_dict = contract.functions.createGame(tournamentId, playersNames, playersPlaces).build_transaction(
-        {
-            "chainId": settings.WEB3_CHAIN_ID,
-            "gas": 700000,
-            "gasPrice": web3.to_wei("50", "gwei"),
-            "nonce": nonce,
-        }
-    )
-    signed_txn = web3.eth.account.sign_transaction(txn_dict, private_key)
-    result = web3.eth.send_raw_transaction(signed_txn.rawTransaction)
-    receipt = web3.eth.wait_for_transaction_receipt(result)
-    logs = contract.events.GameCreated().get_logs(fromBlock=receipt["blockNumber"], toBlock=receipt["blockNumber"])
-    for log in logs:
-        if log["event"] == "GameCreated":
-            gameId = log["args"]["gameId"]
+    for i in range(4):
+        player_name = contract.functions.getPlayerName(game_id, i).call()
+        player_place = contract.functions.getPlayerPlace(game_id, i).call()
+        results.append((player_name, player_place))
+    for item in results:
+        print(f"Player: {item[0]}, Place: {item[1]}")
+
+# tournamentName: probably tournamentId and players: dict {playerNickname: player's place}
+async def blockChainCreateGame(tournamentId, players):
+    from .models import TournamentLobby
+    try:
+        web3 = Web3(Web3.HTTPProvider(settings.WEB3_PROVIDER))
+
+        private_key = settings.WEB3_PRIVATE_KEY
+        account = Account.from_key(private_key)
+
+        web3.eth.defaultAccount = account.address
+
+        contractAddress = settings.WEB3_CONTRACT_ADDRESS
+        contractAbi = settings.WEB3_CONTRACT_ABI
+        contract = web3.eth.contract(address=contractAddress, abi=contractAbi)
+
+        nonce = web3.eth.get_transaction_count(account.address)
+
+        playersNames = []
+        playersPlaces = []
+        for player in players:
+            playersNames.append(player[0])
+            playersPlaces.append(player[1])
+        gas_price = web3.eth.gas_price * 2
+
+        txn_dict = contract.functions.createGame(tournamentId, playersNames, playersPlaces).build_transaction(
+            {
+                "chainId": settings.WEB3_CHAIN_ID,
+                "gas": '0',
+                "gasPrice": gas_price,
+                "nonce": nonce,
+            }
+        )
+        gas = web3.eth.estimate_gas(txn_dict)
+        txn_dict.update({"gas": gas})
+        signed_txn = web3.eth.account.sign_transaction(txn_dict, private_key)
+        result = web3.eth.send_raw_transaction(signed_txn.rawTransaction)
+        receipt = web3.eth.wait_for_transaction_receipt(result)
+        logs = contract.events.GameCreated().get_logs(fromBlock=receipt["blockNumber"], toBlock=receipt["blockNumber"])
+        gameId = None
+        for log in logs:
+            if log["event"] == "GameCreated":
+                gameId = log["args"]["gameId"]
+        if not gameId:
+            print("Was not saved in the blockchain")
+            return
+        await setBlockchainIdForTournament(tournamentId, gameId)
+        print_player_info_from_blockchain(gameId)
+
+    except Exception as e:
+        print(e)
+        return
     # instead of returning should update db to set gameId for the tournament
-    return gameId
+
 
 def create_chat_with_notification_user(user):
     from pingpong.models import Chat, Block
