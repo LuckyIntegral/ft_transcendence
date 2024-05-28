@@ -1,14 +1,29 @@
-PAGE_SIZE = 10;
+const TOURNAMENT_PAGE_SIZE = 7;
+const ONLINE_BADGE = `<span class="badge bg-success">Online</span>`;
+const OFFLINE_BADGE = `<span class="badge bg-danger">Offline</span>`;
+g_participantsList = [];
 
 class TournamentMenu {
     constructor() {
         this.participants = [];
+        this.globalParticipants = [];
     }
 
     start() {
         this.init();
         this.addMainUser();
         this.addEventListeners();
+    }
+
+    refreshParticipantsUsernames() {
+        var usernames = [];
+        for (let i = 0; i < this.participants.length; i++) {
+            usernames.push(this.participants[i].username);
+        }
+        for (let i = 0; i < this.globalParticipants.length; i++) {
+            usernames.push(this.globalParticipants[i].username);
+        }
+        g_participantsList = usernames;
     }
 
     addEventListeners() {
@@ -66,7 +81,7 @@ class TournamentMenu {
         var url = new URL("/api/user-search", window.location.origin);
         url.searchParams.append("username", username);
         url.searchParams.append("is_friends_only", isFriendsOnly);
-        url.searchParams.append("page_size", PAGE_SIZE);
+        url.searchParams.append("page_size", TOURNAMENT_PAGE_SIZE);
         url.searchParams.append("page_index", pageIndex);
         fetchWithToken(url, {
             method: "GET",
@@ -80,6 +95,7 @@ class TournamentMenu {
             .then((data) => {
                 this.loadUsersToTable(data.data);
                 this.loadUsersByUsernamePagination(data.totalPages, pageIndex);
+                this.refreshParticipantsUsernames();
             })
             .catch((error) => {
                 alertError(error);
@@ -95,12 +111,14 @@ class TournamentMenu {
         `;
         document.getElementById("search-result").innerHTML = "";
         document.getElementById("search-result").appendChild(table);
+        this.globalParticipants = [];
         data.forEach((user) => {
+            this.globalParticipants.push(user);
             var row = document.createElement("tr");
             row.innerHTML = `
                 <td><img src="${user.picture}" alt="profile picture" width="50" height="50"></td>
                 <td>${user.username}</td>
-                <td>${user.online}</td>
+                <td class="online-status" data-username="${user.username}">Loading...</td>
                 <td>
                     <button class="btn btn-primary" id="add-${user.username}">
                         Add
@@ -176,6 +194,7 @@ class TournamentMenu {
         }
         this.participants.push(participant);
         this.updateParticipantsList();
+        this.refreshParticipantsUsernames();
     }
 
     removeParticipant(user) {
@@ -184,6 +203,7 @@ class TournamentMenu {
                 (participant) => participant.username !== user.username
             );
             this.updateParticipantsList();
+            this.refreshParticipantsUsernames();
         }
     }
 
@@ -199,7 +219,7 @@ class TournamentMenu {
                         this.participants[i].picture
                     }" alt="profile picture" width="50" height="50"></td>
                     <td>${this.participants[i].username}</td>
-                    <td>${this.participants[i].online}</td>
+                    <td>${ONLINE_BADGE}</td>
                     <td></td>
                 `;
             } else {
@@ -209,7 +229,11 @@ class TournamentMenu {
                     this.participants[i].picture
                 }" alt="profile picture" width="50" height="50"></td>
                 <td>${this.participants[i].username}</td>
-                <td>${this.participants[i].online}</td>
+                <td class="online-status" data-username="${
+                    this.participants[i].username
+                }">${
+                    this.participants[i].online ? ONLINE_BADGE : OFFLINE_BADGE
+                }</td>
                 <td>
                     <button class="btn btn-danger" id="remove-${
                         this.participants[i].username
@@ -227,7 +251,6 @@ class TournamentMenu {
             document
                 .getElementById(`remove-${this.participants[i].username}`)
                 .addEventListener("click", () => {
-                    console.log("Removing participant: ", this.participants[i]);
                     this.removeParticipant(this.participants[i]);
                 });
         }
@@ -238,8 +261,7 @@ class TournamentMenu {
             alertError("Tournament must have 4 participants");
             return;
         }
-        console.log("Creating tournament with participants: ", this.participants)
-        var requestData = {}
+        var requestData = {};
         for (let i = 0; i < this.participants.length; i++) {
             requestData[`player${i + 1}`] = this.participants[i].username;
         }
@@ -247,27 +269,30 @@ class TournamentMenu {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
-                "Authorization": "Bearer " + localStorage.getItem("access"),
+                Authorization: "Bearer " + localStorage.getItem("access"),
             },
             body: JSON.stringify(requestData),
         })
-        .then((response) => {
-            if (response.status === 429) {
-                alertError("Too many tournaments created by you. Please try again later.");
-                throw new Error(response.statusText);
-            }
-            return response.json();
-        })
-        .then((data) => {
-            if (data.error) {
-                alertError(data.error);
-            } else {
-                window.location.hash = `tournamentslobby?token=${data.token}`;
-                alertSuccess("Tournament created successfully. You joined the tournament lobby.");
-            }
-        }).catch((error) => {
-
-        });
+            .then((response) => {
+                if (response.status === 429) {
+                    alertError(
+                        "Too many tournaments created by you. Please try again later."
+                    );
+                    throw new Error(response.statusText);
+                }
+                return response.json();
+            })
+            .then((data) => {
+                if (data.error) {
+                    alertError(data.error);
+                } else {
+                    window.location.hash = `tournamentslobby?token=${data.token}`;
+                    alertSuccess(
+                        "Tournament created successfully. You joined the tournament lobby."
+                    );
+                }
+            })
+            .catch((error) => {});
     }
 
     init() {
