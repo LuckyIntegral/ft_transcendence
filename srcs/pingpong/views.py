@@ -1121,12 +1121,12 @@ class UserSearchView(APIView):
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
         page_size = request.query_params.get("page_size")
-        if page_size and page_size.isdigit() is False:
+        if page_size and not page_size.isdigit():
             return Response({"error": "Invalid page_size"}, status=status.HTTP_400_BAD_REQUEST)
         page_size = 10 if not page_size else int(page_size)
 
         page_index = request.query_params.get("page_index")
-        if page_index and page_index.isdigit() is False:
+        if page_index and not page_index.isdigit():
             return Response({"error": "Invalid page_index"}, status=status.HTTP_400_BAD_REQUEST)
         page_index = 0 if not page_index else int(page_index)
 

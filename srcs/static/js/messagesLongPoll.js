@@ -50,6 +50,30 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
 
+    function updateLastOnlineTournamentMenu(onlineStatuses) {
+        function getIndexOfUser(username, onlineStatuses) {
+            for (var i = 0; i < onlineStatuses.length; i++) {
+                if (onlineStatuses[i]["username"] === username) {
+                    return i;
+                }
+            }
+            return -1;
+        }
+        document.querySelectorAll(".online-status").forEach(function (element) {
+            var username = element.getAttribute("data-username");
+            var lastOnline = new Date(
+                onlineStatuses[getIndexOfUser(username, onlineStatuses)][
+                    "lastOnline"
+                ]
+            ).getTime();
+            if (Date.now() - lastOnline < 60000) {
+                element.innerHTML = `<i class="fa fa-circle online"></i> ${ONLINE_BADGE}`;
+            } else {
+                element.innerHTML = `<i class="fa fa-circle offline"></i> ${OFFLINE_BADGE}`;
+            }
+        });
+    }
+
     async function startWebSocketConnection() {
         if (!localStorage.getItem("access")) {
             await sleep(1000);
@@ -92,6 +116,11 @@ document.addEventListener("DOMContentLoaded", function () {
                     "Community";
                 document.getElementById("friends").textContent = "Friends";
             }
+            if (window.location.hash === "#tournamentmenu") {
+                if (data["onlineStatuses"] !== undefined) {
+                    updateLastOnlineTournamentMenu(data["onlineStatuses"]);
+                }
+            }
             // updating timestamps on messages page
             if (window.location.hash === "#messages") {
                 updateLastOnline(data["chatsInfo"]);
@@ -101,6 +130,7 @@ document.addEventListener("DOMContentLoaded", function () {
             socket.send(
                 JSON.stringify({
                     token: localStorage.getItem("access"),
+                    participants: g_participantsList,
                 })
             );
         };

@@ -187,6 +187,10 @@ class LongPollConsumer(AsyncWebsocketConsumer):
             unread_messages = await self.get_unread_messages(user)
             chatsInfo = await self.get_chats_info(user)
             new_friend_requests = await self.get_new_friend_requests(user)
+            participants = text_data["participants"]
+            onlineStatuses = []
+            if len(participants):
+                onlineStatuses = await self.get_last_online_statuses(participants)
             await self.update_notification_last_online()
             await self.update_last_online(user)
             if new_messages:
@@ -197,6 +201,7 @@ class LongPollConsumer(AsyncWebsocketConsumer):
                             "new_messages": "received",
                             "chatsInfo": chatsInfo,
                             "new_friend_requests": new_friend_requests,
+                            "onlineStatuses": onlineStatuses,
                         }
                     )
                 )
@@ -207,6 +212,7 @@ class LongPollConsumer(AsyncWebsocketConsumer):
                             "new_messages": "unread",
                             "chatsInfo": chatsInfo,
                             "new_friend_requests": new_friend_requests,
+                            "onlineStatuses": onlineStatuses,
                         }
                     )
                 )
@@ -217,11 +223,35 @@ class LongPollConsumer(AsyncWebsocketConsumer):
                             "new_messages": "none",
                             "chatsInfo": chatsInfo,
                             "new_friend_requests": new_friend_requests,
+                            "onlineStatuses": onlineStatuses,
                         }
                     )
                 )
         except Exception as e:
             await self.send(text_data=json.dumps({"error": str(e)}))
+
+    @database_sync_to_async
+    def get_last_online_statuses(self, participants):
+        onlineStatuses = []
+        print(participants)
+        for participant in participants:
+            try:
+                user = User.objects.get(username=participant)
+                lastOnline = user.userprofile.lastOnline
+                onlineStatuses.append(
+                    {
+                        "username": participant,
+                        "lastOnline": lastOnline.isoformat(),
+                    }
+                )
+            except User.DoesNotExist:
+                onlineStatuses.append(
+                    {
+                        "username": participant,
+                        "lastOnline": "unknown",
+                    }
+                )
+        return onlineStatuses
 
     @database_sync_to_async
     def update_notification_last_online(self):
