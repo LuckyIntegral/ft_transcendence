@@ -1,8 +1,22 @@
+const EVENT_BADGE = document.createElement("span");
+EVENT_BADGE.setAttribute(
+    "class",
+    "position-absolute translate-middle p-1 bg-danger border border-light rounded-circle"
+);
+
+const EVENT_BADGE_FRIEND = document.createElement("span");
+EVENT_BADGE_FRIEND.setAttribute(
+    "class",
+    "position-absolute translate-middle p-1 bg-danger border border-light rounded-circle"
+);
+
 document.addEventListener("DOMContentLoaded", function () {
     if (!localStorage.getItem("access")) {
         return;
     }
-    var socket = new WebSocket(`ws://${window.location.host}/messages/long-poll/`);
+    var socket = new WebSocket(
+        `ws://${window.location.host}/messages/long-poll/`
+    );
     function sleep(ms) {
         return new Promise((resolve) => setTimeout(resolve, ms));
     }
@@ -19,7 +33,9 @@ document.addEventListener("DOMContentLoaded", function () {
         for (var chat of chatsInfo) {
             var chatToken = chat["chatToken"];
             var lastOnline = new Date(chat["lastOnline"]);
-            var li = document.querySelector(`li[data-chat-token="${chatToken}"]`);
+            var li = document.querySelector(
+                `li[data-chat-token="${chatToken}"]`
+            );
             if (!li) {
                 return;
             }
@@ -40,7 +56,9 @@ document.addEventListener("DOMContentLoaded", function () {
             return startWebSocketConnection();
         }
         if (!socket.readyState) {
-            socket = new WebSocket(`ws://${window.location.host}/messages/long-poll/`);
+            socket = new WebSocket(
+                `ws://${window.location.host}/messages/long-poll/`
+            );
         }
         socket.onopen = function (e) {
             socket.send(
@@ -57,18 +75,21 @@ document.addEventListener("DOMContentLoaded", function () {
                 if (window.location.hash === "#messages") {
                     getUserListChats();
                 }
-                document.getElementById("messagesRef").textContent = "Messages🔴";
+                document.getElementById("messagesRef").appendChild(EVENT_BADGE);
             } else if (data && data["new_messages"] === "unread") {
-                document.getElementById("messagesRef").textContent = "Messages🔴";
+                document.getElementById("messagesRef").appendChild(EVENT_BADGE);
             } else if (data && data["new_messages"] === "none") {
                 document.getElementById("messagesRef").textContent = "Messages";
             }
             // friend requests notifications
             if (data && data["new_friend_requests"] === true) {
-                document.getElementById("dropdownUser1").textContent = "Community🔴";
-                document.getElementById("friends").textContent = "Friends🔴";
+                document.getElementById("friends").appendChild(EVENT_BADGE);
+                document
+                    .getElementById("dropdownUser1")
+                    .appendChild(EVENT_BADGE_FRIEND);
             } else {
-                document.getElementById("dropdownUser1").textContent = "Community";
+                document.getElementById("dropdownUser1").textContent =
+                    "Community";
                 document.getElementById("friends").textContent = "Friends";
             }
             // updating timestamps on messages page
