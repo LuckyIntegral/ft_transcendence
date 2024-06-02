@@ -48,12 +48,12 @@
     <script src="{% static 'js/game/menu.js' %}"></script>
     <script src="{% static 'js/game/gameLobby.js' %}"></script>
     <script src="{% static 'js/game/tournamentLobby.js' %}"></script>
-    <script src="{% static 'js/game/tournamentMenu.js' %}"></script>
     <!-- 3D Game imports   -->
     <!-- <script src="{% static 'js/game/main.js' %}"></script> -->
     <script src="{% static 'js/game/loading3d.js' %}"></script>
     <script src="{% static 'js/game/utils3d.js' %}"></script>
     <script src="{% static 'js/game/paddles3d.js' %}"></script>
+    <script src="{% static 'js/game/bobo.js' %}"></script>
     <script src="{% static 'js/game/game3d.js' %}"></script>
     <script src="{% static 'js/game/menu3d.js' %}"></script>
     <script src="{% static 'js/game/ai3d.js' %}"></script>
@@ -87,9 +87,9 @@
                             </a>
                             <ul class="dropdown-menu text-small" aria-labelledby="dropdownUser1">
                                 <li><a class="dropdown-item" id="friends" href="#friends">Friends</a></li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" href="#tournamentmenu">Tournaments</a></li>
-                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <hr class="dropdown-divider">
+                                </li>
                                 <li><a class="dropdown-item" href="#leadrboard">Global leaderboard</a></li>
                             </ul>
                         </div>
@@ -106,6 +106,7 @@
                 <!-- </div> -->
                 <!-- </form> -->
 
+                <!-- <button class="btn btn-outline-light m-2" id="searchRef">Search</buttom> -->
                 <button class="btn btn-outline-light m-2" href="#signup" id="signUpRef">Sign up</buttom>
                     <button class="btn btn-outline-light m-2" href="#login" id="loginRef">Login</buttom>
                         <button class="btn btn-outline-light" href="#logOut" id="logOutRef">Log out</buttom>

@@ -16,8 +16,8 @@ class Player3D {
 		this.paddle.resetPosition(this.player)
 	}
 
-	update (dt, keystate, ball) {
-		this.paddle.update(dt, keystate, ball)
+	update (dt, keystate, ball, plId) {
+		this.paddle.update(dt, keystate, ball, plId)
 	}
 
 	scoreGoal () {

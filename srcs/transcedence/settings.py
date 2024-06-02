@@ -163,15 +163,6 @@ REST_FRAMEWORK = {
     "DEFAULT_RENDERER_CLASSES": [
         "rest_framework.renderers.JSONRenderer",
     ],
-    'DEFAULT_THROTTLE_CLASSES': [
-        'rest_framework.throttling.ScopedRateThrottle',
-    ],
-    'DEFAULT_THROTTLE_RATES': {
-        'one_per_minute': '1/min',
-        'ten_per_minute': '10/min',
-        'two_hundred_per_minute': '200/m',
-        'hundred_per_hour': '100/h',
-    }
 }
 
 SIMPLE_JWT = {

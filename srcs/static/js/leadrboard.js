@@ -1,4 +1,4 @@
-const LEADERBOARD_PAGE_SIZE = 8;
+PAGE_SIZE = 8;
 
 function loadLeaderboardPage(page = 0) {
     if (document.getElementById("leaderboard") != null) {
@@ -88,7 +88,7 @@ function loadLeaderboardTable(page = 0) {
 
     var url = new URL(`http://${window.location.host}/api/leaderboard/`);
     url.searchParams.append("page", page);
-    url.searchParams.append("pageSize", LEADERBOARD_PAGE_SIZE);
+    url.searchParams.append("pageSize", PAGE_SIZE);
 
     fetchWithToken(url, {
         method: "GET",
@@ -109,7 +109,7 @@ function loadLeaderboardTable(page = 0) {
                     winRate = (user.wins / user.games) * 100;
                 }
                 row.innerHTML = `
-                <th scope="row">${i + 1 + page * LEADERBOARD_PAGE_SIZE}</th>
+                <th scope="row">${i + 1 + page * PAGE_SIZE}</th>
                 <td><img src="${user.photo}" alt="Profile photo" class="rounded-circle" width="50" height="50"></td>
                 <td>${user.username}</td>
                 <td>${user.wins}</td>

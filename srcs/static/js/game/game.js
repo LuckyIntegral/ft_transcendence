@@ -316,8 +316,6 @@ class Game {
         const isWKey = event.key === "w" || event.key === "W";
         const isSKey = event.key === "s" || event.key === "S";
 
-        this.player2.moveUp = false;
-        this.player2.moveDown = false;
         if (this.playerId === "player1") {
             if (isKeyDown && isWKey) this.player1.moveUp = true;
             else if (isKeyDown && isSKey) this.player1.moveDown = true;

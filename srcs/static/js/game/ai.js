@@ -27,10 +27,10 @@ class AI {
 
         let newY = this.y + dy;
 
-        if (newY - GameConstants.PADDLE_PADDING < 0) {
-            newY = 0 + GameConstants.PADDLE_PADDING;
-        } else if (newY + GameConstants.PADDLE_HEIGHT + GameConstants.PADDLE_PADDING > GameConstants.GAME_HEIGHT) {
-            newY = GameConstants.GAME_HEIGHT - GameConstants.PADDLE_HEIGHT - GameConstants.PADDLE_PADDING;
+        if (newY < 0) {
+            newY = 0;
+        } else if (newY + GameConstants.PADDLE_HEIGHT > GameConstants.GAME_HEIGHT) {
+            newY = GameConstants.GAME_HEIGHT - GameConstants.PADDLE_HEIGHT;
         }
 
         this.y = newY;

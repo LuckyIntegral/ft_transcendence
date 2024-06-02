@@ -20,13 +20,12 @@ from rest_framework_simplejwt.tokens import UntypedToken
 from rest_framework_simplejwt.state import token_backend
 from rest_framework_simplejwt.authentication import InvalidToken, TokenError
 from django.core.exceptions import ValidationError
-from .utils import getUserFromToken, blockChainCreateGame
+from .utils import getUserFromToken
 import json
 import asyncio
 from django.utils import timezone
 import html
 import re
-import threading
 
 
 class ChatConsumer(AsyncWebsocketConsumer):
@@ -119,18 +118,26 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 return
         regex = r"gameToken=([A-Za-z0-9\-]*)"
         match = re.match(regex, text_data_json["message"])
+        print(match)
         if not match:
             messageText = html.escape(text_data_json["message"])
         else:
             gameToken = match.group(1)
+            print(gameToken)
             if not await self.is_token_exists_in_pong_lobby(gameToken):
                 await self.send(text_data=json.dumps({"error": "Game does not exist!"}))
                 return
-            messageText = (
-                f"You have been invited to play a game! Click here <a href='#pong?game-token={gameToken}'>to play</a>."
+            if "kind" in text_data_json and text_data_json["kind"] == "3d":
+                messageText = (
+					f"Join <a href='#pong3d?game-token={gameToken}'>3D Pong!</a>"
+				)
+            else:
+                messageText = (
+					f"Join <a href='#pong?game-token={gameToken}'>2D Pong!</a>"
             )
         sender = html.escape(text_data_json["sender"])
         timestamp = html.escape(text_data_json["timestamp"])
+        print(f"Sender: {sender}")
         try:
             self.chat = await self.getChat(self.chatToken)
             self.sender = await self.getSender(sender)
@@ -187,10 +194,6 @@ class LongPollConsumer(AsyncWebsocketConsumer):
             unread_messages = await self.get_unread_messages(user)
             chatsInfo = await self.get_chats_info(user)
             new_friend_requests = await self.get_new_friend_requests(user)
-            participants = text_data["participants"]
-            onlineStatuses = []
-            if len(participants):
-                onlineStatuses = await self.get_last_online_statuses(participants)
             await self.update_notification_last_online()
             await self.update_last_online(user)
             if new_messages:
@@ -201,7 +204,6 @@ class LongPollConsumer(AsyncWebsocketConsumer):
                             "new_messages": "received",
                             "chatsInfo": chatsInfo,
                             "new_friend_requests": new_friend_requests,
-                            "onlineStatuses": onlineStatuses,
                         }
                     )
                 )
@@ -212,7 +214,6 @@ class LongPollConsumer(AsyncWebsocketConsumer):
                             "new_messages": "unread",
                             "chatsInfo": chatsInfo,
                             "new_friend_requests": new_friend_requests,
-                            "onlineStatuses": onlineStatuses,
                         }
                     )
                 )
@@ -223,35 +224,11 @@ class LongPollConsumer(AsyncWebsocketConsumer):
                             "new_messages": "none",
                             "chatsInfo": chatsInfo,
                             "new_friend_requests": new_friend_requests,
-                            "onlineStatuses": onlineStatuses,
                         }
                     )
                 )
         except Exception as e:
             await self.send(text_data=json.dumps({"error": str(e)}))
-
-    @database_sync_to_async
-    def get_last_online_statuses(self, participants):
-        onlineStatuses = []
-        print(participants)
-        for participant in participants:
-            try:
-                user = User.objects.get(username=participant)
-                lastOnline = user.userprofile.lastOnline
-                onlineStatuses.append(
-                    {
-                        "username": participant,
-                        "lastOnline": lastOnline.isoformat(),
-                    }
-                )
-            except User.DoesNotExist:
-                onlineStatuses.append(
-                    {
-                        "username": participant,
-                        "lastOnline": "unknown",
-                    }
-                )
-        return onlineStatuses
 
     @database_sync_to_async
     def update_notification_last_online(self):
@@ -385,12 +362,16 @@ class GameConsumer(AsyncWebsocketConsumer):
             if self.user.username not in GameConsumer.playerAuth[self.token]:
                 GameConsumer.playerAuth[self.token][self.user.username] = 0
             GameConsumer.playerAuth[self.token][self.user.username] += 1
+
+            opponentName = await self.get_opponent_username(self.user, self.token)
             if await self.isUserHost(self.user, self.token):
                 await self.send(
                     text_data=json.dumps(
                         {
                             "event": "assign_role",
                             "role": "player1",
+							"username": self.user.username,
+                            "opponent": opponentName,
                         }
                     )
                 )
@@ -400,6 +381,8 @@ class GameConsumer(AsyncWebsocketConsumer):
                         {
                             "event": "assign_role",
                             "role": "player2",
+							"username": self.user.username,
+                            "opponent": opponentName,
                         }
                     )
                 )
@@ -408,7 +391,9 @@ class GameConsumer(AsyncWebsocketConsumer):
                 await self.setGameStarted(self.token)
             try:
                 lobby = await self.getLobbyData(self.token)
+                print("Lobby exists in try")
             except PongLobby.DoesNotExist:
+                print("Lobby does not exist")
                 await self.close()
                 return
 
@@ -450,6 +435,13 @@ class GameConsumer(AsyncWebsocketConsumer):
 
         if event == "game_over":
             await self.setGameFinished(self.token, data)
+	
+    @database_sync_to_async
+    def get_opponent_username(self, user, token):
+        lobby = PongLobby.objects.get(token=token)
+        if user == lobby.host:
+            return lobby.guest.username
+        return lobby.host.username
 
     async def game_move(self, event):
         player1_pos = event.get("player1_pos")
@@ -735,17 +727,9 @@ class TournamentConsumer(AsyncWebsocketConsumer):
             tournament = TournamentLobby.objects.get(token=self.token)
         except TournamentLobby.DoesNotExist:
             return
-        if tournament.final.isFinished and tournament.finished == False:
-            tournament.finished = True
+        if tournament.final.isFinished:
+            tournament.isFinished = True
             tournament.save()
-            results = async_to_sync(self.get_tournament_results)()
-            data = []
-            for result in results:
-                data.append(
-                    [result["username"], int(result["place"][0])]
-                )
-            # TODO uncomment this line
-            # threading.Thread(target=async_to_sync(blockChainCreateGame), args=(self.token, data)).start()
 
     @database_sync_to_async
     def get_tournament_results(self):

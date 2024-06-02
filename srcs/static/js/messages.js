@@ -87,7 +87,7 @@ function createIncomeMessageItemLi(message, time, avatarUrl) {
     return li;
 }
 
-async function sendPongInvite(username) {
+async function generatePongLobby(username) {
     fetchWithToken("/api/lobby/pong/", {
         method: "POST",
         headers: {
@@ -101,9 +101,31 @@ async function sendPongInvite(username) {
         .then((response) => {
             if (response.ok) {
                 return response.json();
-            } else if (response.status === 429) {
-                alertError("You are sending too many invites. Please wait a bit.");
-                throw new Error("You are sending too many invites. Please wait a bit.");
+            }
+            return null;
+        })
+        .then((data) => {
+            if (data === null) {
+                return null;
+            }
+            return data["token"];
+        });
+}
+
+async function sendPongInvite(username, dim) {
+    fetchWithToken("/api/lobby/pong/", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            Authorization: "Bearer " + localStorage.getItem("access"),
+        },
+        body: JSON.stringify({
+            username: username,
+        }),
+    })
+        .then((response) => {
+            if (response.ok) {
+                return response.json();
             }
             return null;
         })
@@ -133,6 +155,7 @@ async function sendPongInvite(username) {
                     sender: sender,
                     message: message,
                     timestamp: new Date().toISOString(),
+					kind: dim,
                 })
             );
 
@@ -150,8 +173,6 @@ async function sendPongInvite(username) {
                 return dateB - dateA;
             });
             list.empty().append(listItems);
-        }).catch((error) => {
-
         });
 }
 
@@ -214,6 +235,7 @@ function createChatHeader(data) {
         var blockButton = `<button class="block-button btn btn-danger" id="blockButton">Block</button>`;
     }
     var inviteButton = `<button class="invite-button btn btn-success" id="inviteButton">Invite to Pong</button>`;
+    var inviteButton3d = `<button class="invite3d-button btn btn-success" id="inviteButton">Invite to Pong3D</button>`;
     div.setAttribute("class", "col-lg-6");
     div.innerHTML = `<img src="${localStorage.getItem("companionPicture")}" alt="avatar">
                     <div class="chat-about">
@@ -221,6 +243,7 @@ function createChatHeader(data) {
                     </div>
                     ${blockButton}
                     ${inviteButton}
+					${inviteButton3d}
                     `;
     blockButton = div.querySelector(".block-button");
     blockButton.addEventListener("click", function () {
@@ -256,7 +279,12 @@ function createChatHeader(data) {
 
     inviteButton = div.querySelector(".invite-button");
     inviteButton.addEventListener("click", function () {
-        sendPongInvite(data["username"]);
+        sendPongInvite(data["username"],'2d');
+    });
+
+    inviteButton3d = div.querySelector(".invite3d-button");
+    inviteButton3d.addEventListener("click", function () {
+        sendPongInvite(data["username"],'3d');
     });
     return div;
 }

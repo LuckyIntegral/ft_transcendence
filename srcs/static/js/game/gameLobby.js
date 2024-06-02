@@ -23,22 +23,35 @@ class GameLobby {
             if (data.event === "assign_role") {
                 this.playerId = data.role;
                 this.game.playerId = data.role;
+                if (this.game instanceof Game3D) {
+					this.game.userName = data.username;
+					this.game.opponentName = data.opponent;
+					console.log('Opponent name: ' + data.opponent);
+                    game.adjustToPlayerRole(data.role);
+                }
                 console.log(`Assigned role: ${this.playerId}`);
             }
 
             if (data.event === "player_connected") {
                 this.playersConnected = data.players_connected;
+				console.log(`Player connected: ${this.playerConnected}`);
                 if (data.isFinished === true) {
                     this.gameOver = true;
                     console.log("Game is finished. Displaying end game message.");
-                    this.game.drawEndGameMessage(`GAME OVER! ${data.winner} WINS!`);
+					if (this.game instanceof Game3D) {
+                    	this.game.drawEndGameMessage(`${data.winner} WON!`, game.userName, game.opponentName, 
+						 `${data.hostScore}`,`${data.guestScore}`);
+					}
+					else {
+                    	this.game.drawEndGameMessage(`GAME OVER! ${data.winner} WON!`);
+					}
                     window.removeEventListener("keydown", this.boundKeyPress);
                     window.removeEventListener("keyup", this.boundKeyPress);
                 } else if (data.isExpired === true) {
                     this.gameOver = true;
                     window.removeEventListener("keydown", this.boundKeyPress);
                     window.removeEventListener("keyup", this.boundKeyPress);
-                    this.game.drawEndGameMessage("Invitation link expired.");
+                    this.game.drawEndGameMessage("Invitation link expired.", "", "", "", "");
                 } else if (this.playersConnected === 2) {
                     console.log("Both players connected. Starting game.");
                     this.game.startCountdown();
@@ -46,7 +59,7 @@ class GameLobby {
                 console.log(`Players connected: ${this.playersConnected}`);
             }
             if (data.event === "game_move" && this.gameOver === false) {
-                console.log("Received game move data.");
+                // console.log("Received game move data.");
                 this.game.updatePositions(data.player1_pos, data.player2_pos, data.ball_pos, data.update_type);
             }
         };

@@ -32,7 +32,6 @@ from pingpong.views import (
     BlockUserView,
     PongLobbyView,
     TournamentLobbyView,
-	UserSearchView,
 )
 
 
@@ -93,6 +92,7 @@ urlpatterns = [
     path("api/token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
     path("api/signup/", SignupView.as_view(), name="signup"),
     path("api/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
+    path("api/profile/", ProfileView.as_view(), name="edit_profile"),
     path("api/password/", PasswordView.as_view(), name="change_password"),
     path("api/verify-token/", VerifyTokenView.as_view(), name="verify_token"),
     path("api/friends/", FriendsView.as_view(), name="friend_list"),
@@ -137,5 +137,4 @@ urlpatterns = [
     path("api/messages/", MessagesView.as_view(), name="messages"),
     path("api/lobby/pong/", PongLobbyView.as_view(), name="pong-lobby"),
     path("api/lobby/tournament/", TournamentLobbyView.as_view(), name="tournament-lobby"),
-	path("api/user-search/", UserSearchView.as_view(), name="user-search"),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -1,22 +1,8 @@
-const EVENT_BADGE = document.createElement("span");
-EVENT_BADGE.setAttribute(
-    "class",
-    "position-absolute translate-middle p-1 bg-danger border border-light rounded-circle"
-);
-
-const EVENT_BADGE_FRIEND = document.createElement("span");
-EVENT_BADGE_FRIEND.setAttribute(
-    "class",
-    "position-absolute translate-middle p-1 bg-danger border border-light rounded-circle"
-);
-
 document.addEventListener("DOMContentLoaded", function () {
     if (!localStorage.getItem("access")) {
         return;
     }
-    var socket = new WebSocket(
-        `ws://${window.location.host}/messages/long-poll/`
-    );
+    var socket = new WebSocket(`ws://${window.location.host}/messages/long-poll/`);
     function sleep(ms) {
         return new Promise((resolve) => setTimeout(resolve, ms));
     }
@@ -33,9 +19,7 @@ document.addEventListener("DOMContentLoaded", function () {
         for (var chat of chatsInfo) {
             var chatToken = chat["chatToken"];
             var lastOnline = new Date(chat["lastOnline"]);
-            var li = document.querySelector(
-                `li[data-chat-token="${chatToken}"]`
-            );
+            var li = document.querySelector(`li[data-chat-token="${chatToken}"]`);
             if (!li) {
                 return;
             }
@@ -50,39 +34,13 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
 
-    function updateLastOnlineTournamentMenu(onlineStatuses) {
-        function getIndexOfUser(username, onlineStatuses) {
-            for (var i = 0; i < onlineStatuses.length; i++) {
-                if (onlineStatuses[i]["username"] === username) {
-                    return i;
-                }
-            }
-            return -1;
-        }
-        document.querySelectorAll(".online-status").forEach(function (element) {
-            var username = element.getAttribute("data-username");
-            var lastOnline = new Date(
-                onlineStatuses[getIndexOfUser(username, onlineStatuses)][
-                    "lastOnline"
-                ]
-            ).getTime();
-            if (Date.now() - lastOnline < 60000) {
-                element.innerHTML = `<i class="fa fa-circle online"></i> ${ONLINE_BADGE}`;
-            } else {
-                element.innerHTML = `<i class="fa fa-circle offline"></i> ${OFFLINE_BADGE}`;
-            }
-        });
-    }
-
     async function startWebSocketConnection() {
         if (!localStorage.getItem("access")) {
             await sleep(1000);
             return startWebSocketConnection();
         }
         if (!socket.readyState) {
-            socket = new WebSocket(
-                `ws://${window.location.host}/messages/long-poll/`
-            );
+            socket = new WebSocket(`ws://${window.location.host}/messages/long-poll/`);
         }
         socket.onopen = function (e) {
             socket.send(
@@ -99,27 +57,19 @@ document.addEventListener("DOMContentLoaded", function () {
                 if (window.location.hash === "#messages") {
                     getUserListChats();
                 }
-                document.getElementById("messagesRef").appendChild(EVENT_BADGE);
+                document.getElementById("messagesRef").textContent = "Messages🔴";
             } else if (data && data["new_messages"] === "unread") {
-                document.getElementById("messagesRef").appendChild(EVENT_BADGE);
+                document.getElementById("messagesRef").textContent = "Messages🔴";
             } else if (data && data["new_messages"] === "none") {
                 document.getElementById("messagesRef").textContent = "Messages";
             }
             // friend requests notifications
             if (data && data["new_friend_requests"] === true) {
-                document.getElementById("friends").appendChild(EVENT_BADGE);
-                document
-                    .getElementById("dropdownUser1")
-                    .appendChild(EVENT_BADGE_FRIEND);
+                document.getElementById("dropdownUser1").textContent = "Community🔴";
+                document.getElementById("friends").textContent = "Friends🔴";
             } else {
-                document.getElementById("dropdownUser1").textContent =
-                    "Community";
+                document.getElementById("dropdownUser1").textContent = "Community";
                 document.getElementById("friends").textContent = "Friends";
-            }
-            if (window.location.hash === "#tournamentmenu") {
-                if (data["onlineStatuses"] !== undefined) {
-                    updateLastOnlineTournamentMenu(data["onlineStatuses"]);
-                }
             }
             // updating timestamps on messages page
             if (window.location.hash === "#messages") {
@@ -130,7 +80,6 @@ document.addEventListener("DOMContentLoaded", function () {
             socket.send(
                 JSON.stringify({
                     token: localStorage.getItem("access"),
-                    participants: g_participantsList,
                 })
             );
         };

@@ -20,21 +20,26 @@ const GameConstants3D = {
 	GRAVITY: 9.81,
 	BALL_RADIUS: 0.03,
 	BALL_HEIGHT: 0.2,
-	BALL_Y_SPEED: 1.6,
+	BALL_Y_SPEED: 1.7,
+	BALL_X_MAX_SPEED_RATIO: 1.5,
 	BALL_RADIUS: 0.04,
+	BALL_PAUSE_TIME: 1.0,
 	TABLE_MAX_DEPTH: 1.8,
 	TABLE_MIN_DEPTH: -1.8,
 	TABLE_HALF_WIDTH: 1.0,
 	PADL_SCALE : 1.5,
-	PADL_H_RANGE: 1.0,   // Paddle horizontal movement range from center
+	PADL_H_RANGE: 1.11,   // Paddle horizontal movement range from center
 	PADL_V_RANGE: 0.5,  // Paddle vertical movement range from 0 (isn't needed) 
 	PADDLE_WIDTH: 0.22,
 	PADDLE_YPOS: 0.2,   // Default Paddle height from the table
+  	PADDLE_SPEED: 1.9,
 	PADDLE_DIST_TO_BALL: 0.2,  // Distance from paddle to ball for y movement
-  	LOADBAR_WIDTH: 300,
-  	LOADBAR_HEIGHT: 30,
-  	PADDLE_SPEED: 1.6,
+  	LOADBAR_WIDTH: 500,
+  	LOADBAR_HEIGHT: 5,
 	GAME_OVER_TIME: 1.8,
+	EFFECT_DURATION: 0.4,
+	EFFECT_OPACITY: 0.4,
+	ERROR_RANGE: 0.05,
 };
 
 const GameModes = {

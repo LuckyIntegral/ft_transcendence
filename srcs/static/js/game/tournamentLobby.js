@@ -22,9 +22,6 @@ class TournamentLobby {
         };
         this.lobbySocket.onmessage = (event) => {
             const data = JSON.parse(event.data);
-            if (data.stage === "None") {
-                this.displayLobbyNotFoundMessage();
-            }
             if (data.stage === "tournament_over") {
                 this.displayGameOverMessage(data.results);
             }
@@ -208,18 +205,6 @@ class TournamentLobby {
                 GameConstants.GAME_HEIGHT / 2 + 50 + i * 20
             );
         }
-    }
-
-    displayLobbyNotFoundMessage() {
-        this.clearCanvas();
-        this.context.fillStyle = "WHITE";
-        this.context.font = "30px Arial";
-        this.context.textAlign = "center";
-        this.context.fillText(
-            "Lobby not found.",
-            GameConstants.GAME_WIDTH / 2,
-            GameConstants.GAME_HEIGHT / 2
-        );
     }
 
     clearCanvas() {

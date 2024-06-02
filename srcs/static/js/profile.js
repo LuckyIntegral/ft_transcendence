@@ -68,6 +68,7 @@ function saveProfile() {
         window.location.hash = "default";
         return;
     }
+    document.getElementById("loading").style.display = "block";
     var newDisplayName = document.getElementById("displayName");
     var newEmail = document.getElementById("email");
     var editProfileButton = document.getElementById("buttonEditProfile");
@@ -122,6 +123,9 @@ function saveProfile() {
                 alertError('Display name is too long or empty');
             }
         })
+        .finally(function () {
+            document.getElementById("loading").style.display = "none";
+        });
 }
 
 function loadProfilePage() {
@@ -329,8 +333,6 @@ function enableTwoStepVerification(popup) {
             setTwoStepVerificationButton(true);
             popup.parentNode.removeChild(popup);
             location.reload();
-        } else if (response.status === 429) {
-            alertError("Too many verification attempts. Please try again later.");
         } else {
             alertError("Email is not verified");
         }
@@ -362,8 +364,6 @@ function disableTwoStepVerification(popup) {
                 setTwoStepVerificationButton(false);
                 popup.parentNode.removeChild(popup);
                 location.reload();
-            } else if (response.status == 429) {
-                alertError("Too many verification attempts. Please try again later.");
             } else {
                 alertError(response.statusText);
             }
