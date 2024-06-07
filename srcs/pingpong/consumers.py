@@ -126,9 +126,17 @@ class ChatConsumer(AsyncWebsocketConsumer):
             if not await self.is_token_exists_in_pong_lobby(gameToken):
                 await self.send(text_data=json.dumps({"error": "Game does not exist!"}))
                 return
-            messageText = (
-                f"You have been invited to play a game! Click here <a href='#pong?game-token={gameToken}'>to play</a>."
+            if "kind" in text_data_json and text_data_json["kind"] == "3d":
+                messageText = (
+					f"Join <a href='#pong3d?game-token={gameToken}'>3D Pong!</a>"
+				)
+            else:
+                messageText = (
+					f"Join <a href='#pong?game-token={gameToken}'>2D Pong!</a>"
             )
+            # messageText = (
+            #     f"You have been invited to play a game! Click here <a href='#pong?game-token={gameToken}'>to play</a>."
+            # )
         sender = html.escape(text_data_json["sender"])
         timestamp = html.escape(text_data_json["timestamp"])
         try:
@@ -385,12 +393,15 @@ class GameConsumer(AsyncWebsocketConsumer):
             if self.user.username not in GameConsumer.playerAuth[self.token]:
                 GameConsumer.playerAuth[self.token][self.user.username] = 0
             GameConsumer.playerAuth[self.token][self.user.username] += 1
+            opponentName = await self.get_opponent_username(self.user, self.token)
             if await self.isUserHost(self.user, self.token):
                 await self.send(
                     text_data=json.dumps(
                         {
                             "event": "assign_role",
                             "role": "player1",
+							"username": self.user.username,
+                            "opponent": opponentName,
                         }
                     )
                 )
@@ -400,9 +411,29 @@ class GameConsumer(AsyncWebsocketConsumer):
                         {
                             "event": "assign_role",
                             "role": "player2",
+							"username": self.user.username,
+                            "opponent": opponentName,
                         }
                     )
                 )
+            # if await self.isUserHost(self.user, self.token):
+            #     await self.send(
+            #         text_data=json.dumps(
+            #             {
+            #                 "event": "assign_role",
+            #                 "role": "player1",
+            #             }
+            #         )
+            #     )
+            # else:
+            #     await self.send(
+            #         text_data=json.dumps(
+            #             {
+            #                 "event": "assign_role",
+            #                 "role": "player2",
+            #             }
+            #         )
+            #     )
 
             if self.isBothUsersConnected():
                 await self.setGameStarted(self.token)
@@ -450,6 +481,13 @@ class GameConsumer(AsyncWebsocketConsumer):
 
         if event == "game_over":
             await self.setGameFinished(self.token, data)
+    
+    @database_sync_to_async
+    def get_opponent_username(self, user, token):
+        lobby = PongLobby.objects.get(token=token)
+        if user == lobby.host:
+            return lobby.guest.username
+        return lobby.host.username
 
     async def game_move(self, event):
         player1_pos = event.get("player1_pos")

@@ -4,6 +4,11 @@
 	background-color: rgba(255, 255, 255, 0.4); /* Light background color on hover */
 	color: #ffffff; /* White text color on hover */
  }
+ 
+ @font-face {
+	font-family: "theren-regular";
+	src: url('/static/assets3d/fonts/attack.ttf');
+}
 
 .card {
     background: #fff;
