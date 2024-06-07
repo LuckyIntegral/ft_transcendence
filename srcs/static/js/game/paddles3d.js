@@ -3,12 +3,13 @@ class Paddle3D {
 	constructor (player, paddle_mesh) {
 		this.player = player
 		this.paddlemesh = paddle_mesh;
-		this.resetPosition(player);
+		this.position = new THREE.Vector3(0.0, 0.0, 0.0);
 		this.position.x = this.paddlemesh.position.x;
 		this.position.y = this.paddlemesh.position.y;
 		this.position.z = this.paddlemesh.position.z;
 		this.speed = GameConstants3D.PADDLE_SPEED;
 		this.velocity = new THREE.Vector3(0.0, 0.0, 0.0);
+		this.resetPosition(player);
 	}
   
 	resetPosition (player) {
@@ -22,8 +23,10 @@ class Paddle3D {
 			this.paddlemesh.position.y = GameConstants3D.PADDLE_YPOS;
 			this.paddlemesh.position.z = GameConstants3D.TABLE_MIN_DEPTH;
 		}
-		this.position = this.paddlemesh.position;
-		// console.log('Paddle3D: player, resetPosition: position:', player, this.position);
+		this.position.x = this.paddlemesh.position.x;
+		this.position.y = this.paddlemesh.position.y;
+		this.position.z = this.paddlemesh.position.z;
+		this.velocity = new THREE.Vector3(0.0, 0.0, 0.0);
 	}
 
 	outOfBounds(pos, max, min)
@@ -53,15 +56,21 @@ class Paddle3D {
 
 	}
 
-	update_controls(keystate) {
+	update_controls(keystate, plId) {
 		// (keystate['w'] || keystate['W'])? this.velocity.y = this.speed : this.velocity.y = 0;
 		// (keystate['s'] || keystate['S'])? this.velocity.y += -this.speed : this.velocity.y += 0;
-		(keystate['a'] || keystate['A'])? this.velocity.x = -this.speed : this.velocity.x = 0;
-		(keystate['d'] || keystate['D'])? this.velocity.x += this.speed : this.velocity.x += 0;
+		if (plId === 'player1')	{
+			(keystate['a'] || keystate['A'])? this.velocity.x = -this.speed : this.velocity.x = 0;
+			(keystate['d'] || keystate['D'])? this.velocity.x += this.speed : this.velocity.x += 0;
+		}
+		else if (plId === 'player2') {
+			(keystate['a'] || keystate['A'])? this.velocity.x = this.speed : this.velocity.x = 0;
+			(keystate['d'] || keystate['D'])? this.velocity.x -= this.speed : this.velocity.x -= 0;
+		}
 	}
 
-	update(dt, keystate, ball) {
-		this.update_controls(keystate);
+	update(dt, keystate, ball, plId) {
+		this.update_controls(keystate, plId);
 		this.move(dt, ball);
 	}
 }

@@ -1,12 +1,22 @@
+var intro3dImage = null;
+
 class Menu3D {
   constructor () {
     this.game = new Game3D(69)
     this.title = 'PONG'
     this.menuItems = [
       {
-        text: 'PLAYER VS AI',
-        action: () => this.game.loadGame(GameModes.PLAYER_VS_AI),
-        image: 'static/images/ai.png'
+        text: 'Easy',
+        action: () => this.game.loadGame(GameModes.PLAYER_VS_AI, 'easy'),
+        image: 'static/images/tabletenis.jpg'
+      },
+      {
+        text: 'Hard',
+        action: () => this.game.loadGame(GameModes.PLAYER_VS_AI, 'hard'),
+      },
+      {
+        text: 'Brutal',
+        action: () => this.game.loadGame(GameModes.PLAYER_VS_AI, 'impossible'),
       },
     ]
     this.images = {}
@@ -43,7 +53,7 @@ class Menu3D {
     const y = event.clientY - rect.top
 
     const startX = this.canvas.width / 2 - 200
-    const startY = this.canvas.height / 2 - 50
+    const startY = 2 * this.canvas.height / 5
 
     for (let i = 0; i < this.menuItems.length; i++)
 	{
@@ -66,6 +76,7 @@ class Menu3D {
         img.onload = () => {
           this.images[path] = img
           this.drawMenu()
+          intro3dImage = img;
         }
         img.src = path
       }
@@ -132,15 +143,20 @@ class Menu3D {
   }
 
   drawMenu () {
-    this.clear()
+    if (intro3dImage !== null) {
+      this.context.drawImage(intro3dImage, 0, 0, this.canvas.width, this.canvas.height)
+    }
 
     if (this.title !== null) {
       this.context.fillStyle = 'WHITE'
-      this.context.fillText(this.title, this.canvas.width / 2, 50)
+      this.context.font = '80px theren-regular'
+      this.context.fillText(this.title, this.canvas.width / 2, this.canvas.height / 5)
     }
 
     const startX = this.canvas.width / 2
-    const startY = this.canvas.height / 2 - 50
+    const startY = 2 * this.canvas.height / 5 
+
+    this.context.font = '30px theren-regular'
 
     this.menuItems.forEach((item, index) => {
       this.drawButton(
@@ -166,19 +182,10 @@ class Menu3D {
       this.context.fillStyle = `rgba(0, 0, 0, ${this.clickIntensity[index]})`
       this.context.fillRect(x, y, width, height)
     }
-    if (this.images[this.menuItems[index].image]) {
-      this.context.drawImage(
-        this.images[this.menuItems[index].image],
-        x + width - 48,
-        y + (height - 44) / 2,
-        45,
-        44
-      )
-    }
   }
 
   setFont () {
-    this.context.font = '30px Arial'
+    this.context.font = '30px theren-regular'
     this.context.textAlign = 'center'
     this.context.textBaseline = 'middle'
     this.context.fillStyle = 'WHITE'
@@ -199,7 +206,7 @@ class Menu3D {
     const y = event.clientY - this.canvas.getBoundingClientRect().top
 
     const startX = this.canvas.width / 2 - 200
-    const startY = this.canvas.height / 2 - 50
+    const startY = 2 * this.canvas.height / 5 
 
     let selectedIndex = null
     for (let i = 0; i < this.menuItems.length; i++) {

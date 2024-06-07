@@ -24,18 +24,18 @@ class Loading {
         // Draw loading bar background
         this.ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
         this.ctx.fillRect(
-            (this.canvas.width - this.loadingBarWidth) / 2,
-            (this.canvas.height - this.loadingBarHeight) / 2,
-            this.loadingBarWidth,
-            this.loadingBarHeight
+            (this.canvas.width - this.loadBarWidth) / 2,
+            7 * (this.canvas.height - this.loadBarHeight) / 8,
+            this.loadBarWidth,
+            this.loadBarHeight
         );
         // Draw loading bar progress
         this.ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
         this.ctx.fillRect(
-            (this.canvas.width - this.loadingBarWidth) / 2,
-            (this.canvas.height - this.loadingBarHeight) / 2,
-            (this.loadingBarWidth * loadProgress) / 100,
-            this.loadingBarHeight
+            (this.canvas.width - this.loadBarWidth) / 2,
+            7 * (this.canvas.height - this.loadBarHeight) / 8,
+            (this.loadBarWidth * loadProgress) / 100,
+            this.loadBarHeight
         );
         // Draw loading text
         this.ctx.fillStyle = 'white';
@@ -43,9 +43,9 @@ class Loading {
         this.ctx.textAlign = 'center';
         this.ctx.textBaseline = 'middle';
         this.ctx.fillText(
-            `Loading... ${loadProgress}%`,
+            `Loading... ${Math.floor(loadProgress)}%`,
             this.canvas.width / 2,
-            this.canvas.height / 2 + this.loadingBarHeight + 20
+            7 * this.canvas.height / 8 + this.loadBarHeight + 20
         );
     }
 }

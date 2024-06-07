@@ -50,9 +50,20 @@ document.addEventListener("DOMContentLoaded", function () {
         pong3d: function() {
             removePopups();
             closeSockets();
-            let menu3d = new Menu3D()
-            menu3d.start()
-            previousRoute = 'pong3d';
+            if (query_params === null || query_params === undefined) {
+                let menu = new Menu3D();
+                menu.start();
+            } else {
+                const img = new Image()
+                img.onload = () => {
+                  intro3dImage = img;
+                  var gameToken = query_params.split("=")[1];
+                  let game = new Game3D(gameToken);
+                  game.loadGame(GameModes.PLAYER_VS_PLAYER);
+                  query_params = null;
+                }
+                img.src = "static/images/tabletenis.jpg"
+            }
         },
         friends: function () {
             removePopups();
