@@ -42,9 +42,12 @@ services:
     image: nginx:1.19
     ports:
       - "8080:80"
+      - "8443:443"
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf
       - socket_volume:/tmp
+      - ./cert.pem:/etc/nginx/ssl/cert.pem # New line: mount the certificate file
+      - ./key.pem:/etc/nginx/ssl/key.pem # New line: mount the private key file
       - .:/code
     depends_on:
       - web
