@@ -296,7 +296,7 @@ class Game {
         this.context.fillStyle = "WHITE";
         this.context.font = "40px Arial";
         this.context.fillText(message, GameConstants.GAME_WIDTH / 2, GameConstants.GAME_HEIGHT / 2 - 50);
-        this.context.fillText("Click to play again", GameConstants.GAME_WIDTH / 2, GameConstants.GAME_HEIGHT / 2 + 50);
+        // this.context.fillText("Click to play again", GameConstants.GAME_WIDTH / 2, GameConstants.GAME_HEIGHT / 2 + 50);
         if (g_GameSocket !== null) {
             g_GameSocket.close();
         }
