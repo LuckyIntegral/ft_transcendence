@@ -383,9 +383,11 @@ class GameConsumer(AsyncWebsocketConsumer):
                 self.jwtToken = JWTTokenValidator().validate(authHeader)
                 self.user = await self.get_user_from_token(self.jwtToken)
                 if not await self.userInLobby(self.user, self.token):
+                    print("User not in lobby")
                     await self.close()
                     return
             except Exception as e:
+                print(e)
                 await self.close()
                 return
             if self.token not in GameConsumer.playerAuth:
@@ -484,7 +486,10 @@ class GameConsumer(AsyncWebsocketConsumer):
     
     @database_sync_to_async
     def get_opponent_username(self, user, token):
-        lobby = PongLobby.objects.get(token=token)
+        try:
+            lobby = PongLobby.objects.get(token=token)
+        except PongLobby.DoesNotExist:
+            return "Undefined"
         if user == lobby.host:
             return lobby.guest.username
         return lobby.host.username

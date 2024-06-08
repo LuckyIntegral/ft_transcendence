@@ -260,18 +260,17 @@ class Game {
     }
 
     checkIfOver() {
-        var isOver = false;
-        if (this.player2.score >= 5) {
-            this.endGame(this.player2);
-        } else if (this.player1.score >= 5) {
-            this.endGame(this.player1);
-        }
         if ((this.player2.score >= 5 || this.player1.score >= 5) && this.gameMode !== GameModes.PLAYER_VS_AI) {
             this.lobby.gameSocket.send(JSON.stringify({
                 event: "game_over",
                 hostScore: this.player1.score,
                 guestScore: this.player2.score}
             ));
+        }
+        if (this.player2.score >= 5) {
+            this.endGame(this.player2);
+        } else if (this.player1.score >= 5) {
+            this.endGame(this.player1);
         }
     }
 

@@ -293,6 +293,20 @@ class ProfileView(APIView):
     """
 
     throttle_scope = "two_hundred_per_minute"
+    
+    def get_games_stats(self, user):
+        games = PongLobby.objects.filter((Q(host=user) | Q(guest=user)) & Q(isFinished=True))
+        if not games:
+            return {"won": 0, "lost": 0}
+        won = 0
+        lost = 0
+        for game in games:
+            print(game.winner)
+            if game.winner == user:
+                won += 1
+            else:
+                lost += 1
+        return {"won": won, "lost": lost}
 
     def get(self, request, format=None):
         """This method is used to get the profile of a user."""
@@ -305,6 +319,9 @@ class ProfileView(APIView):
             user = getUserFromToken(token)
         except ValidationError as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        
+        game_stats = self.get_games_stats(user)
+        won, lost = game_stats["won"], game_stats["lost"]
 
         data = {
             "username": user.username,
@@ -314,6 +331,10 @@ class ProfileView(APIView):
             "twoStepVerificationEnabled": user.userprofile.isTwoStepEmailAuthEnabled,
             "picture": user.userprofile.picture.url,
             "pictureSmall": user.userprofile.pictureSmall.url,
+            "gamesWon": won,
+            "gamesLost": lost,
+            "gamesPlayed": won + lost,
+            "winRate": 0 if won + lost == 0 else round(won / (won + lost) * 100, 2),
         }
         return Response(data, status=status.HTTP_200_OK)
 

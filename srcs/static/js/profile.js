@@ -180,6 +180,10 @@ function getAndSetProfileData() {
             var email = document.getElementById("email");
             var username = document.getElementById("username");
             var picture = document.getElementById("profileImg");
+            var gamesPlayed = document.getElementById("gamesPlayed");
+            var gamesWon = document.getElementById("gamesWon");
+            var gamesLost = document.getElementById("gamesLost");
+            var winRate = document.getElementById("winRate");
 
             var emailVerificationP = document.getElementById("emailVerified");
             var emailVerificationSpan = createVerificationSpan(data.emailVerified);
@@ -188,6 +192,10 @@ function getAndSetProfileData() {
             email.textContent = data.email;
             username.textContent = data.username;
             picture.src = data.picture;
+            gamesPlayed.textContent = data.gamesPlayed;
+            gamesWon.textContent = data.gamesWon;
+            gamesLost.textContent = data.gamesLost;
+            winRate.textContent = data.winRate.toString() + "%";
 
             setTwoStepVerificationButton(data.twoStepVerificationEnabled);
             emailVerificationP.appendChild(emailVerificationSpan);

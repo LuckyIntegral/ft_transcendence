@@ -34,6 +34,7 @@ class GameLobby {
 
             if (data.event === "player_connected") {
                 this.playersConnected = data.players_connected;
+                console.log(data);
                 if (data.isFinished === true) {
                     this.gameOver = true;
                     console.log("Game is finished. Displaying end game message.");
