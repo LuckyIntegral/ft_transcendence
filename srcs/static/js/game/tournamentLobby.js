@@ -8,7 +8,7 @@ class TournamentLobby {
     }
 
     join(lobbyToken) {
-        this.lobbySocket = new WebSocket(`ws://${window.location.host}/ws/tournament/${lobbyToken}/`);
+        this.lobbySocket = new WebSocket(`wss://${window.location.host}/ws/tournament/${lobbyToken}/`);
         g_LobbySocket = this.lobbySocket;
 
         this.createCanvas()
@@ -16,7 +16,7 @@ class TournamentLobby {
 
         this.lobbySocket.onopen = () => {
             console.log(
-                `Tournament Lobby WebSocket connection established on ws://${window.location.host}/ws/game/${lobbyToken}/.`
+                `Tournament Lobby WebSocket connection established on wss://${window.location.host}/ws/game/${lobbyToken}/.`
             );
             this.lobbySocket.send(JSON.stringify({ auth_header: "Bearer " + localStorage.getItem("access") }));
         };

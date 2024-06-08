@@ -1,6 +1,7 @@
 FROM python:3.10.10
 
 RUN apt-get update && apt-get install -y postgresql-client
+RUN apt-get install -y openssl
 
 ENV PYTHONUNBUFFERED 1
 

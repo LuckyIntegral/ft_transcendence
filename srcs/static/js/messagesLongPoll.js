@@ -15,7 +15,7 @@ document.addEventListener("DOMContentLoaded", function () {
         return;
     }
     var socket = new WebSocket(
-        `ws://${window.location.host}/messages/long-poll/`
+        `wss://${window.location.host}/messages/long-poll/`
     );
     function sleep(ms) {
         return new Promise((resolve) => setTimeout(resolve, ms));
@@ -81,7 +81,7 @@ document.addEventListener("DOMContentLoaded", function () {
         }
         if (!socket.readyState) {
             socket = new WebSocket(
-                `ws://${window.location.host}/messages/long-poll/`
+                `wss://${window.location.host}/messages/long-poll/`
             );
         }
         socket.onopen = function (e) {

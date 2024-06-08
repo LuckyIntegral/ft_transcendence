@@ -216,7 +216,7 @@ function createChatHeader(data) {
     }
     var inviteButton = `<button class="invite-button btn btn-success" id="inviteButton">Invite to Pong</button>`;
     var inviteButton3d = `<button class="invite3d-button btn btn-success" id="inviteButton">Invite to Pong3D</button>`;
-    div.setAttribute("class", "col-lg-6");
+    div.setAttribute("class", "col-lg-8");
     div.innerHTML = `<img src="${localStorage.getItem("companionPicture")}" alt="avatar">
                     <div class="chat-about">
                         <h6 class="m-b-0">${data["username"]}</h6>
@@ -318,7 +318,7 @@ function getChatMessages() {
 }
 
 function connectToSocket() {
-    chatSocket = new WebSocket(`ws://${window.location.host}/ws/chat/${chatToken}/`);
+    chatSocket = new WebSocket(`wss://${window.location.host}/ws/chat/${chatToken}/`);
     chatSocket.onopen = function (event) {
         chatSocket.send(
             JSON.stringify({

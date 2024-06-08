@@ -17,7 +17,7 @@ def sendVerificationEmail(email, token):
     try:
         send_mail(
             "Email Verification",
-            "Verify your email address by clicking the link below: http://localhost:8080/verify-email?token=" + token,
+            "Verify your email address by clicking the link below: https://localhost:8080/verify-email?token=" + token,
             "admin@localhost",
             [email],
             fail_silently=False,
@@ -43,7 +43,7 @@ def sendPasswordResetEmail(email, token):
     try:
         send_mail(
             "Password Reset",
-            "Reset your password by clicking the link below: http://localhost:8080/reset-password/?token=" + token,
+            "Reset your password by clicking the link below: https://localhost:8080/reset-password/?token=" + token,
             "admin@localhost",
             [email],
             fail_silently=False,

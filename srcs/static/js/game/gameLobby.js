@@ -9,12 +9,12 @@ class GameLobby {
     }
 
     join(gameToken, game) {
-        this.gameSocket = new WebSocket(`ws://${window.location.host}/ws/game/${gameToken}/`);
+        this.gameSocket = new WebSocket(`wss://${window.location.host}/ws/game/${gameToken}/`);
         g_GameSocket = this.gameSocket;
         this.game = game;
 
         this.gameSocket.onopen = () => {
-            console.log(`Game WebSocket connection established on ws://${window.location.host}/ws/game/${gameToken}/.`);
+            console.log(`Game WebSocket connection established on wss://${window.location.host}/ws/game/${gameToken}/.`);
             this.gameSocket.send(JSON.stringify({ auth_header: "Bearer " + localStorage.getItem("access") }));
         };
 
