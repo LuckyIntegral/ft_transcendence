@@ -106,7 +106,7 @@ function loadLeaderboardTable(page = 0) {
                 var row = document.createElement("tr");
                 var winRate = 0;
                 if (user.games != 0) {
-                    winRate = (user.wins / user.games) * 100;
+                    winRate = ((user.wins / user.games) * 100).toFixed(2) + "%";
                 }
                 row.innerHTML = `
                 <th scope="row">${i + 1 + page * LEADERBOARD_PAGE_SIZE}</th>

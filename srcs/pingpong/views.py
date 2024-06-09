@@ -1068,6 +1068,20 @@ class LeaderboardView(APIView):
     """
 
     throttle_scope = "two_hundred_per_minute"
+    
+    def get_games_stats(self, user):
+        games = PongLobby.objects.filter((Q(host=user) | Q(guest=user)) & Q(isFinished=True))
+        if not games:
+            return {"won": 0, "lost": 0}
+        won = 0
+        lost = 0
+        for game in games:
+            print(game.winner)
+            if game.winner == user:
+                won += 1
+            else:
+                lost += 1
+        return {"won": won, "lost": lost}
 
     def get(self, request, format=None):
         """This method is used to get the leaderboard."""
@@ -1105,12 +1119,14 @@ class LeaderboardView(APIView):
         ]
 
         for player in player_list:
+            game_stats = self.get_games_stats(player.user)
+            gamesWon, gamesPlayed = game_stats["won"], game_stats["won"] + game_stats["lost"]
             response["data"].append(
                 {
                     "photo": player.pictureSmall.url,
                     "username": player.user.username,
-                    "wins": player.gamesWon,
-                    "games": player.gamesPlayed,
+                    "wins": gamesWon,
+                    "games": gamesPlayed,
                 }
             )
 
