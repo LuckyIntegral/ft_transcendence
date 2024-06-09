@@ -217,7 +217,8 @@ function createChatHeader(data) {
     var inviteButton = `<button class="invite-button btn btn-success" id="inviteButton">Invite to Pong</button>`;
     var inviteButton3d = `<button class="invite3d-button btn btn-success" id="inviteButton">Invite to Pong3D</button>`;
     div.setAttribute("class", "col-lg-8");
-    div.innerHTML = `<img src="${localStorage.getItem("companionPicture")}" alt="avatar">
+    if (data["username"] === "Notifications") {
+        div.innerHTML = `<img src="${localStorage.getItem("companionPicture")}" alt="avatar">
                     <div class="chat-about">
                         <h6 class="m-b-0">${data["username"]}</h6>
                     </div>
@@ -225,6 +226,17 @@ function createChatHeader(data) {
                     ${inviteButton}
                     ${inviteButton3d}
                     `;
+    } else {
+        div.innerHTML = `<img src="${localStorage.getItem("companionPicture")}" alt="avatar" style="cursor: pointer; transitions: box-shadow 0.3s ease; box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.1);">
+                        <div class="chat-about">
+                            <h6 class="m-b-0">${data["username"]}</h6>
+                        </div>
+                        ${blockButton}
+                        ${inviteButton}
+                        ${inviteButton3d}
+                        `;
+        div.querySelector("img").addEventListener("click", showInfoCompanion.bind(null, data["username"]));
+    }
     blockButton = div.querySelector(".block-button");
     blockButton.addEventListener("click", function () {
         fetchWithToken("/api/users/block/", {
@@ -464,5 +476,30 @@ function getUserListChats() {
         })
         .catch((error) => {
             console.error(error);
+        });
+}
+
+function showInfoCompanion(username) {
+    var url = new URL(`https://${window.location.host}/api/user-details/`);
+    url.searchParams.append("username", username);
+    fetchWithToken(url, {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+            Authorization: "Bearer " + localStorage.getItem("access"),
+        },
+    })
+        .then((response) => response.json())
+        .then((data) => {
+            var user = data;
+            var profilePopup = createUserDetailPopup(user);
+            document.body.appendChild(profilePopup);
+            var closeButton = profilePopup.querySelector("#close-button");
+            closeButton.addEventListener("click", function () {
+                document.body.removeChild(profilePopup);
+            });
+        })
+        .catch((error) => {
+            alertError(error);
         });
 }

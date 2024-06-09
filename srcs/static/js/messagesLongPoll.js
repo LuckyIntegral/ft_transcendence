@@ -30,6 +30,9 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     function updateLastOnline(chatsInfo) {
+        if (!chatsInfo || chatsInfo === undefined) {
+            return;
+        }
         for (var chat of chatsInfo) {
             var chatToken = chat["chatToken"];
             var lastOnline = new Date(chat["lastOnline"]);

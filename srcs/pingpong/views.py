@@ -1197,6 +1197,20 @@ class UserDetailsView(APIView):
     """
 
     throttle_scope = "two_hundred_per_minute"
+    
+    def get_games_stats(self, user):
+        games = PongLobby.objects.filter((Q(host=user) | Q(guest=user)) & Q(isFinished=True))
+        if not games:
+            return {"won": 0, "lost": 0}
+        won = 0
+        lost = 0
+        for game in games:
+            print(game.winner)
+            if game.winner == user:
+                won += 1
+            else:
+                lost += 1
+        return {"won": won, "lost": lost}
 
     def get(self, request, format=None):
         """This method is used to get the details of a user."""
@@ -1224,6 +1238,9 @@ class UserDetailsView(APIView):
                 {"error": "User does not have a profile"},
                 status=status.HTTP_404_NOT_FOUND,
             )
+            
+        games_stats = self.get_games_stats(user)
+        gamesWon, gamesPlayed = games_stats["won"], games_stats["won"] + games_stats["lost"]
         data = {
             "username": user.username,
             "email": user.email,
@@ -1231,8 +1248,8 @@ class UserDetailsView(APIView):
                 userProfile.displayName if userProfile.displayName else "no info"
             ),
             "picture": userProfile.picture.url,
-            "wins": userProfile.gamesWon,
-            "games": userProfile.gamesPlayed,
+            "wins": gamesWon,
+            "games": gamesPlayed,
         }
         return Response(data, status=status.HTTP_200_OK)
 
