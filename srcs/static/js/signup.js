@@ -33,7 +33,6 @@ document.addEventListener("DOMContentLoaded", function () {
                             <label for="id_password_confirm" class="form-label">Confirm Password</label>
                             <input type="password" id="id_password_confirm" name="password_confirm" class="form-control" autocomplete="new-password" required>
                         </div>
-                        <p class="fw-lighter" style="font-size:12px;" >TODO: Password policy will be implemented later</p>
                         <button type="submit" class="btn btn-dark">Sign Up</button>
                     </form>
                     <div id="popupContent"></div>

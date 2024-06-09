@@ -234,8 +234,6 @@ function changePassword() {
                         <label for="id_new_password_confirm" class="form-label">Confirm New Password</label>
                         <input type="password" id="id_new_password_confirm" name="new_password_confirm" class="form-control" autocomplete="new-password" required>
                     </div>
-                    <p class="fw-lighter
-                    " style="font-size:12px;" >TODO: Password policy will be implemented later</p>
                     <button type="submit" class="btn btn-dark">Change Password</button>
                 </form>
                 <div id="popupContent"></div>
@@ -401,7 +399,6 @@ function editTwoStepVerification() {
                                 ">Verification Code</label>
                                 <input type="text" id="id_verification_code" name="verification_code" class="form-control" required>
                             </div>
-                            <p class="fw-lighter" style="font-size:12px;" >TODO: add explanation</p>
                             <button type="submit" class="btn btn-primary">Verify</button>
                         </form>
                     <div id="popupContent"></div>
@@ -423,7 +420,6 @@ function editTwoStepVerification() {
                                 ">Verification Code</label>
                                 <input type="text" id="id_verification_code" name="verification_code" class="form-control" required>
                             </div>
-                            <p class="fw-lighter" style="font-size:12px;" >TODO: add explanation</p>
                             <button type="submit" class="btn btn-primary">Verify</button>
                         </form>
                     </div>
