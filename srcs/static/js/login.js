@@ -140,6 +140,8 @@ document.addEventListener("DOMContentLoaded", function () {
                         } else {
                             popupAlertError("Incorrect username or password");
                         }
+                    }).catch(function (error) {
+                        console.log("Error:", error);
                     })
                     .finally(function () {
                         if (localStorage.getItem("access") != null) {

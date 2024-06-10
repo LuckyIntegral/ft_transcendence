@@ -26,7 +26,7 @@ clean:
 restart: stop rmsocket debug
 
 rmsocket:
-	@docker volume rm trancedence_socket_volume
+	@docker volume rm trans_socket_volume
 cleandb:
 	@docker volume rm $(shell docker volume ls -q)
 

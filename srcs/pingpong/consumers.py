@@ -483,7 +483,7 @@ class GameConsumer(AsyncWebsocketConsumer):
 
         if event == "game_over":
             await self.setGameFinished(self.token, data)
-    
+
     @database_sync_to_async
     def get_opponent_username(self, user, token):
         try:
@@ -805,22 +805,22 @@ class TournamentConsumer(AsyncWebsocketConsumer):
         return [
             {
                 "username": first_place_user.username,
-                "diplayName": first_place_user.userprofile.displayName,
+                "displayName": first_place_user.userprofile.displayName,
                 "place": "1st",
             },
             {
                 "username": second_place_user.username,
-                "diplayName": second_place_user.userprofile.displayName,
+                "displayName": second_place_user.userprofile.displayName,
                 "place": "2nd",
             },
             {
                 "username": third_place_user.username,
-                "diplayName": third_place_user.userprofile.displayName,
+                "displayName": third_place_user.userprofile.displayName,
                 "place": "3/4th",
             },
             {
                 "username": fourth_place_user.username,
-                "diplayName": fourth_place_user.userprofile.displayName,
+                "displayName": fourth_place_user.userprofile.displayName,
                 "place": "3/4th",
             },
         ]

@@ -293,7 +293,7 @@ class ProfileView(APIView):
     """
 
     throttle_scope = "two_hundred_per_minute"
-    
+
     def get_games_stats(self, user):
         games = PongLobby.objects.filter((Q(host=user) | Q(guest=user)) & Q(isFinished=True))
         if not games:
@@ -319,7 +319,7 @@ class ProfileView(APIView):
             user = getUserFromToken(token)
         except ValidationError as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-        
+
         game_stats = self.get_games_stats(user)
         won, lost = game_stats["won"], game_stats["lost"]
 
@@ -1068,7 +1068,7 @@ class LeaderboardView(APIView):
     """
 
     throttle_scope = "two_hundred_per_minute"
-    
+
     def get_games_stats(self, user):
         games = PongLobby.objects.filter((Q(host=user) | Q(guest=user)) & Q(isFinished=True))
         if not games:
@@ -1187,6 +1187,7 @@ class UserSearchView(APIView):
                 user_list = UserProfile.objects.filter(
                     user__username__icontains=search_query
                 ).order_by("user__username")
+            user_list = user_list.exclude(user__username="Notifications")
             lower_bound = page_size * page_index
             upper_bound = min(page_size * (page_index + 1), user_list.count())
             if lower_bound >= user_list.count() or lower_bound < 0 or page_size < 1:
@@ -1213,7 +1214,7 @@ class UserDetailsView(APIView):
     """
 
     throttle_scope = "two_hundred_per_minute"
-    
+
     def get_games_stats(self, user):
         games = PongLobby.objects.filter((Q(host=user) | Q(guest=user)) & Q(isFinished=True))
         if not games:
@@ -1254,7 +1255,7 @@ class UserDetailsView(APIView):
                 {"error": "User does not have a profile"},
                 status=status.HTTP_404_NOT_FOUND,
             )
-            
+
         games_stats = self.get_games_stats(user)
         gamesWon, gamesPlayed = games_stats["won"], games_stats["won"] + games_stats["lost"]
         data = {

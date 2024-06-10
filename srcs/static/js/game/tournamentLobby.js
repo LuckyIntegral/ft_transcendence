@@ -202,6 +202,7 @@ class TournamentLobby {
             return;
         }
         for (let i = 0; i < results.length; i++) {
+            console.log(results[i]);
             this.context.fillText(
                 `${results[i].username}, aka ${results[i].displayName}: ${results[i].place}`,
                 GameConstants.GAME_WIDTH / 2,
