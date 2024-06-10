@@ -242,7 +242,7 @@ class Game {
 			this.context.fillText(
 				(this.opponentName? this.opponentName+": " : "AI: ") + ((this.playerId == 'player1') ? this.player2.score : this.player1.score),
 				GameConstants.GAME_WIDTH - GameConstants.GAME_WIDTH / 6,
-				
+				35
 			);
 
 		}
@@ -255,7 +255,7 @@ class Game {
 			this.context.fillText(
 				(this.userName ? this.userName + ": " : "AI: ") + ((this.playerId == 'player1') ? this.player1.score : this.player2.score),
 				GameConstants.GAME_WIDTH - GameConstants.GAME_WIDTH / 6,
-				
+                35
 			);
 		}
     }
