@@ -925,16 +925,15 @@ class Game3D {
 	}
 
     blurHandler3d() {
-		if (!this.isGameStarted || this.gameMode === GameModes.PLAYER_VS_PLAYER)
-		{
-			this.reset_key_state();		
-			return;
-		}
-		else {
-			this.stopGame();
-			// this.deallocate();
-			// window.location.hash = 'pong3d';
-		}
+		this.reset_key_state();		
+		// if (!this.isGameStarted || this.gameMode === GameModes.PLAYER_VS_PLAYER)
+		// {
+		// 	this.reset_key_state();		
+		// 	return;
+		// }
+		// else {
+		// 	this.stopGame();
+		// }
 	}
 
 	deallocate() {
