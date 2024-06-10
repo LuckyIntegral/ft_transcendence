@@ -232,16 +232,32 @@ class Game {
         this.context.font = "35px Arial";
         // this.context.fillText(this.player1.score, GameConstants.GAME_WIDTH / 4, GameConstants.GAME_HEIGHT / 5);
         // this.context.fillText(this.player2.score, (3 * GameConstants.GAME_WIDTH) / 4, GameConstants.GAME_HEIGHT / 5);
-		this.context.fillText(
-            (this.userName? this.userName+': ' : "Player: ") + ((this.playerId == 'player1') ? this.player1.score : this.player2.score),
-            GameConstants.GAME_WIDTH / 6,
-			35
-        );
-        this.context.fillText(
-            (this.opponentName? this.opponentName+": " : "AI: ") + ((this.playerId == 'player1') ? this.player2.score : this.player1.score),
-            GameConstants.GAME_WIDTH - GameConstants.GAME_WIDTH / 6,
-			35
-        );
+		if (this.playerId === 'player1')
+		{
+			this.context.fillText(
+				(this.userName? this.userName+': ' : "Player: ") + ((this.playerId == 'player1') ? this.player1.score : this.player2.score),
+				GameConstants.GAME_WIDTH / 6,
+				35
+			);
+			this.context.fillText(
+				(this.opponentName? this.opponentName+": " : "AI: ") + ((this.playerId == 'player1') ? this.player2.score : this.player1.score),
+				GameConstants.GAME_WIDTH - GameConstants.GAME_WIDTH / 6,
+				
+			);
+
+		}
+		else {
+			this.context.fillText(
+				(this.opponentName ? this.opponentName +': ' : "Player: ") + ((this.playerId == 'player1') ? this.player2.score : this.player1.score),
+				GameConstants.GAME_WIDTH / 6,
+				35
+			);
+			this.context.fillText(
+				(this.userName ? this.userName + ": " : "AI: ") + ((this.playerId == 'player1') ? this.player1.score : this.player2.score),
+				GameConstants.GAME_WIDTH - GameConstants.GAME_WIDTH / 6,
+				
+			);
+		}
     }
 
     drawPlayer() {
