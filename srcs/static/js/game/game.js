@@ -351,8 +351,10 @@ class Game {
     }
 
     blurHandler() {
-        this.player1.moveUp = false;
-        this.player1.moveDown = false;
+        if (this.player1) {
+            this.player1.moveUp = false;
+            this.player1.moveDown = false;
+        }
     }
 
     resetHandler() {
