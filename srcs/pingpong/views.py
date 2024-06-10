@@ -1615,3 +1615,68 @@ class TournamentLobbyView(APIView):
             final=final
         )
         return Response({"token": tournament_id}, status=status.HTTP_201_CREATED)
+
+class GameStatsView(APIView):
+
+    throttle_scope = "two_hundred_per_minute"
+
+    def get(self, request, format=None):
+        '''
+        This method is used to get the game stats of a user.
+        The request should contain the following query parameters:
+            page
+            pageSize
+        '''
+        auth_header = request.headers.get("Authorization")
+        try:
+            token = JWTTokenValidator().validate(auth_header)
+        except ValidationError:
+            return Response({"error": "User not found"}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            user = getUserFromToken(token)
+        except ValidationError:
+            return Response({"error": "User not found"}, status=status.HTTP_400_BAD_REQUEST)
+
+        page = request.query_params.get("page")
+        if page and not page.isdigit():
+            return Response({"error": "Invalid page"}, status=status.HTTP_400_BAD_REQUEST)
+        page = 0 if not page else int(page)
+
+        page_size = request.query_params.get("pageSize")
+        if page_size and not page_size.isdigit():
+            return Response({"error": "Invalid page_size"}, status=status.HTTP_400_BAD_REQUEST)
+        page_size = 10 if not page_size else int(page_size)
+
+        response = {
+            "data": [],
+            "page": 0,
+            "totalPages": 0,
+        }
+
+        games = PongLobby.objects.filter((Q(host=user) | Q(guest=user)) & Q(isFinished=True))
+
+        for game in games:
+            response["data"].append(
+                {
+                    'opponent': game.guest.username if game.host == user else game.host.username,
+                    'result': 'win' if game.winner == user else 'loss',
+                    'score': f"{game.hostScore} - {game.guestScore}",
+                    'date': game.created,
+                }
+            )
+
+
+        if not response["data"]:
+            return Response(response, status=status.HTTP_200_OK)
+
+        if page_size * page >= len(response["data"]) or page < 0 or page_size < 1:
+            return Response(response, status=status.HTTP_400_BAD_REQUEST)
+
+        response["page"] = page
+        response["totalPages"] = math.ceil(len(response["data"]) / page_size)
+
+        response["data"] = response["data"][
+            page_size * page : min(page_size * (page + 1), len(response["data"]))
+        ]
+
+        return Response(response, status=status.HTTP_200_OK)

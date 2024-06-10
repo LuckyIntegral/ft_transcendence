@@ -1,3 +1,5 @@
+DEFAULT_PAGE_SIZE_GAMES_ARCHIVE = 2;
+
 function editProfile() {
     var displayName = document.getElementById("displayName");
     var email = document.getElementById("email");
@@ -85,43 +87,43 @@ function saveProfile() {
             displayName: newDisplayName.value,
             email: newEmail.value,
         }),
-    })
-        .then(function (response) {
-            if (response.ok) {
-                if (localStorage.getItem("email") !== newEmail.value) {
-                    var emailVerificationP = document.getElementById("emailVerified");
-                    var emailVerificationSpan = createVerificationSpan(false);
-                    emailVerificationP.innerHTML = "";
-                    emailVerificationP.appendChild(emailVerificationSpan);
-                }
-                email.setAttribute("id", "email");
-                displayName.setAttribute("id", "displayName");
-                email.setAttribute("class", "text-muted mb-0");
-                displayName.setAttribute("class", "text-muted mb-0");
-
-                email.textContent = newEmail.value;
-                displayName.textContent = newDisplayName.value;
-
-                newEmail.parentNode.replaceChild(email, newEmail);
-                newDisplayName.parentNode.replaceChild(displayName, newDisplayName);
-
-                editProfileButton.textContent = "Edit Profile";
-                editProfileButton.removeEventListener("click", saveProfile);
-                editProfileButton.addEventListener("click", editProfile);
-
-                undoButton.textContent = "Change Password";
-                undoButton.removeEventListener("click", undoChanges);
-                undoButton.addEventListener("click", changePassword);
-                location.reload();
-                return response.json();
-            } else if (response.status === 400) {
-                alertError("Invalid email address");
-            } else if (response.status === 401) {
-                alertError("Email is already taken");
-            } else if (response.status === 405) {
-                alertError('Display name is too long or empty');
+    }).then(function (response) {
+        if (response.ok) {
+            if (localStorage.getItem("email") !== newEmail.value) {
+                var emailVerificationP =
+                    document.getElementById("emailVerified");
+                var emailVerificationSpan = createVerificationSpan(false);
+                emailVerificationP.innerHTML = "";
+                emailVerificationP.appendChild(emailVerificationSpan);
             }
-        })
+            email.setAttribute("id", "email");
+            displayName.setAttribute("id", "displayName");
+            email.setAttribute("class", "text-muted mb-0");
+            displayName.setAttribute("class", "text-muted mb-0");
+
+            email.textContent = newEmail.value;
+            displayName.textContent = newDisplayName.value;
+
+            newEmail.parentNode.replaceChild(email, newEmail);
+            newDisplayName.parentNode.replaceChild(displayName, newDisplayName);
+
+            editProfileButton.textContent = "Edit Profile";
+            editProfileButton.removeEventListener("click", saveProfile);
+            editProfileButton.addEventListener("click", editProfile);
+
+            undoButton.textContent = "Change Password";
+            undoButton.removeEventListener("click", undoChanges);
+            undoButton.addEventListener("click", changePassword);
+            location.reload();
+            return response.json();
+        } else if (response.status === 400) {
+            alertError("Invalid email address");
+        } else if (response.status === 401) {
+            alertError("Email is already taken");
+        } else if (response.status === 405) {
+            alertError("Display name is too long or empty");
+        }
+    });
 }
 
 function loadProfilePage() {
@@ -143,14 +145,23 @@ function loadProfilePage() {
             profileDiv.innerHTML = "";
 
             profileDiv.appendChild(profilePage);
-            var editProfileButton = document.getElementById("buttonEditProfile");
+            var editProfileButton =
+                document.getElementById("buttonEditProfile");
             editProfileButton.addEventListener("click", editProfile);
 
-            var changePasswordButton = document.getElementById("buttonChangePassword");
+            var changePasswordButton = document.getElementById(
+                "buttonChangePassword"
+            );
             changePasswordButton.addEventListener("click", changePassword);
 
-            var twoStepVerificationButton = document.getElementById("buttonTwoStepVerification");
-            twoStepVerificationButton.addEventListener("click", editTwoStepVerification);
+            var twoStepVerificationButton = document.getElementById(
+                "buttonTwoStepVerification"
+            );
+            twoStepVerificationButton.addEventListener(
+                "click",
+                editTwoStepVerification
+            );
+            loadGamesArchive();
         });
 }
 
@@ -186,7 +197,9 @@ function getAndSetProfileData() {
             var winRate = document.getElementById("winRate");
 
             var emailVerificationP = document.getElementById("emailVerified");
-            var emailVerificationSpan = createVerificationSpan(data.emailVerified);
+            var emailVerificationSpan = createVerificationSpan(
+                data.emailVerified
+            );
 
             displayName.textContent = data.displayName;
             email.textContent = data.email;
@@ -282,7 +295,7 @@ function changePassword() {
                         "Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number and one special character"
                     );
                 } else if (response.status === 405) {
-                    popupAlertError('Password is too long');
+                    popupAlertError("Password is too long");
                 }
             });
         });
@@ -336,7 +349,9 @@ function enableTwoStepVerification(popup) {
             popup.parentNode.removeChild(popup);
             location.reload();
         } else if (response.status === 429) {
-            alertError("Too many verification attempts. Please try again later.");
+            alertError(
+                "Too many verification attempts. Please try again later."
+            );
         } else {
             alertError("Email is not verified");
         }
@@ -369,7 +384,9 @@ function disableTwoStepVerification(popup) {
                 popup.parentNode.removeChild(popup);
                 location.reload();
             } else if (response.status == 429) {
-                alertError("Too many verification attempts. Please try again later.");
+                alertError(
+                    "Too many verification attempts. Please try again later."
+                );
             } else {
                 alertError(response.statusText);
             }
@@ -436,7 +453,9 @@ function editTwoStepVerification() {
             document.body.removeChild(popup);
         });
 
-        var twoStepVerificationForm = document.getElementById("two-step-verification-form");
+        var twoStepVerificationForm = document.getElementById(
+            "two-step-verification-form"
+        );
         if (twoStepVerificationForm) {
             twoStepVerificationForm.addEventListener("submit", function (e) {
                 e.preventDefault();
@@ -451,12 +470,131 @@ function editTwoStepVerification() {
 }
 
 function setTwoStepVerificationButton(isEnabled) {
-    var twoStepVerifictionButton = document.getElementById("buttonTwoStepVerification");
+    var twoStepVerifictionButton = document.getElementById(
+        "buttonTwoStepVerification"
+    );
     if (isEnabled) {
         twoStepVerifictionButton.textContent = "Disable Two Step Verification";
         twoStepVerifictionButton.class = "btn btn-outline-danger ms-1";
     } else {
         twoStepVerifictionButton.textContent = "Enable Two Step Verification";
         twoStepVerifictionButton.class = "btn btn-outline-primary ms-1";
+    }
+}
+
+function loadGamesArchive(page = 0) {
+    console.log(page);
+
+    var tableBody = document.getElementById("gamesArchive");
+    tableBody.innerHTML = "";
+
+    var url = new URL("/api/games/", window.location.origin);
+    url.searchParams.append("page", page);
+    url.searchParams.append("pageSize", DEFAULT_PAGE_SIZE_GAMES_ARCHIVE);
+
+    fetchWithToken(url, {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+            Authorization: "Bearer " + localStorage.getItem("access"),
+        },
+    })
+        .then(function (response) {
+            if (response.ok) {
+                return response.json();
+            } else {
+                throw new Error("Error: " + response.error);
+            }
+        })
+        .then(function (data) {
+            if (!data.data || data.data.length == 0) {
+                var noGames = document.createElement("tr");
+                var noGamesData = document.createElement("td");
+
+                noGamesData.setAttribute("colspan", "5");
+                noGamesData.textContent = "No games played yet";
+                noGames.appendChild(noGamesData);
+                tableBody.appendChild(noGames);
+                loadGameArchivePagination(false);
+            } else {
+                data.data.forEach(function (game) {
+                    var row = document.createElement("tr");
+                    var date = document.createElement("td");
+                    var opponent = document.createElement("td");
+                    var result = document.createElement("td");
+
+                    // pretty date
+                    var resDate = new Date(game.date);
+                    date.textContent = resDate.toLocaleString();
+
+                    opponent.textContent = game.opponent;
+                    result.textContent = game.score;
+                    if (game.result == "win") {
+                        result.style.color = "green";
+                    } else {
+                        result.style.color = "red";
+                    }
+
+                    row.appendChild(date);
+                    row.appendChild(opponent);
+                    row.appendChild(result);
+
+                    tableBody.appendChild(row);
+                });
+                loadGameArchivePagination(true, data.page, data.totalPages);
+            }
+        })
+        .catch(function () {});
+}
+
+function loadGameArchivePagination(visible, page = 0, totalPages = 0) {
+    if (visible) {
+        var pagination = document.getElementById("gameArchivePagination");
+        pagination.innerHTML = "";
+        pagination.innerHTML = `
+        <ul class="pagination justify-content-center" id="games-pagination">
+            <li class="page-item">
+                <button
+                    class="page-link"
+                    id="left-btn-games-pagination"
+                    aria-label="Previous"
+                >
+                    <span aria-hidden="true">&laquo;</span>
+                </button>
+            </li>
+            <li class="page-item">
+                <a class="page-link" id="current-page"></a>
+            </li>
+            <li class="page-item">
+                <button
+                    class="page-link"
+                    id="right-btn-games-pagination"
+                    aria-label="Next"
+                >
+                    <span aria-hidden="true">&raquo;</span>
+                </button>
+            </li>
+        </ul>
+        `;
+
+        var currentPage = document.getElementById("current-page");
+        currentPage.textContent = page + 1;
+
+        var leftButton = document.getElementById("left-btn-games-pagination");
+        var rightButton = document.getElementById("right-btn-games-pagination");
+
+        leftButton.addEventListener("click", function () {
+            loadGamesArchive(page - 1);
+        });
+
+        rightButton.addEventListener("click", function () {
+            loadGamesArchive(page + 1);
+        });
+
+        leftButton.disabled = page == 0;
+        rightButton.disabled = page == totalPages - 1;
+    } else {
+        var pagination = document.getElementById("gameArchivePagination");
+        pagination.innerHTML = "";
     }
 }
