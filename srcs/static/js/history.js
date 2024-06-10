@@ -17,6 +17,10 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
 
+    function cleanUpContentStyles() {
+        document.getElementById("content").style = "";
+    }
+
     function removePopups() {
         var profilePopup = document.getElementById("profile-popup");
         if (profilePopup !== null) {
@@ -32,10 +36,12 @@ document.addEventListener("DOMContentLoaded", function () {
         profile: function () {
             removePopups();
             closeSockets();
+            cleanUpContentStyles();
             loadProfilePage();
         },
         pong: function () {
             removePopups();
+            cleanUpContentStyles();
             closeSockets();
             if (query_params === null || query_params === undefined) {
                 let menu = new Menu();
@@ -49,6 +55,7 @@ document.addEventListener("DOMContentLoaded", function () {
         },
         pong3d: function() {
             removePopups();
+            cleanUpContentStyles();
             closeSockets();
             if (query_params === null || query_params === undefined) {
                 let menu = new Menu3D();
@@ -63,25 +70,29 @@ document.addEventListener("DOMContentLoaded", function () {
                   query_params = null;
                 }
                 img.src = "static/images/tabletenis.jpg"
-            } 
+            }
         },
         friends: function () {
             removePopups();
+            cleanUpContentStyles();
             closeSockets();
             loadFriendsPage();
         },
         leadrboard: function () {
             removePopups();
+            cleanUpContentStyles();
             closeSockets();
             loadLeaderboardPage();
         },
         messages: function () {
             removePopups();
+            cleanUpContentStyles();
             closeSockets();
             loadMessagesPage();
         },
         tournamentslobby: function () {
             removePopups();
+            cleanUpContentStyles();
             closeSockets();
             if (query_params === null || query_params === undefined) {
                 let menu = new Menu();
@@ -94,11 +105,14 @@ document.addEventListener("DOMContentLoaded", function () {
         },
         tournamentmenu: function () {
             closeSockets();
+            removePopups();
+            cleanUpContentStyles();
             let tournamentMenu = new TournamentMenu();
             tournamentMenu.start();
         },
         default: function () {
             removePopups();
+            cleanUpContentStyles();
             closeSockets();
             document.getElementById("content").textContent = "Default page";
         },
