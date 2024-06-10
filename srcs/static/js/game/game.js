@@ -214,7 +214,7 @@ class Game {
         if (this.lobbyId !== undefined) {
             this.context.fillStyle = "WHITE";
             this.context.font = "20px Arial";
-            this.context.fillText(`Lobby ID: ${this.lobbyId}`, 10, 20);
+            // this.context.fillText(`Lobby ID: ${this.lobbyId}`, 10, 20);
         }
         this.drawScores();
         this.drawPlayer();
@@ -229,9 +229,19 @@ class Game {
 
     drawScores() {
         this.context.fillStyle = "WHITE";
-        this.context.font = "75px Arial";
-        this.context.fillText(this.player1.score, GameConstants.GAME_WIDTH / 4, GameConstants.GAME_HEIGHT / 5);
-        this.context.fillText(this.player2.score, (3 * GameConstants.GAME_WIDTH) / 4, GameConstants.GAME_HEIGHT / 5);
+        this.context.font = "35px Arial";
+        // this.context.fillText(this.player1.score, GameConstants.GAME_WIDTH / 4, GameConstants.GAME_HEIGHT / 5);
+        // this.context.fillText(this.player2.score, (3 * GameConstants.GAME_WIDTH) / 4, GameConstants.GAME_HEIGHT / 5);
+		this.context.fillText(
+            (this.userName? this.userName+': ' : "Player: ") + ((this.playerId == 'player1') ? this.player1.score : this.player2.score),
+            GameConstants.GAME_WIDTH / 6,
+			35
+        );
+        this.context.fillText(
+            (this.opponentName? this.opponentName+": " : "AI: ") + ((this.playerId == 'player1') ? this.player2.score : this.player1.score),
+            GameConstants.GAME_WIDTH - GameConstants.GAME_WIDTH / 6,
+			35
+        );
     }
 
     drawPlayer() {
@@ -351,10 +361,11 @@ class Game {
     }
 
     blurHandler() {
-        if (this.player1) {
-            this.player1.moveUp = false;
-            this.player1.moveDown = false;
-        }
+		if(this.player1)
+		{
+			this.player1.moveUp = false;
+			this.player1.moveDown = false;
+		}
     }
 
     resetHandler() {

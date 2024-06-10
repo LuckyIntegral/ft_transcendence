@@ -28,7 +28,10 @@ class GameLobby {
 					this.game.opponentName = data.opponent;
 					console.log('Opponent name: ' + data.opponent);
                     game.adjustToPlayerRole(data.role);
-                }
+                } else {
+					this.game.userName = data.username;
+					this.game.opponentName = data.opponent;
+				}
                 console.log(`Assigned role: ${this.playerId}`);
             }
 
