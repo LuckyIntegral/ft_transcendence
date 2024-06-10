@@ -149,6 +149,16 @@ class TournamentLobby {
             GameConstants.GAME_WIDTH / 2,
             GameConstants.GAME_HEIGHT / 2
         );
+        this.context.fillText(
+            "The game will be opened in the new tab.",
+            GameConstants.GAME_WIDTH / 2,
+            GameConstants.GAME_HEIGHT / 2 + 30
+        );
+        this.context.fillText(
+            "Don't forget to close it when game is finished.",
+            GameConstants.GAME_WIDTH / 2,
+            GameConstants.GAME_HEIGHT / 2 + 60
+        );
         this.canvas.removeEventListener("click", this.clickHandler);
         this.canvas.addEventListener("click", this.clickHandler);
     }
@@ -162,6 +172,16 @@ class TournamentLobby {
             "Your final game is ready.\nClick to join the game",
             GameConstants.GAME_WIDTH / 2,
             GameConstants.GAME_HEIGHT / 2
+        );
+        this.context.fillText(
+            "The game will be opened in the new tab.",
+            GameConstants.GAME_WIDTH / 2,
+            GameConstants.GAME_HEIGHT / 2 + 30
+        );
+        this.context.fillText(
+            "Don't forget to close the tab when the game is finished.",
+            GameConstants.GAME_WIDTH / 2,
+            GameConstants.GAME_HEIGHT / 2 + 60
         );
         this.canvas.removeEventListener("click", this.clickHandler);
         this.canvas.addEventListener("click", this.clickHandler);
