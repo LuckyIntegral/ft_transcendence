@@ -14,7 +14,6 @@ class GameLobby {
         this.game = game;
 
         this.gameSocket.onopen = () => {
-            console.log(`Game WebSocket connection established on wss://${window.location.host}/ws/game/${gameToken}/.`);
             this.gameSocket.send(JSON.stringify({ auth_header: "Bearer " + localStorage.getItem("access") }));
         };
 
@@ -26,7 +25,6 @@ class GameLobby {
                 if (this.game instanceof Game3D) {
 					this.game.userName = data.username;
 					this.game.opponentName = data.opponent;
-					console.log('Opponent name: ' + data.opponent);
                     game.adjustToPlayerRole(data.role);
                 } else {
 					this.game.userName = data.username;
@@ -37,12 +35,10 @@ class GameLobby {
 
             if (data.event === "player_connected") {
                 this.playersConnected = data.players_connected;
-                console.log(data);
                 if (data.isFinished === true) {
                     this.gameOver = true;
-                    console.log("Game is finished. Displaying end game message.");
                     if (this.game instanceof Game3D) {
-                    	this.game.drawEndGameMessage(`${data.winner} WON!`, game.userName, game.opponentName, 
+                    	this.game.drawEndGameMessage(`${data.winner} WON!`, game.userName, game.opponentName,
 						 `${data.hostScore}`,`${data.guestScore}`);
 					}
 					else {
@@ -57,10 +53,8 @@ class GameLobby {
                     window.removeEventListener("keyup", this.boundKeyPress);
                     this.game.drawEndGameMessage("Invitation link expired.");
                 } else if (this.playersConnected === 2) {
-                    console.log("Both players connected. Starting game.");
                     this.game.startCountdown();
                 }
-                console.log(`Players connected: ${this.playersConnected}`);
             }
             if (data.event === "game_move" && this.gameOver === false) {
                 // console.log("Received game move data.");
@@ -69,11 +63,9 @@ class GameLobby {
         };
 
         this.gameSocket.onclose = () => {
-            console.log("Game WebSocket connection closed.");
         };
 
         this.gameSocket.onerror = (e) => {
-            console.error("Game WebSocket error:", e);
         };
     }
 

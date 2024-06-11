@@ -241,7 +241,6 @@ class LongPollConsumer(AsyncWebsocketConsumer):
     @database_sync_to_async
     def get_last_online_statuses(self, participants):
         onlineStatuses = []
-        print(participants)
         for participant in participants:
             try:
                 user = User.objects.get(username=participant)
@@ -704,7 +703,6 @@ class TournamentConsumer(AsyncWebsocketConsumer):
             await self.assign_final_game()
             finilists = await self.get_finilists_usernames()
             for username in finilists:
-                print(username)
                 if username not in TournamentConsumer.players_auth[self.token]:
                     await self.send_game_ready_notification(
                         username,
@@ -720,7 +718,6 @@ class TournamentConsumer(AsyncWebsocketConsumer):
             curStage = "eliminated"
         if (curStage == "semifinal_game_ready" and await self.is_user_won_semifinals(self.user)):
             curStage = "waiting_for_finals"
-        print(f"Stage: {curStage}")
         await self.send(
             text_data=json.dumps(
             {

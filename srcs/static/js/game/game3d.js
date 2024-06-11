@@ -21,7 +21,7 @@ class Game3D {
     updateCountdown(countdown) {
         if (this.gameOver) return;
         this.ctx.drawImage(intro3dImage, 0, 0, GameConstants.GAME_WIDTH, GameConstants.GAME_HEIGHT);
-        
+
         this.ctx.fillStyle = "WHITE";
         this.ctx.font = "40px theren-regular";
         this.ctx.textAlign = "center";
@@ -45,7 +45,7 @@ class Game3D {
             this.camera.position.y = 1.23;
             this.camera.position.z = -2.7;
             this.camera.lookAt(0, 0, 0);
-            this.bobo.setPosition(-2.1, -1.0, 0.0) 
+            this.bobo.setPosition(-2.1, -1.0, 0.0)
             this.bobo.setRotationY(-Math.PI / 2 + Math.PI);
         } else {
             this.initCamera();
@@ -170,7 +170,7 @@ class Game3D {
 	}
 
 	loadEffect (loader) {
-		// Load Effect 
+		// Load Effect
 		loader.load(
 			'static/assets3d/town/effect.glb',
 			function (gltf) {
@@ -199,7 +199,7 @@ class Game3D {
     }
 
 	loadEffect (loader) {
-		// Load Effect 
+		// Load Effect
 		loader.load(
 			'static/assets3d/town/effect.glb',
 			function (gltf) {
@@ -290,11 +290,11 @@ class Game3D {
 					animationsByName[clip.name] = clip;
 				}
                 this.bobo = new Bobo(object.scene, animationsByName);
-                this.bobo.setPosition(2.1, -1.0, 0.0) 
+                this.bobo.setPosition(2.1, -1.0, 0.0)
                 this.bobo.setRotationY(-Math.PI / 2);
 				this.bobo.headBone = this.headBone;
                 this.scene.add(this.bobo.mesh);
-            }.bind(this), 
+            }.bind(this),
             function (xhr) {
                 // console.log((xhr.loaded / xhr.total * 100) + '% Bobo loaded')
             },
@@ -325,42 +325,42 @@ class Game3D {
 				this.sounds['pong'] = this.pong;
             }.bind(this)
         );
-		audioLoader.load('static/assets3d/sounds/force.mp3', 
+		audioLoader.load('static/assets3d/sounds/force.mp3',
 		function(buffer){
 			this.force.setBuffer(buffer);
 			this.force.setLoop(false);
 			this.force.setVolume(0.22);
 			this.sounds['force'] = this.force;
 		}.bind(this));
-		audioLoader.load('static/assets3d/sounds/pointwin.mp3', 
+		audioLoader.load('static/assets3d/sounds/pointwin.mp3',
 		function(buffer){
 			this.pwin.setBuffer(buffer);
 			this.pwin.setLoop(false);
 			this.pwin.setVolume(0.3);
 			this.sounds['point_win'] = this.pwin;
 		}.bind(this));
-		audioLoader.load('static/assets3d/sounds/gamewin.mp3', 
+		audioLoader.load('static/assets3d/sounds/gamewin.mp3',
 		function(buffer){
 			this.gwin.setBuffer(buffer);
 			this.gwin.setLoop(false);
 			this.gwin.setVolume(0.6);
 			this.sounds['game_win'] = this.gwin;
 		}.bind(this));
-		audioLoader.load('static/assets3d/sounds/applause.mp3', 
+		audioLoader.load('static/assets3d/sounds/applause.mp3',
 		function(buffer){
 			this.applause.setBuffer(buffer);
 			this.applause.setLoop(false);
 			this.applause.setVolume(0.22);
 			this.sounds['applause'] = this.applause;
 		}.bind(this));
-		audioLoader.load('static/assets3d/sounds/pointlost.mp3', 
+		audioLoader.load('static/assets3d/sounds/pointlost.mp3',
 		function(buffer){
 			this.plost.setBuffer(buffer);
 			this.plost.setLoop(false);
 			this.plost.setVolume(0.22);
 			this.sounds['point_lost'] = this.plost;
 		}.bind(this));
-		audioLoader.load('static/assets3d/sounds/gamelose.mp3', 
+		audioLoader.load('static/assets3d/sounds/gamelose.mp3',
 		function(buffer){
 			this.glost.setBuffer(buffer);
 			this.glost.setLoop(false);
@@ -447,7 +447,7 @@ class Game3D {
         this.ctx.fillStyle = "WHITE";
         this.ctx.font = "40px theren-regular";
         this.ctx.textAlign = "center";
-        this.ctx.fillText("Waiting for opponent...", 
+        this.ctx.fillText("Waiting for opponent...",
                 GameConstants.GAME_WIDTH / 2, GameConstants.GAME_HEIGHT /4);
     }
 
@@ -488,14 +488,12 @@ class Game3D {
         this.canvas_ui.style.pointerEvents = "none";
         this.ctx = this.canvas_ui.getContext("2d");
         content.appendChild(this.canvas_ui);
-        console.log("UI Canvas created");
     }
 
     start() {
         if (!this.isGameStarted) {
             this.isGameStarted = true;
             this.gameOver = false;
-            console.log("Game started");
             // this.setUpCanvas()
             this.startNewGame();
         }
@@ -529,7 +527,7 @@ class Game3D {
 			this.effect_mesh.traverse((child) => {
 				if (child.isMesh) {
 					child.material.transparent = true;
-					child.material.opacity = GameConstants3D.EFFECT_OPACITY * 
+					child.material.opacity = GameConstants3D.EFFECT_OPACITY *
 							this.effect_mesh.timer / GameConstants3D.EFFECT_DURATION;
 				}
 			});
@@ -538,7 +536,7 @@ class Game3D {
 		}
 	}
 
-   
+
 
     loop() {
         if (this.gameOver)
@@ -556,13 +554,13 @@ class Game3D {
 				this.drawEndGameClientMessage("You WON");
 			} else {
 				this.drawEndGameClientMessage("You LOST");
-			}	
+			}
 			if (this.finishGame === true) {
 				return;
 			}
 			this.lastUpdateTime = now;
             window.requestAnimationFrame(this.loop.bind(this));
-		} 
+		}
 		else {
 			this.update();
 			this.draw();
@@ -586,17 +584,17 @@ class Game3D {
 			this.player1.update(dt, this.keystate, this.ball, this.playerId);
 			if (this.gameMode === GameModes.PLAYER_VS_AI) {
 				this.player2.update(this.ball, dt);
-			} 
+			}
 			else {
 				this.lobby.sendGameData({
 					event: "game_move",
-					player1_pos: { x: this.player1.paddle.position.x, 
-                                    y: this.player1.paddle.position.y, 
+					player1_pos: { x: this.player1.paddle.position.x,
+                                    y: this.player1.paddle.position.y,
                                     z: this.player1.paddle.position.z,
                                     rot: this.player1.paddle.paddlemesh.rotation.y},
-					ball_pos: { x: this.ball.position.x, 
-                                y: this.ball.position.y, 
-                                z: this.ball.position.z, 
+					ball_pos: { x: this.ball.position.x,
+                                y: this.ball.position.y,
+                                z: this.ball.position.z,
                                 effect: this.effect_mesh.effect_apply},
 				});
 			}
@@ -609,7 +607,7 @@ class Game3D {
 			this.lobby.sendGameData({
 				event: "game_move",
 				player2_pos: { x: this.player2.paddle.position.x,
-                                y: this.player2.paddle.position.y, 
+                                y: this.player2.paddle.position.y,
                                 z: this.player2.paddle.position.z,
                                 rot: this.player2.paddle.paddlemesh.rotation.y},
 			});
@@ -631,7 +629,7 @@ class Game3D {
             this.ball.position.z = ballPos.z;
             this.ball.position.y = ballPos.y;
 			this.effect_mesh.effect_apply = ballPos.effect;
-        } 
+        }
 		else {
             this.player2.paddle.position.x = player2Pos.x;
             this.player2.paddle.position.y = player2Pos.y;
@@ -665,7 +663,7 @@ class Game3D {
 				if (this.player1.score < 5)
 					this.playRandomClip(['rejected', 'defeat', 'defeat2', 'bored']);
 				if (!this.sounds['point_lost'].isPlaying)
-					this.sounds['point_lost'].play();	
+					this.sounds['point_lost'].play();
 			}
             this.goal();
         } else if (this.ball.position.z > GameConstants3D.GAME_OVER_TIME * GameConstants3D.TABLE_MAX_DEPTH) {
@@ -674,7 +672,7 @@ class Game3D {
 				if (this.player2.score < 5)
 					this.playRandomClip(['rejected', 'defeat', 'defeat2', 'bored']);
 				if (!this.sounds['point_lost'].isPlaying)
-					this.sounds['point_lost'].play();	
+					this.sounds['point_lost'].play();
 			}
 			else if (this.playerId === 'player2') {
 				if (this.player2.score < 5)
@@ -782,13 +780,13 @@ class Game3D {
             this.drawEndGameClientMessage("You WON");
         } else {
             this.drawEndGameClientMessage("You LOST");
-        }		
+        }
         window.removeEventListener("keydown", this.boundKeyPress);
         window.removeEventListener("keyup", this.boundKeyPress);
 		if (this.gameMode === GameModes.PLAYER_VS_PLAYER) {
         	this.canvas_three.addEventListener("click", this.goToChat);
 		}
-		else 
+		else
 			this.canvas_three.addEventListener("click", this.boundReset);
         this.gameOver = true;
     }
@@ -818,7 +816,7 @@ class Game3D {
 		if (this.gameMode === GameModes.PLAYER_VS_PLAYER) {
         	this.canvas_three.addEventListener("click", this.goToChat);
 		}
-		else 
+		else
 			this.canvas_three.addEventListener("click", this.boundReset);
 		if (this.gameMode === GameModes.PLAYER_VS_PLAYER) {
         	this.ctx.fillText("Click to go back to messages", GameConstants.GAME_WIDTH / 2, 3 * GameConstants.GAME_HEIGHT / 4 + 60);
@@ -886,7 +884,7 @@ class Game3D {
 
         this.boundBlur = this.blurHandler3d.bind(this);
         window.addEventListener("blur", this.boundBlur);
-		
+
 		this.hashChange = this.hashChangeHandler3d.bind(this);
 		window.addEventListener("hashchange", this.hashChange);
 
@@ -925,10 +923,10 @@ class Game3D {
 	}
 
     blurHandler3d() {
-		this.reset_key_state();		
+		this.reset_key_state();
 		// if (!this.isGameStarted || this.gameMode === GameModes.PLAYER_VS_PLAYER)
 		// {
-		// 	this.reset_key_state();		
+		// 	this.reset_key_state();
 		// 	return;
 		// }
 		// else {
@@ -938,9 +936,8 @@ class Game3D {
 
 	deallocate() {
 		cancelAnimationFrame(this.loop);
-		while(this.scene.children.length > 0){ 
-			console.log('removing', this.scene.children[0]);
-			this.scene.remove(this.scene.children[0]); 
+		while(this.scene.children.length > 0){
+			this.scene.remove(this.scene.children[0]);
 		}
 		// this.renderer.dispose();
 		this.scene = null;

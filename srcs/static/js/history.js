@@ -129,7 +129,6 @@ document.addEventListener("DOMContentLoaded", function () {
         hash = parts[0];
         query_params = parts[1];
         var routeFunction = routes[hash];
-        console.log("hash: " + hash);
         if (routeFunction) {
             routeFunction();
         } else {
