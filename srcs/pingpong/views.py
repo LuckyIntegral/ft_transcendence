@@ -681,7 +681,7 @@ class TwoStepVerificationCodeView(APIView):
 
     def get_throttles(self):
         if self.request.method == "PUT":
-            self.throttle_scope = "one_per_minute"
+            self.throttle_scope = "five_per_minute"
             return [ScopedRateThrottle()]
         elif self.request.method == "POST":
             self.throttle_scope = "hundred_per_hour"
@@ -769,7 +769,7 @@ class TwoStepVerification(APIView):
             self.throttle_scope = "two_hundred_per_minute"
             return [ScopedRateThrottle()]
         elif self.request.method == "PUT":
-            self.throttle_scope = "one_per_minute"
+            self.throttle_scope = "five_per_minute"
             return [ScopedRateThrottle()]
         else:
             return super().get_throttles()
@@ -863,7 +863,7 @@ class TwoStepVerification(APIView):
 
 class VerificationEmailView(APIView):
 
-    throttle_scope = "one_per_minute"
+    throttle_scope = "five_per_minute"
 
     def get(self, request, format=None):
         auth_header = request.headers.get("Authorization")
@@ -893,7 +893,7 @@ class ForgetPasswordView(APIView):
 
     def get_throttles(self):
         if self.request.method == "POST":
-            self.throttle_scope = "one_per_minute"
+            self.throttle_scope = "five_per_minute"
             return [ScopedRateThrottle()]
         elif self.request.method == "GET":
             self.throttle_scope = "two_hundred_per_minute"
@@ -1507,7 +1507,7 @@ class BlockUserView(APIView):
 
 class PongLobbyView(APIView):
 
-    throttle_scope = "one_per_minute"
+    throttle_scope = "five_per_minute"
 
     def post(self, request, format=None):
         auth_header = request.headers.get("Authorization")
@@ -1546,7 +1546,7 @@ class PongLobbyView(APIView):
 
 
 class TournamentLobbyView(APIView):
-    throttle_scope = "one_per_minute"
+    throttle_scope = "five_per_minute"
 
     def all_users_exists(self, users) -> bool:
         if len(users) != len(set(users)):

@@ -70,7 +70,8 @@ document.addEventListener("DOMContentLoaded", function () {
                     if (response.status === 201) {
                         alertSuccess("Signup successful!");
                         obtainToken(username, password).then(() => {
-                            //sendVerificationEmail(); TODO uncomment this line
+                            // TODO uncomment this line
+                            sendVerificationEmail();
                         });
                     } else if (response.status === 400) {
                         popupAlertError("Username is already taken");

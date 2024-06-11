@@ -785,7 +785,7 @@ class TournamentConsumer(AsyncWebsocketConsumer):
                     [result["username"], int(result["place"][0])]
                 )
             # TODO uncomment this line
-            # threading.Thread(target=async_to_sync(blockChainCreateGame), args=(self.token, data)).start()
+            threading.Thread(target=async_to_sync(blockChainCreateGame), args=(self.token, data)).start()
 
     @database_sync_to_async
     def get_tournament_results(self):

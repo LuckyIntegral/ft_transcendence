@@ -30,7 +30,7 @@ SECRET_KEY = os.environ.get("SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["0.0.0.0", "localhost", "127.0.0.1", "10.14.5.5"]
+ALLOWED_HOSTS = ["0.0.0.0", "localhost", "127.0.0.1", "10.14.5.2"]
 
 
 # Application definition
@@ -166,7 +166,7 @@ REST_FRAMEWORK = {
         'rest_framework.throttling.ScopedRateThrottle',
     ],
     'DEFAULT_THROTTLE_RATES': {
-        'one_per_minute': '1/min',
+        'five_per_minute': '5/min',
         'ten_per_minute': '10/min',
         'two_hundred_per_minute': '200/m',
         'hundred_per_hour': '100/h',
