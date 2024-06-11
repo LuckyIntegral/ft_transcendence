@@ -34,12 +34,20 @@ document.addEventListener("DOMContentLoaded", function () {
 
     var routes = {
         profile: function () {
+            if (localStorage.getItem("access") === null) {
+                window.location.hash = "default";
+                return;
+            }
             removePopups();
             closeSockets();
             cleanUpContentStyles();
             loadProfilePage();
         },
         pong: function () {
+            if (localStorage.getItem("access") === null) {
+                window.location.hash = "default";
+                return;
+            }
             removePopups();
             cleanUpContentStyles();
             closeSockets();
@@ -54,6 +62,10 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         },
         pong3d: function() {
+            if (localStorage.getItem("access") === null) {
+                window.location.hash = "default";
+                return;
+            }
             removePopups();
             cleanUpContentStyles();
             closeSockets();
@@ -73,24 +85,40 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         },
         friends: function () {
+            if (localStorage.getItem("access") === null) {
+                window.location.hash = "default";
+                return;
+            }
             removePopups();
             cleanUpContentStyles();
             closeSockets();
             loadFriendsPage();
         },
         leadrboard: function () {
+            if (localStorage.getItem("access") === null) {
+                window.location.hash = "default";
+                return;
+            }
             removePopups();
             cleanUpContentStyles();
             closeSockets();
             loadLeaderboardPage();
         },
         messages: function () {
+            if (localStorage.getItem("access") === null) {
+                window.location.hash = "default";
+                return;
+            }
             removePopups();
             cleanUpContentStyles();
             closeSockets();
             loadMessagesPage();
         },
         tournamentslobby: function () {
+            if (localStorage.getItem("access") === null) {
+                window.location.hash = "default";
+                return;
+            }
             removePopups();
             cleanUpContentStyles();
             closeSockets();
@@ -104,6 +132,10 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         },
         tournamentmenu: function () {
+            if (localStorage.getItem("access") === null) {
+                window.location.hash = "default";
+                return;
+            }
             closeSockets();
             removePopups();
             cleanUpContentStyles();
