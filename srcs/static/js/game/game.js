@@ -70,7 +70,6 @@ class Game {
         canvas.id = "game";
         content.textContent = "";
         content.appendChild(canvas);
-        console.log("Canvas created");
     }
 
     displayWaitingMessage() {
@@ -83,7 +82,6 @@ class Game {
 
     start() {
         if (!this.isGameStarted) {
-            console.log("Game started");
             this.isGameStarted = true;
             this.gameOver = false;
             this.startNewGame();
@@ -103,7 +101,6 @@ class Game {
         this.context = this.canvas.getContext("2d");
         this.canvas.width = GameConstants.GAME_WIDTH;
         this.canvas.height = GameConstants.GAME_HEIGHT;
-        console.log("Canvas set up");
     }
 
     startNewGame() {

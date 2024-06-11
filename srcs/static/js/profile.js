@@ -482,8 +482,26 @@ function setTwoStepVerificationButton(isEnabled) {
     }
 }
 
+
+function formatScore(score, result) {
+    score = score.split(" - ");
+    var scoreOne = score[0];
+    var scoreTwo = score[1];
+    var temp;
+    if (scoreOne < scoreTwo && result === "win") {
+        temp = scoreOne;
+        scoreOne = scoreTwo;
+        scoreTwo = temp;
+    } else if (scoreOne > scoreTwo && result === "loss") {
+        temp = scoreOne;
+        scoreOne = scoreTwo;
+        scoreTwo = temp;
+    }
+    var result = `${scoreOne} - ${scoreTwo}`
+    return result;
+}
+
 function loadGamesArchive(page = 0) {
-    console.log(page);
 
     var tableBody = document.getElementById("gamesArchive");
     tableBody.innerHTML = "";
@@ -528,8 +546,8 @@ function loadGamesArchive(page = 0) {
                     date.textContent = resDate.toLocaleString();
 
                     opponent.textContent = game.opponent;
-                    result.textContent = game.score;
-                    if (game.result == "win") {
+                    result.textContent = formatScore(game.score, game.result);
+                    if (game.result === "win") {
                         result.style.color = "green";
                     } else {
                         result.style.color = "red";
@@ -544,7 +562,6 @@ function loadGamesArchive(page = 0) {
                 loadGameArchivePagination(true, data.page, data.totalPages);
             }
         })
-        .catch(function () {});
 }
 
 function loadGameArchivePagination(visible, page = 0, totalPages = 0) {

@@ -26,14 +26,14 @@ class Bobo {
 	turnHead(target, dt) {
 		let speed = 0.0;
 		if (this.turnGoal == 1.0){
-			this.turnTime += dt; 
+			this.turnTime += dt;
 			speed = this.turnTime / this.headTurnTime ;
 			if (speed >= 1.0) {
 				speed = 1.0;
 				this.turnTime = this.headTurnTime;
 			}
 		}
-		else if (this.turnGoal == 0.0)	
+		else if (this.turnGoal == 0.0)
 		{
 			this.turnTime -= dt;
 			speed = this.turnTime / this.headTurnTime;
@@ -46,7 +46,7 @@ class Bobo {
 		this.headBone.lookAt(new THREE.Vector3(0.6 * target.position.x , 0.3 * target.position.y - 0.6, target.position.z));
 		const targetRotation = this.headBone.quaternion.clone();
 		this.headBone.quaternion.copy(originalRotation);
-		this.headBone.quaternion.slerp(targetRotation, speed);	
+		this.headBone.quaternion.slerp(targetRotation, speed);
     }
 
 	setPosition (x, y, z) {
@@ -61,12 +61,12 @@ class Bobo {
 		if (this.animations[state]) {
 			const nextAction = this.mixer.clipAction(this.animations[state]);
 			nextAction.reset();
-			nextAction.loop = THREE.LoopOnce; 
+			nextAction.loop = THREE.LoopOnce;
 			nextAction.clampWhenFinished = true;
 			nextAction.play();
 			if (this.currentAction) {
 				this.currentAction.crossFadeTo(nextAction, 0.5, true);
-			} 
+			}
 			this.currentAction = nextAction;
 			this.currentState = state;
 
@@ -79,15 +79,12 @@ class Bobo {
 					this.playDefaultAnimation();
 				}
 			};
-	
+
 			this.mixer.addEventListener('finished', finishListener);
-		} else {
-			console.log(`Animation ${state} not found`);
 		}
 	}
-  
+
 	update(dt) {
 		this.mixer.update(dt);
 	}
 }
-  
